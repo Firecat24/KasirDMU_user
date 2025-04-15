@@ -34,6 +34,13 @@ class Database_obat:
                 ppn REAL DEFAULT 11.0
             )
         """)
+        self.kursor.execute("""
+            CREATE TABLE IF NOT EXISTS data_pajak (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                jenis_pajak TEXT NOT NULL,
+                persen_pajak REAL NOT NULL
+            )
+        """)
         self.koneksi.commit()
 
     def new_produk(self, jenis, plu, nama_produk, satuan, harga_beli, harga_umum, harga_cabang, harga_halodoc, harga_karyawan, harga_bpjs, kode_golongan, nama_golongan, rak, supplier, fast_moving, kemasan_beli, isi, tanggal_kadaluarsa, stok_apotek, stok_min, stok_max, ppn):
