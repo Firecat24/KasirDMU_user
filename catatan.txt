@@ -1,0 +1,11 @@
+sudah ketemu kode golongannya jadi kesalahannya pada spinner diganti menjadi dropdown menurut kivymd
+
+sudah berhasil set obat
+
+ada beberapa hal yang harus diperhatikan dalam tabel view barang terutama MDDatatable yang pagination untuk mengurutkan dari id atau nama atau lainnya
+
+ada permasalahan di kivy MD yang mana didalam librarynya
+    1. datatable dan juga MDdropdownmenu, apabila pakai versi 1.2 itu ada warning karena di versi kivymd terbaru sudah tidak digunakan
+    2. apabila menggunakan versi terbaru dari kivyMD ada seperti 2 library itu tidak ada pengganti lainnya yang cocok entah itu MDmenu ataupun recycleview
+
+permasalahan didalam pembacaan database dan pemanfaatan didalam kivy membuat nya loading agak lama, belum ada solusi namun untuk saat ini semua berjalan normal

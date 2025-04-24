@@ -1,0 +1,42 @@
+<ObatItem@BoxLayout>:
+    index: 0
+    data: []
+    is_selected: False
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: 40
+    canvas.before:
+        Color:
+            rgba: (0, 0.5, 1, 1) if root.is_selected else (1, 1, 1, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    Label:
+        text: root.data[0]
+        color: 0, 0, 0, 1
+    Label:
+        text: root.data[1]
+        color: 0, 0, 0, 1
+
+<ObatTable>:
+    orientation: 'vertical'
+    padding: 10
+    spacing: 5
+
+    BoxLayout:
+        size_hint_y: None
+        height: 40
+        Button:
+            text: "Edit"
+            on_release: root.edit_selected()
+
+    RecycleView:
+        id: rv
+        viewclass: 'ObatItem'
+        RecycleBoxLayout:
+            default_size: None, dp(40)
+            default_size_hint: 1, None
+            size_hint_y: None
+            height: self.minimum_height
+            orientation: 'vertical'
