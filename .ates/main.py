@@ -1,44 +1,32 @@
-from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
-from kivy.properties import ListProperty, NumericProperty
+from kivy.lang import Builder
+from kivymd.app import MDApp
+from kivymd.uix.datatables import MDDataTable
+from kivymd.uix.button import MDRaisedButton
 
-class ObatTable(BoxLayout):
-    rv_data = ListProperty()
-    selected_index = NumericProperty(-1)
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.rv_data = [
-            {'nama': 'Paracetamol', 'stok': 50},
-            {'nama': 'Amoxicillin', 'stok': 30},
-            {'nama': 'Ibuprofen', 'stok': 20},
-        ]
-        self.refresh_rv()
+class MainApp(MDApp):
 
-    def refresh_rv(self):
-        self.ids.rv.data = [{
-            'index': i,
-            'data': [item['nama'], str(item['stok'])],
-            'is_selected': i == self.selected_index
-        } for i, item in enumerate(self.rv_data)]
-
-    def select_row(self, index):
-        self.selected_index = index
-        self.refresh_rv()
-
-    def edit_selected(self):
-        if self.selected_index >= 0:
-            item = self.rv_data[self.selected_index]
-            print(f"Edit data: {item['nama']} (stok: {item['stok']})")
-        else:
-            print("Tidak ada baris yang dipilih.")
-
-class ObatItem(BoxLayout):
-    def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos):
-            self.parent.parent.parent.select_row(self.index)
-        return super().on_touch_down(touch)
-
-class MyApp(App):
     def build(self):
-        return ObatTable()
+        self.theme_cls.primary_palette = "Blue"
+        return Builder.load_file("main.kv")
+
+    def select_all_checkbox(self):
+        # Mendapatkan data table
+        data_table = self.root.ids.data_table
+        
+        # Mengubah status checkbox di seluruh baris menjadi True
+        new_row_data = []
+        for row in data_table.row_data:
+            new_row = list(row)
+            new_row[-1] = "True"  # Menandakan checkbox dicentang
+            new_row_data.append(tuple(new_row))
+
+        # Memperbarui data table dengan row data yang baru
+        data_table.row_data = new_row_data
+
+    def on_start(self):
+        data_table = self.root.ids.data_table
+        data_table.add_row_checkboxes()
+
+if __name__ == "__main__":
+    MainApp().run()

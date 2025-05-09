@@ -8,4 +8,27 @@ ada permasalahan di kivy MD yang mana didalam librarynya
     1. datatable dan juga MDdropdownmenu, apabila pakai versi 1.2 itu ada warning karena di versi kivymd terbaru sudah tidak digunakan
     2. apabila menggunakan versi terbaru dari kivyMD ada seperti 2 library itu tidak ada pengganti lainnya yang cocok entah itu MDmenu ataupun recycleview
 
+
+(sudah ada solusi namun tidak tahu apakah efisien atau tidak)
 permasalahan didalam pembacaan database dan pemanfaatan didalam kivy membuat nya loading agak lama, belum ada solusi namun untuk saat ini semua berjalan normal
+    solusinya dapat menggunakan session untuk menyimpan data database lalu tinggal manfaatkan session tiap kali ditampilkan kedalam ui, apabila diedit atau ditambahkan, cukup muat ulang database kedalam session
+
+
+(solved)
+ada eror didalam hapus, untuk checklist erornya tidak mau ngecheck padahal sudah dicheck dan ada 2 check padahal cuman 1, karena checklist dicentang lalu pergi ke halaman add data setelah itu refresh page dan ada checklist yang nyantol
+    1. mungkin bisa menggunakan alert if apabila ada checklist didalam get_checked maka tidak boleh keluar dari page data
+    2. atau bisa menggunakan disabled button pada saat check list ditekan, dan hanya bisa digunakan untuk menghapus data apabila banyak dan edit apabila hanya 1
+
+
+(solved)
+sama seperti eror diatas namun ini untuk edit
+    solusinya saya menghapus tombol kembali agar orang hanya bisa simpan dan auto kembali, alih alih menggunakan tombol kembali
+
+
+ada eror didalam edit data obat, yang mana data untuk golongan dan pajak tidak dapat keluar saat tombol edit ditekan jadi tiap kali user mau edit obat, dia harus memilih golongan dan pajak terus menerus setiap kali edit
+
+
+ada eror di table_data sepertinya solusinya harus ganti cara menampilkan table_data tidak menggunakan dari kivymd
+    solusi saat ini adalah checklistnya selalu direfresh menggunakan manual all check lalu all uncheck, dan itu berhasil
+    solusi ke 2 tetap menggunakan kivy namun membuat tabel buatan bukan yang otomatis
+        namun pertanyaannya, bisakah dia membuat seperti scroll view atau pagination ? jika tidak harus memikirkan cara lainnya, untuk checkbox nanti bisa diganti menggunakan hapus dan edit tombol biasa di sisi kanan atau kiri

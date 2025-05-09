@@ -9,14 +9,22 @@ WindowsManager:
     Dashboard:
 
     DataObat:
-
     InsertObat:
+    EditObat:
 
-    InsertPPN:
-
+    DataGolonganObat:
     InsertGolonganObat:
+    EditGolonganObat:
+
+    DataPajak:
+    InsertPajak:
+    EditPajak:
 
     Kasir:
+
+
+#-------------------------------------------------------------------------------------------------------------------#
+
 
 <Dashboard>:
     name: 'dashboard'
@@ -129,6 +137,9 @@ WindowsManager:
                 on_release: app.change_screen('insert_golongan_obat')
 
 
+#-------------------------------------------------------------------------------------------------------------------#
+
+
 <DataObat>:
     name: 'data_obat'
     BoxLayout:
@@ -160,7 +171,13 @@ WindowsManager:
                 width: 100
                 on_release: app.change_screen('insert_obat',"left")
             Button:
-                text: "Hapus Terpilih"
+                text: 'Edit Obat'
+                font_size: 12
+                size_hint_x: None
+                width: 100
+                on_release: root.edit_data_obat()
+            Button:
+                text: "Hapus Obat"
                 font_size: 12
                 size_hint_x: None
                 width: 100
@@ -224,7 +241,7 @@ WindowsManager:
                 width: 100
                 on_release: app.change_screen('dashboard',"right")
             Button:
-                text: 'Add Obat'
+                text: 'Data Obat'
                 font_size: 12
                 size_hint_x: None
                 width: 100
@@ -244,7 +261,7 @@ WindowsManager:
                     pos: self.x, self.y
                     size: self.width, 1
 
-            text: 'DATA OBAT'
+            text: 'ISI DATA OBAT'
             font_size: 30
             size_hint_y: None
             height: 40
@@ -355,6 +372,166 @@ WindowsManager:
                     pos_hint: {"center_x": 0.5}
                     on_release: app.simpan_data_obat()
 
+<EditObat>
+    name: 'edit_obat'
+    BoxLayout:
+        orientation: 'vertical'
+    
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            canvas.after:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.x, self.y
+                    size: self.width, 1
+
+            text: 'EDIT DATA OBAT'
+            font_size: 30
+            size_hint_y: None
+            height: 40
+            halign: 'center'
+            valign: 'middle'
+            color: 0, 0, 0, 1
+            text_size: self.size
+
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            canvas.after:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.x, self.y
+                    size: self.width, 1
+
+            text:'Apabila Tidak Ada Perubahan Tekan Tombol Simpan'
+            font_size: 15
+            size_hint_y: None
+            height: 30
+            halign: 'center'
+            valign: 'middle'
+            color: 0, 0, 0, 1
+            text_size: self.size
+
+        ScrollView:
+            id: scroll_edit
+            MDBoxLayout:
+                id: form_edit_obat
+                orientation: "vertical"
+                padding: 10
+                spacing: 10
+                size_hint_y: None
+                height: self.minimum_height
+                pos_hint: {"center_x": 0.5}
+
+                MDTextField:
+                    hint_text: "ID"
+                    helper_text: "Biarkan kosong untuk auto increment"
+                    helper_text_mode: "on_focus"
+                    readonly: True
+
+                MDTextField:
+                    id: jenis
+                    hint_text: "Jenis"
+
+                MDTextField:
+                    id: plu
+                    hint_text: "PLU"
+
+                MDTextField:
+                    id: nama_produk
+                    hint_text: "Nama Produk"
+
+                MDTextField:
+                    id: satuan
+                    hint_text: "Satuan"
+
+                MDTextField:
+                    id: harga_beli
+                    hint_text: "Harga Beli"
+                    input_filter: "float"
+
+                MDRaisedButton:
+                    id: dropdown_golongan_edit
+                    text: "Pilih Golongan"
+                    pos_hint: {"center_x": 0.5}
+                    on_release: root.menu_golongan.open()
+
+                MDLabel:
+                    id: label_kode_golongan_edit
+                    text: root.kode_golongan_aktif
+                    halign: "center"
+
+                MDTextField:
+                    id: rak
+                    hint_text: "Rak"
+
+                MDTextField:
+                    id: supplier
+                    hint_text: "Supplier"
+
+                MDTextField:
+                    id: fast_moving
+                    hint_text: "Fast Moving (Ya/Tidak)"
+
+                MDTextField:
+                    id: kemasan_beli
+                    hint_text: "Kemasan Beli"
+
+                MDTextField:
+                    id: isi
+                    hint_text: "Isi"
+                    input_filter: "int"
+
+                MDTextField:
+                    id: tanggal_kadaluarsa
+                    hint_text: "Tanggal Kadaluarsa (YYYY-MM-DD)"
+
+                MDTextField:
+                    id: stok_apotek
+                    hint_text: "Stok Apotek"
+                    input_filter: "int"
+
+                MDTextField:
+                    id: stok_min
+                    hint_text: "Stok Minimum"
+                    input_filter: "int"
+
+                MDTextField:
+                    id: stok_max
+                    hint_text: "Stok Maksimum"
+                    input_filter: "int"
+
+                MDRaisedButton:
+                    id: dropdown_pajak_edit
+                    text: "Pilih Pajak"
+                    pos_hint: {"center_x": 0.5}
+                    on_release: root.menu_pajak.open()
+
+                MDLabel:
+                    id: label_kode_pajak_edit
+                    text: root.kode_pajak_aktif
+                    halign: "center"
+
+                MDRaisedButton:
+                    text: "Simpan Data"
+                    pos_hint: {"center_x": 0.5}
+                    on_release: root.simpan_edit()
+
+
+#-------------------------------------------------------------------------------------------------------------------#
+
+
 <InsertPPN>:
     name: 'data_PPN'
     BoxLayout:
@@ -415,6 +592,10 @@ WindowsManager:
             Label:
                 text:'Insert PPN'
                 font_size: 30
+
+
+#-------------------------------------------------------------------------------------------------------------------#
+
 
 <InsertGolonganObat>:
     name: 'data_golongan_obat'
@@ -477,6 +658,10 @@ WindowsManager:
             Label:
                 text: 'Insert Golongan Obat'
                 font_size: 30
+
+
+#-------------------------------------------------------------------------------------------------------------------#
+                
 
 <Kasir>:
     name: 'Kasir'

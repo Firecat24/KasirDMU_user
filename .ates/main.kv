@@ -1,42 +1,31 @@
-<ObatItem@BoxLayout>:
-    index: 0
-    data: []
-    is_selected: False
-    orientation: 'horizontal'
-    size_hint_y: None
-    height: 40
-    canvas.before:
-        Color:
-            rgba: (0, 0.5, 1, 1) if root.is_selected else (1, 1, 1, 1)
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-    Label:
-        text: root.data[0]
-        color: 0, 0, 0, 1
-    Label:
-        text: root.data[1]
-        color: 0, 0, 0, 1
-
-<ObatTable>:
+BoxLayout:
     orientation: 'vertical'
-    padding: 10
-    spacing: 5
 
-    BoxLayout:
-        size_hint_y: None
-        height: 40
-        Button:
-            text: "Edit"
-            on_release: root.edit_selected()
+    MDToolbar:
+        title: "Data Obat"
+        left_action_items: [["menu", lambda x: app.navigation_draw()]]
+        elevation: 10
+    
+    MDRaisedButton:
+        text: "Select All"
+        size_hint: None, None
+        size: "200dp", "48dp"
+        pos_hint: {"center_x": 0.5}
+        on_release: app.select_all_checkbox()
 
-    RecycleView:
-        id: rv
-        viewclass: 'ObatItem'
-        RecycleBoxLayout:
-            default_size: None, dp(40)
-            default_size_hint: 1, None
-            size_hint_y: None
-            height: self.minimum_height
-            orientation: 'vertical'
+    MDDataTable:
+        id: data_table
+        size_hint: None, None
+        size: "600dp", "400dp"
+        column_data: [
+            ("ID", dp(30)),
+            ("Jenis", dp(30)),
+            ("PLU", dp(30)),
+            ("Nama Produk", dp(50)),
+            ("Select", dp(30))  # Kolom checkbox
+        ]
+        row_data: [
+            ("1", "Jenis 1", "123", "Obat A", "True"),
+            ("2", "Jenis 2", "124", "Obat B", "False"),
+            ("3", "Jenis 3", "125", "Obat C", "True")
+        ]

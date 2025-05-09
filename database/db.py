@@ -65,13 +65,15 @@ class DatabaseObat:
 
 
  # ==================== DATA OBAT ====================
+
+
     def new_produk(self, jenis, plu, nama_produk, satuan, harga_beli, harga_umum, harga_resep, harga_cabang, harga_halodoc, harga_karyawan, harga_bpjs, kode_golongan, nama_golongan, rak, supplier, fast_moving, kemasan_beli, isi, tanggal_kadaluarsa, stok_apotek, stok_min, stok_max, ppn):
         self.kursor.execute("""
             INSERT INTO data_obat (jenis, plu, nama_produk, satuan, harga_beli, harga_umum, harga_resep, harga_cabang, harga_halodoc, harga_karyawan, harga_bpjs, kode_golongan, nama_golongan, rak, supplier, fast_moving, kemasan_beli, isi, tanggal_kadaluarsa, stok_apotek, stok_min, stok_max, ppn) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (jenis, plu, nama_produk, satuan, harga_beli, harga_umum, harga_resep, harga_cabang, harga_halodoc, harga_karyawan, harga_bpjs, kode_golongan, nama_golongan, rak, supplier, fast_moving, kemasan_beli, isi, tanggal_kadaluarsa, stok_apotek, stok_min, stok_max, ppn))
         self.koneksi.commit()
 
-    def edit_produk(self, id, jenis=None, plu=None, nama_produk=None, satuan=None, harga_beli=None, harga_umum=None, harga_resep=None, harga_cabang=None, harga_halodoc=None, harga_karyawan=None, harga_bpjs=None, kode_golongan=None, nama_golongan=None, rak=None, supplier=None, fast_moving=None, kemasan_beli=None, isi=None, tanggal_kadaluarsa=None, stok_apotek=None, stok_min=None, stok_max=None, ppn=None):
+    def edit_produk(self, jenis=None, plu=None, nama_produk=None, satuan=None, harga_beli=None, harga_umum=None, harga_resep=None, harga_cabang=None, harga_halodoc=None, harga_karyawan=None, harga_bpjs=None, kode_golongan=None, nama_golongan=None, rak=None, supplier=None, fast_moving=None, kemasan_beli=None, isi=None, tanggal_kadaluarsa=None, stok_apotek=None, stok_min=None, stok_max=None, ppn=None):
         query = "UPDATE data_obat SET "
         params = []
 
@@ -145,13 +147,14 @@ class DatabaseObat:
             query += "ppn=?, "
             params.append(ppn)
 
-        query = query.rstrip(", ") +  f" WHERE id={id}"
-        self.kursor.execute(query,*params)  
+        query = query.rstrip(", ") + " WHERE plu=?"
+        params.append(plu)
+        self.kursor.execute(query, tuple(params))
         self.koneksi.commit()
 
-    def delete_product(self, id):
+    def delete_product(self, plu):
         try:
-            self.kursor.execute("DELETE FROM data_obat WHERE id=?", (id,))
+            self.kursor.execute("DELETE FROM data_obat WHERE plu=?", (plu,))
             self.koneksi.commit()
 
             if self.kursor.rowcount > 0:
@@ -160,18 +163,21 @@ class DatabaseObat:
                 return False
                 
         except Exception as e:
-            print(f"Error deleting product with ID {id}: {e}")
+            print(f"Error deleting product with ID {plu}: {e}")
             return False
     
     def get_all_obat(self):
         self.kursor.execute("SELECT * FROM data_obat")
-        return self.kursor.fetchall()
+        rows = self.kursor.fetchall()
+        return [row[1:] for row in rows]
     
     def jumlah_obat(self):
         self.kursor.execute("SELECT COUNT(*) FROM data_obat")
         return self.kursor.fetchone()[0]
     
+
 # ==================== GOLONGAN ====================
+
 
     def tambah_golongan(self, nama_golongan, margin_umum=0, margin_resep=0, margin_halodoc=0, margin_cabang=0, margin_karyawan=0, margin_bpjs=0):
         self.kursor.execute("""
@@ -237,7 +243,9 @@ class DatabaseObat:
         else:
             return None
 
+
 # ==================== PAJAK ====================
+
 
     def tambah_pajak(self, jenis_pajak, persen_pajak):
         self.kursor.execute("""
@@ -267,7 +275,9 @@ class DatabaseObat:
         else:
             return None 
 
+
 # ==================== TUTUP DATABASE ====================
+
 
     def close_connection(self):
         self.koneksi.close()
