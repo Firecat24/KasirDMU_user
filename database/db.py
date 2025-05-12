@@ -243,6 +243,9 @@ class DatabaseObat:
         else:
             return None
 
+    def get_all_golongan(self):
+        self.kursor.execute("SELECT * FROM data_golongan_obat")
+        return self.kursor.fetchall()
 
 # ==================== PAJAK ====================
 

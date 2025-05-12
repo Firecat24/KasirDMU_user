@@ -22,9 +22,7 @@ WindowsManager:
 
     Kasir:
 
-
 #-------------------------------------------------------------------------------------------------------------------#
-
 
 <Dashboard>:
     name: 'dashboard'
@@ -47,14 +45,14 @@ WindowsManager:
             Spinner:
                 id: menu_spinner
                 text: 'Menu'
-                values: ['Obat', 'PPN', 'Golongan']
+                values: ['Obat', 'Pajak', 'Golongan']
                 size_hint_x: None
                 width: 100
                 font_size: 12
                 on_text:
                     if self.text == 'Obat': app.change_screen('data_obat')
-                    elif self.text == 'PPN': app.change_screen('data_PPN')
                     elif self.text == 'Golongan': app.change_screen('data_golongan_obat')
+                    elif self.text == 'Pajak': app.change_screen('data_pajak')
                     self.text = 'Menu'
 
             Button:
@@ -139,7 +137,6 @@ WindowsManager:
 
 #-------------------------------------------------------------------------------------------------------------------#
 
-
 <DataObat>:
     name: 'data_obat'
     BoxLayout:
@@ -207,7 +204,7 @@ WindowsManager:
             text_size: self.size
 
         BoxLayout:
-            id: table_container
+            id: table_container_obat
             orientation: 'vertical'
             canvas.before:
                 Color:
@@ -528,76 +525,9 @@ WindowsManager:
                     pos_hint: {"center_x": 0.5}
                     on_release: root.simpan_edit()
 
-
 #-------------------------------------------------------------------------------------------------------------------#
 
-
-<InsertPPN>:
-    name: 'data_PPN'
-    BoxLayout:
-        orientation: 'vertical'
-
-        BoxLayout:
-            orientation: 'horizontal'
-            size_hint_y: None
-            height: 40
-            padding: 5
-            spacing: 10
-            canvas.before:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-
-            Button:
-                text: 'Kembali'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('dashboard',"right")
-
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
-
-            text: 'DATA PPN'
-            font_size: 30
-            size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
-
-        BoxLayout:
-            orientation:'vertical'
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-
-            Label:
-                text:'Insert PPN'
-                font_size: 30
-
-
-#-------------------------------------------------------------------------------------------------------------------#
-
-
-<InsertGolonganObat>:
+<DataGolonganObat>:
     name: 'data_golongan_obat'
     BoxLayout:
         orientation: 'vertical'
@@ -647,6 +577,7 @@ WindowsManager:
 
         # Bagian utama konten
         BoxLayout:
+            id: table_container_golongan
             orientation: 'vertical'
             canvas.before:
                 Color:
@@ -655,14 +586,78 @@ WindowsManager:
                     pos: self.pos
                     size: self.size
 
+<InsertGolonganObat>:
+<EditGolonganObat>:
+
+#-------------------------------------------------------------------------------------------------------------------#
+
+<DataPajak>:
+    name: 'data_pajak'
+    BoxLayout:
+        orientation: 'vertical'
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: 40
+            padding: 5
+            spacing: 10
+            canvas.before:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            Button:
+                text: 'Kembali'
+                font_size: 12
+                size_hint_x: None
+                width: 100
+                on_release: app.change_screen('dashboard',"right")
+
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            canvas.after:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.x, self.y
+                    size: self.width, 1
+
+            text: 'DATA PAJAK'
+            font_size: 30
+            size_hint_y: None
+            height: 40
+            halign: 'center'
+            valign: 'middle'
+            color: 0, 0, 0, 1
+            text_size: self.size
+
+        BoxLayout:
+            orientation:'vertical'
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
             Label:
-                text: 'Insert Golongan Obat'
+                text:'Insert PAJAK'
                 font_size: 30
 
 
+<InsertPajak>:
+<EditPajak>:
+
 #-------------------------------------------------------------------------------------------------------------------#
                 
-
 <Kasir>:
     name: 'Kasir'
     BoxLayout:

@@ -77,10 +77,12 @@ class Dashboard(Screen):
 
 class DataObat(Screen):
     def on_enter(self):
-        if hasattr(self, 'data_table') and self.data_table:
-            self.ids.table_container.remove_widget(self.data_table)
+        self.selected_rows = set()
         rows = SessionCache.get_data_obat()
         self.create_table(rows)
+
+    def on_leave(self):
+        self.clear_table()
 
     def create_table(self, rows):
         if not rows:
@@ -88,9 +90,9 @@ class DataObat(Screen):
             return
 
         column_data = [
-            ("[font=Roboto][size=10sp]Jenis[/size][/font]", dp(20)),
+            ("[font=Roboto][size=10sp]Jenis[/size][/font]", dp(30)),
             ("[font=Roboto][size=10sp]PLU[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Nama[/size][/font]", dp(20)),
+            ("[font=Roboto][size=10sp]Nama[/size][/font]", dp(50)),
             ("[font=Roboto][size=10sp]Satuan[/size][/font]", dp(20)),
             ("[font=Roboto][size=10sp]Harga Beli[/size][/font]", dp(20)),
             ("[font=Roboto][size=10sp]Harga Umum[/size][/font]", dp(20)),
@@ -125,48 +127,15 @@ class DataObat(Screen):
             pagination_menu_height="140dp",
             check=True,
         )
-        self.ids.table_container.add_widget(self.data_table)
-        
-    def tampilkan_dialog(self, pesan, setelah_dialog=None, on_yes=None, on_no=None):
-        def tutup_dialog(instance):
-            dialog.dismiss()
-            if setelah_dialog:
-                setelah_dialog()
-
-        def yes_pressed(instance):
-            if on_yes:
-                on_yes()
-            tutup_dialog(instance)
-
-        def no_pressed(instance):
-            if on_no:
-                on_no()
-            tutup_dialog(instance)
-
-        dialog = MDDialog(
-            text=pesan,
-            buttons=[
-                MDFlatButton(text="No", on_release=no_pressed),
-                MDFlatButton(text="Yes", on_release=yes_pressed),
-            ],
-        )
-        dialog.open()
+        self.data_table.bind(on_check_press=self.on_check_press)
+        self.ids.table_container_obat.add_widget(self.data_table)
 
     def hapus_terpilih(self):
-        checked_rows = self.data_table.get_row_checks()
-        if not checked_rows:
+        if not self.selected_rows:
             toast("Belum ada yang dipilih")
             return
 
-        plu_ids = []
-        for row in checked_rows:
-            if len(row) > 1:
-                cleaned = re.sub(r'\[.*?\]', '', row[1])
-                plu_ids.append(cleaned)
-
-        if not plu_ids:
-            toast("Tidak menemukan PLU untuk dihapus")
-            return
+        plu_ids = list(self.selected_rows)
 
         pesan_konfirmasi = "Apakah Anda yakin ingin menghapus data berikut?\n\n" + "\n".join(plu_ids)
 
@@ -189,9 +158,9 @@ class DataObat(Screen):
                 toast(f"{deleted} data berhasil dihapus")
                 rows = db.get_all_obat()
                 SessionCache.set_data_obat(rows)
-                self.manager.current = 'data_obat'
                 data_obat_screen = self.manager.get_screen('data_obat')
-                data_obat_screen.on_enter()
+                data_obat_screen.reload_table(rows)
+                self.manager.current = 'data_obat'
 
         self.tampilkan_dialog(
             pesan_konfirmasi,
@@ -199,15 +168,16 @@ class DataObat(Screen):
             on_no=None
         )
 
-    def bersihkan_field(self, text):
-        if not text:
-            return ""
-        return re.sub(r'\[.*?\]', '', str(text)).strip()
-
-    def edit_data_obat(self,):
-        selected_rows = self.data_table.get_row_checks()
-        if len(selected_rows) == 1:
-            data_row = selected_rows[0]
+    def edit_data_obat(self):
+        if len(self.selected_rows) == 1:
+            selected_plu = list(self.selected_rows)[0]
+            for row in self.data_table.row_data:
+                if self.bersihkan_field(row[1]) == selected_plu:
+                    data_row = row
+                    break
+            else:
+                toast("Data tidak ditemukan.")
+                return
 
             data = {
                 "jenis": self.bersihkan_field(data_row[0]),
@@ -234,11 +204,56 @@ class DataObat(Screen):
         else:
             dialog = MDDialog(
                 text="Pilih satu data saja untuk diedit!",
-                buttons=[
-                    MDFlatButton(text="OK", on_release=lambda x: dialog.dismiss())
-                ],
+                buttons=[MDFlatButton(text="OK", on_release=lambda x: dialog.dismiss())],
             )
             dialog.open()
+            
+    def on_check_press(self, instance_table, current_row):
+        plu = self.bersihkan_field(current_row[1])
+        if plu in self.selected_rows:
+            self.selected_rows.remove(plu)
+        else:
+            self.selected_rows.add(plu)
+
+    def bersihkan_field(self, text):
+        if not text:
+            return ""
+        return re.sub(r'\[.*?\]', '', str(text)).strip()
+    
+    def reload_table(self, rows):
+        self.clear_table()
+        if rows:
+            Clock.schedule_once(lambda dt: self.create_table(rows), 0.3)
+    
+    def tampilkan_dialog(self, pesan, setelah_dialog=None, on_yes=None, on_no=None):
+        def tutup_dialog(instance):
+            dialog.dismiss()
+            if setelah_dialog:
+                setelah_dialog()
+
+        def yes_pressed(instance):
+            if on_yes:
+                on_yes()
+            tutup_dialog(instance)
+
+        def no_pressed(instance):
+            if on_no:
+                on_no()
+            tutup_dialog(instance)
+
+        dialog = MDDialog(
+            text=pesan,
+            buttons=[
+                MDFlatButton(text="No", on_release=no_pressed),
+                MDFlatButton(text="Yes", on_release=yes_pressed),
+            ],
+        )
+        dialog.open()
+
+    def clear_table(self):
+        if hasattr(self, 'data_table') and self.data_table:
+            self.ids.table_container_obat.remove_widget(self.data_table)
+            self.data_table = None
 
 
 class InsertObat(Screen):
@@ -400,7 +415,7 @@ class InsertObat(Screen):
         def tutup_dialog(instance):
             dialog.dismiss()
             if setelah_dialog:
-                self.bersihkan_field(), 
+                self.bersihkan_field_add_obat(), 
                 setelah_dialog()
 
         dialog = MDDialog(
@@ -637,7 +652,57 @@ class EditObat(Screen):
 #----------------------------------------------------------------------------------------------------------#
 
 class DataGolonganObat(Screen):
-    pass
+    def on_enter(self):
+        self.selected_rows = set()
+        rows = SessionCache.get_data_golongan()
+        if rows:
+            Clock.schedule_once(lambda dt: self.create_table(rows), 0.5)
+        else:
+            print("Tidak ada data golongan.")
+
+    def on_leave(self):
+        if hasattr(self, 'data_table') and self.data_table:
+            self.ids.table_container_golongan.remove_widget(self.data_table)
+            self.data_table = None
+
+    def create_table(self, rows):
+        if not rows:
+            print("Data golongan kosong!")
+            return
+
+        column_data = [
+            ("[font=Roboto][size=10sp]Kode[/size][/font]", dp(20)),
+            ("[font=Roboto][size=10sp]Nama Golongan[/size][/font]", dp(20)),
+            ("[font=Roboto][size=10sp]Margin Umum[/size][/font]", dp(20)),
+            ("[font=Roboto][size=10sp]Margin Resep[/size][/font]", dp(20)),
+            ("[font=Roboto][size=10sp]Margin Cabang[/size][/font]", dp(20)),
+            ("[font=Roboto][size=10sp]Margin Halodoc[/size][/font]", dp(20)),
+            ("[font=Roboto][size=10sp]Margin Karyawan[/size][/font]", dp(20)),
+            ("[font=Roboto][size=10sp]Margin BPJS[/size][/font]", dp(20)),
+        ]
+
+        row_data = [
+            tuple(f"[font=Roboto][size=10sp]{str(item)}[/size][/font]" for item in row)
+            for row in rows
+        ]
+
+        self.data_table = MDDataTable(
+            size_hint=(1, 1),
+            column_data=column_data,
+            row_data=row_data,
+            use_pagination=True,
+            pagination_menu_height="140dp",
+            check=True,
+        )
+        self.data_table.bind(on_check_press=self.on_check_press)
+        self.ids.table_container_golongan.add_widget(self.data_table)
+
+    def on_check_press(self, instance_table, current_row):
+        kode = current_row[0]
+        if kode in self.selected_rows:
+            self.selected_rows.remove(kode)
+        else:
+            self.selected_rows.add(kode)
 
 class InsertGolonganObat(Screen):
     pass
@@ -674,6 +739,12 @@ class KasirApp(MDApp):
 
         if not SessionCache.get_data_obat():
             SessionCache.set_data_obat(self.db.get_all_obat())
+
+        if not SessionCache.get_data_golongan():
+            SessionCache.set_data_golongan(self.db.get_all_golongan())
+
+        if not SessionCache.get_data_pajak():
+            SessionCache.set_data_pajak(self.db.get_all_pajak())
 
         return Builder.load_file('user_interface/gui.kv')
     
