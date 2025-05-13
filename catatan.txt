@@ -51,3 +51,6 @@ ada eror di table_data mengenai checkbox sepertinya solusinya harus ganti cara m
 (solved)
 ada eror pada saat masuk kedalam data golongan, dari data obat lalu kembali lalu ke data golongan, ada eror, katanya list out of range
     SOLUSI bikin checkbox manual jadi tidak menggunakan get_checked
+
+
+eror yang sama seperti diatas yakni list out of range dan tidak tahu penyebab utamanya apa namun untuk sekarang masih bisa diredam

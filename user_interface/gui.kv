@@ -45,14 +45,14 @@ WindowsManager:
             Spinner:
                 id: menu_spinner
                 text: 'Menu'
-                values: ['Obat', 'Pajak', 'Golongan']
+                values: ['Obat', 'Golongan', 'Pajak']
                 size_hint_x: None
                 width: 100
                 font_size: 12
                 on_text:
-                    if self.text == 'Obat': app.change_screen('data_obat')
-                    elif self.text == 'Golongan': app.change_screen('data_golongan_obat')
-                    elif self.text == 'Pajak': app.change_screen('data_pajak')
+                    if self.text == 'Obat': app.change_screen('data_obat','left')
+                    elif self.text == 'Golongan': app.change_screen('data_golongan_obat','left')
+                    elif self.text == 'Pajak': app.change_screen('data_pajak','left')
                     self.text = 'Menu'
 
             Button:
@@ -61,7 +61,7 @@ WindowsManager:
                 size_hint_x: None
                 width: 100
                 font_size: 12
-                on_release: app.change_screen('Kasir')
+                on_release: app.change_screen('Kasir','left')
 
             Label:
                 id: time_label
@@ -107,32 +107,24 @@ WindowsManager:
                     size: self.size
             cols: 2
             rows: 2
-            padding: 10
-            spacing: 10
+            padding: 5
+            spacing: 5
 
             Button:
                 text: 'Insert PPN'
-                size_hint: None, None
-                size: 200, 100
-                on_release: app.change_screen('insert_PPN')
+                on_release: app.change_screen('insert_PPN', 'left')
 
             Button:
                 text: 'Insert Golongan Obat'
-                size_hint: None, None
-                size: 200, 100
-                on_release: app.change_screen('insert_golongan_obat')
+                on_release: app.change_screen('insert_golongan_obat', 'left')
 
             Button:
                 text: 'Insert PPN'
-                size_hint: None, None
-                size: 200, 100
-                on_release: app.change_screen('insert_PPN')
+                on_release: app.change_screen('insert_PPN', 'left')
 
             Button:
                 text: 'Insert Golongan Obat'
-                size_hint: None, None
-                size: 200, 100
-                on_release: app.change_screen('insert_golongan_obat')
+                on_release: app.change_screen('insert_golongan_obat', 'left')
 
 
 #-------------------------------------------------------------------------------------------------------------------#
@@ -156,24 +148,28 @@ WindowsManager:
                     size: self.size
 
             Button:
-                text: 'Kembali'
+                id: tombol_dashboard
+                text: 'Dashboard'
                 font_size: 12
                 size_hint_x: None
                 width: 100
                 on_release: app.change_screen('dashboard',"right")
             Button:
+                id: tombol_add_obat
                 text: 'Add Obat'
                 font_size: 12
                 size_hint_x: None
                 width: 100
                 on_release: app.change_screen('insert_obat',"left")
             Button:
+                id: tombol_edit_obat
                 text: 'Edit Obat'
                 font_size: 12
                 size_hint_x: None
                 width: 100
                 on_release: root.edit_data_obat()
             Button:
+                id: tombol_hapus_obat
                 text: "Hapus Obat"
                 font_size: 12
                 size_hint_x: None
@@ -203,7 +199,7 @@ WindowsManager:
             color: 0, 0, 0, 1
             text_size: self.size
 
-        BoxLayout:
+        FloatLayout:
             id: table_container_obat
             orientation: 'vertical'
             canvas.before:
@@ -232,11 +228,11 @@ WindowsManager:
                     size: self.size
 
             Button:
-                text: 'Kembali'
+                text: 'Dashboard'
                 font_size: 12
                 size_hint_x: None
                 width: 100
-                on_release: app.change_screen('dashboard',"right")
+                on_release: app.change_screen('dashboard',"down")
             Button:
                 text: 'Data Obat'
                 font_size: 12
@@ -546,11 +542,20 @@ WindowsManager:
                     size: self.size
 
             Button:
-                text: 'Kembali'
+                id: tombol_dashboard
+                text: 'Dashboard'
                 font_size: 12
                 size_hint_x: None
                 width: 100
                 on_release: app.change_screen('dashboard',"right")
+
+            Button:
+                id: tombol_add_golongan
+                text: 'Insert Golongan Obat'
+                font_size: 12
+                size_hint_x: None
+                width: 150
+                on_release: app.change_screen('insert_golongan_obat',"left")
 
         Label:
             canvas.before:
@@ -576,7 +581,7 @@ WindowsManager:
             text_size: self.size
 
         # Bagian utama konten
-        BoxLayout:
+        FloatLayout:
             id: table_container_golongan
             orientation: 'vertical'
             canvas.before:
@@ -587,6 +592,114 @@ WindowsManager:
                     size: self.size
 
 <InsertGolonganObat>:
+    name: 'insert_golongan_obat'
+    BoxLayout:
+        orientation: 'vertical'
+        
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: 40
+            padding: 5
+            spacing: 10
+            canvas.before:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            Button:
+                text: 'Dashboard'
+                font_size: 12
+                size_hint_x: None
+                width: 100
+                on_release: app.change_screen('dashboard',"down")
+            Button:
+                text: 'Data Golongan Obat'
+                font_size: 12
+                size_hint_x: None
+                width: 150
+                on_release: app.change_screen('data_golongan_obat',"right")
+
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            canvas.after:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.x, self.y
+                    size: self.width, 1
+
+            text: 'ISI DATA GOLONGAN OBAT'
+            font_size: 30
+            size_hint_y: None
+            height: 40
+            halign: 'center'
+            valign: 'middle'
+            color: 0, 0, 0, 1
+            text_size: self.size
+
+        ScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: 10
+                spacing: 10
+                size_hint_y: None
+                height: self.minimum_height
+                pos_hint: {"center_x": 0.5}
+
+                MDTextField:
+                    hint_text: "Kode Golongan"
+                    helper_text: "Biarkan kosong untuk Isi Otomatis"
+                    helper_text_mode: "on_focus"
+                    readonly: True
+
+                MDTextField:
+                    id: nama_golongan
+                    hint_text: "Nama Golongan"
+
+                MDTextField:
+                    id: margin_umum
+                    hint_text: "Margin Umum"
+                    input_filter: "float"
+
+                MDTextField:
+                    id: margin_resep
+                    hint_text: "Margin Resep"
+                    input_filter: "float"
+
+                MDTextField:
+                    id: margin_cabang
+                    hint_text: "Margin Cabang"
+                    input_filter: "float"
+
+                MDTextField:
+                    id: margin_halodoc
+                    hint_text: "Margin Halodoc"
+                    input_filter: "float"
+
+                MDTextField:
+                    id: margin_karyawan
+                    hint_text: "Margin Karyawan"
+                    input_filter: "float"
+
+                MDTextField:
+                    id: margin_bpjs
+                    hint_text: "Margin BPJS"
+                    input_filter: "float"
+
+                MDRaisedButton:
+                    text: "Simpan Data"
+                    pos_hint: {"center_x": 0.5}
+                    on_release: app.simpan_data_golongan_obat()
+
+
 <EditGolonganObat>:
 
 #-------------------------------------------------------------------------------------------------------------------#
@@ -610,7 +723,7 @@ WindowsManager:
                     size: self.size
 
             Button:
-                text: 'Kembali'
+                text: 'Dashboard'
                 font_size: 12
                 size_hint_x: None
                 width: 100
@@ -677,7 +790,7 @@ WindowsManager:
                     size: self.size
 
             Button:
-                text: 'Kembali'
+                text: 'Dashboard'
                 font_size: 12
                 size_hint_x: None
                 width: 100

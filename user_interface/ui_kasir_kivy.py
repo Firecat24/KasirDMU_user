@@ -1,22 +1,20 @@
 import re
-
+import threading
+import time
 from datetime import datetime
 from database.db import DatabaseObat
-
 from kivymd.app import MDApp
 from kivymd.uix.datatables import MDDataTable
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.toast import toast
-
+from kivymd.uix.spinner import MDSpinner
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.clock import Clock
 from kivy.metrics import dp
 from kivy.properties import ListProperty, StringProperty
-
-
 #----------------------------------------------------------------------------------------------------------#
 
 class SessionCache:
@@ -78,8 +76,30 @@ class Dashboard(Screen):
 class DataObat(Screen):
     def on_enter(self):
         self.selected_rows = set()
+        self.spinner = MDSpinner(
+            size_hint=(None, None),
+            size=(62, 62),
+            pos_hint={"center_x": 0.5, "center_y": 0.5},
+            line_width=2,
+        )
+        self.ids.tombol_dashboard.disabled = True
+        self.ids.tombol_add_obat.disabled = True
+        self.ids.tombol_edit_obat.disabled = True
+        self.ids.tombol_hapus_obat.disabled = True
+        self.ids.table_container_obat.add_widget(self.spinner)
+        threading.Thread(target=self.load_data_table_with_delay).start()
+
+    def load_data_table_with_delay(self):
         rows = SessionCache.get_data_obat()
+        Clock.schedule_once(lambda dt: self.after_loading(rows), 5)
+
+    def after_loading(self, rows):
+        self.ids.table_container_obat.remove_widget(self.spinner)
         self.create_table(rows)
+        self.ids.tombol_dashboard.disabled = False
+        self.ids.tombol_add_obat.disabled = False
+        self.ids.tombol_edit_obat.disabled = False
+        self.ids.tombol_hapus_obat.disabled = False
 
     def on_leave(self):
         self.clear_table()
@@ -220,11 +240,6 @@ class DataObat(Screen):
             return ""
         return re.sub(r'\[.*?\]', '', str(text)).strip()
     
-    def reload_table(self, rows):
-        self.clear_table()
-        if rows:
-            Clock.schedule_once(lambda dt: self.create_table(rows), 0.3)
-    
     def tampilkan_dialog(self, pesan, setelah_dialog=None, on_yes=None, on_no=None):
         def tutup_dialog(instance):
             dialog.dismiss()
@@ -249,6 +264,11 @@ class DataObat(Screen):
             ],
         )
         dialog.open()
+
+    def reload_table(self, rows):
+        self.clear_table()
+        if rows:
+            Clock.schedule_once(lambda dt: self.create_table(rows), 0.3)
 
     def clear_table(self):
         if hasattr(self, 'data_table') and self.data_table:
@@ -405,7 +425,7 @@ class InsertObat(Screen):
 
             rows = MDApp.get_running_app().db.get_all_obat()
             SessionCache.set_data_obat(rows)
-            self.tampilkan_dialog("Data berhasil disimpan!", setelah_dialog=lambda: MDApp.get_running_app().change_screen('data_obat', 'left'))
+            self.tampilkan_dialog("Data berhasil disimpan!", setelah_dialog=lambda: MDApp.get_running_app().change_screen('data_obat', 'right'))
 
         except Exception as e:
             print("Error saat menyimpan data:", str(e))
@@ -628,7 +648,7 @@ class EditObat(Screen):
             SessionCache.set_data_obat(rows)
 
             def setelah_ditutup():
-                MDApp.get_running_app().change_screen('data_obat', 'left')
+                MDApp.get_running_app().change_screen('data_obat', 'right')
                 print("telah berhasil update data")
 
             self.bersihkan_field_insert_obat()
@@ -654,18 +674,32 @@ class EditObat(Screen):
 class DataGolonganObat(Screen):
     def on_enter(self):
         self.selected_rows = set()
-        rows = SessionCache.get_data_golongan()
-        if rows:
-            Clock.schedule_once(lambda dt: self.create_table(rows), 0.5)
-        else:
-            print("Tidak ada data golongan.")
+        self.spinner = MDSpinner(
+            size_hint=(None, None),
+            size=(62, 62),
+            pos_hint={"center_x": 0.5, "center_y": 0.5},
+            active=True
+        )
+        self.ids.tombol_dashboard.disabled = True
+        self.ids.tombol_add_golongan.disabled = True
+        self.ids.table_container_golongan.clear_widgets()
+        self.ids.table_container_golongan.add_widget(self.spinner)
+
+        # Jalankan loading dan buat tabel di thread terpisah
+        threading.Thread(target=self.load_table_with_delay).start()
 
     def on_leave(self):
-        if hasattr(self, 'data_table') and self.data_table:
-            self.ids.table_container_golongan.remove_widget(self.data_table)
-            self.data_table = None
+        self.clear_table()
 
-    def create_table(self, rows):
+    def load_table_with_delay(self):
+        rows = SessionCache.get_data_golongan()
+        Clock.schedule_once(lambda dt: self.show_table(rows), 5)
+        
+
+    def show_table(self, rows):
+        self.ids.table_container_golongan.clear_widgets()
+        self.ids.tombol_dashboard.disabled = False
+        self.ids.tombol_add_golongan.disabled = False
         if not rows:
             print("Data golongan kosong!")
             return
@@ -698,11 +732,24 @@ class DataGolonganObat(Screen):
         self.ids.table_container_golongan.add_widget(self.data_table)
 
     def on_check_press(self, instance_table, current_row):
+        if not current_row:
+            return print("Tidak ada data yang dipilih")
+
         kode = current_row[0]
         if kode in self.selected_rows:
             self.selected_rows.remove(kode)
         else:
             self.selected_rows.add(kode)
+
+    def reload_table(self, rows):
+        self.clear_table()
+        if rows:
+            Clock.schedule_once(lambda dt: self.create_table(rows), 0.3)
+
+    def clear_table(self):
+        if hasattr(self, 'data_table') and self.data_table:
+            self.ids.table_container_golongan.remove_widget(self.data_table)
+            self.data_table = None
 
 class InsertGolonganObat(Screen):
     pass
@@ -748,7 +795,7 @@ class KasirApp(MDApp):
 
         return Builder.load_file('user_interface/gui.kv')
     
-    def change_screen(self, screen_name, direction='left'):
+    def change_screen(self, screen_name, direction):
         self.root.transition.direction = direction
         self.root.current = screen_name
 
