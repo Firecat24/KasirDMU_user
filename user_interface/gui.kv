@@ -363,7 +363,7 @@ WindowsManager:
                 MDRaisedButton:
                     text: "Simpan Data"
                     pos_hint: {"center_x": 0.5}
-                    on_release: app.simpan_data_obat()
+                    on_release: root.simpan_data_obat()
 
 <EditObat>
     name: 'edit_obat'
@@ -557,6 +557,22 @@ WindowsManager:
                 width: 150
                 on_release: app.change_screen('insert_golongan_obat',"left")
 
+            Button:
+                id: tombol_edit_golongan
+                text: 'Edit Golongan Obat'
+                font_size: 12
+                size_hint_x: None
+                width: 150
+                on_release: root.edit_data_golongan_obat()
+
+            Button:
+                id: tombol_hapus_golongan
+                text: 'Hapus Golongan Obat'
+                font_size: 12
+                size_hint_x: None
+                width: 150
+                on_release: root.hapus_terpilih()
+
         Label:
             canvas.before:
                 Color:
@@ -697,10 +713,112 @@ WindowsManager:
                 MDRaisedButton:
                     text: "Simpan Data"
                     pos_hint: {"center_x": 0.5}
-                    on_release: app.simpan_data_golongan_obat()
+                    on_release: root.simpan_data_golongan_obat()
 
 
 <EditGolonganObat>:
+    name: 'edit_golongan_obat'
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            canvas.after:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.x, self.y
+                    size: self.width, 1
+
+            text: 'ISI DATA GOLONGAN OBAT'
+            font_size: 30
+            size_hint_y: None
+            height: 40
+            halign: 'center'
+            valign: 'middle'
+            color: 0, 0, 0, 1
+            text_size: self.size
+        
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            canvas.after:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.x, self.y
+                    size: self.width, 1
+
+            text:'Apabila Tidak Ada Perubahan Tekan Tombol Simpan'
+            font_size: 15
+            size_hint_y: None
+            height: 30
+            halign: 'center'
+            valign: 'middle'
+            color: 0, 0, 0, 1
+            text_size: self.size
+
+        ScrollView:
+            id: scroll_edit_golongan
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: 10
+                spacing: 10
+                size_hint_y: None
+                height: self.minimum_height
+                pos_hint: {"center_x": 0.5}
+
+                MDTextField:
+                    id: kode_golongan
+                    hint_text: "Kode Golongan"
+                    disabled: True
+
+                MDTextField:
+                    id: nama_golongan
+                    hint_text: "Nama Golongan"
+
+                MDTextField:
+                    id: margin_umum
+                    hint_text: "Margin Umum"
+                    input_filter: "float"
+
+                MDTextField:
+                    id: margin_resep
+                    hint_text: "Margin Resep"
+                    input_filter: "float"
+
+                MDTextField:
+                    id: margin_cabang
+                    hint_text: "Margin Cabang"
+                    input_filter: "float"
+
+                MDTextField:
+                    id: margin_halodoc
+                    hint_text: "Margin Halodoc"
+                    input_filter: "float"
+
+                MDTextField:
+                    id: margin_karyawan
+                    hint_text: "Margin Karyawan"
+                    input_filter: "float"
+
+                MDTextField:
+                    id: margin_bpjs
+                    hint_text: "Margin BPJS"
+                    input_filter: "float"
+
+                MDRaisedButton:
+                    text: "Simpan Data"
+                    pos_hint: {"center_x": 0.5}
+                    on_release: root.simpan_edit_golongan()
 
 #-------------------------------------------------------------------------------------------------------------------#
 

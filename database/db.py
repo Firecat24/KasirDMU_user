@@ -217,8 +217,18 @@ class DatabaseObat:
         self.koneksi.commit()
 
     def hapus_golongan(self, kode_golongan):
-        self.kursor.execute("DELETE FROM data_golongan_obat WHERE kode_golongan = ?", (kode_golongan,))
-        self.koneksi.commit()
+        try:
+            self.kursor.execute("DELETE FROM data_golongan_obat WHERE kode_golongan = ?", (kode_golongan,))
+            self.koneksi.commit()
+
+            if self.kursor.rowcount > 0:
+                return True
+            else:
+                return False
+                
+        except Exception as e:
+            print(f"Error deleting product with ID {kode_golongan}: {e}")
+            return False
 
     def get_nama_kode_golongan(self):
         self.kursor.execute("SELECT kode_golongan, nama_golongan FROM data_golongan_obat")

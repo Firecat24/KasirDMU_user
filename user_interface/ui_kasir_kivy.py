@@ -15,6 +15,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.clock import Clock
 from kivy.metrics import dp
 from kivy.properties import ListProperty, StringProperty
+
 #----------------------------------------------------------------------------------------------------------#
 
 class SessionCache:
@@ -76,68 +77,85 @@ class Dashboard(Screen):
 class DataObat(Screen):
     def on_enter(self):
         self.selected_rows = set()
+        self.show_spinner()
+        self.set_tombol_enabled(False)
+        
+        self.loading_thread = threading.Thread(target=self.load_data_table)
+        self.loading_thread.start()
+        Clock.schedule_interval(self.cek_thread_selesai, 1)
+
+    def show_spinner(self):
         self.spinner = MDSpinner(
             size_hint=(None, None),
             size=(62, 62),
             pos_hint={"center_x": 0.5, "center_y": 0.5},
-            line_width=2,
+            active=True
         )
-        self.ids.tombol_dashboard.disabled = True
-        self.ids.tombol_add_obat.disabled = True
-        self.ids.tombol_edit_obat.disabled = True
-        self.ids.tombol_hapus_obat.disabled = True
+        self.ids.table_container_obat.clear_widgets()
         self.ids.table_container_obat.add_widget(self.spinner)
-        threading.Thread(target=self.load_data_table_with_delay).start()
 
-    def load_data_table_with_delay(self):
-        rows = SessionCache.get_data_obat()
-        Clock.schedule_once(lambda dt: self.after_loading(rows), 5)
+    def hide_spinner(self):
+        if hasattr(self, 'spinner') and self.spinner in self.ids.table_container_obat.children:
+            self.ids.table_container_obat.remove_widget(self.spinner)
 
-    def after_loading(self, rows):
-        self.ids.table_container_obat.remove_widget(self.spinner)
+    def set_tombol_enabled(self, enabled: bool):
+        self.ids.tombol_dashboard.disabled = not enabled
+        self.ids.tombol_add_obat.disabled = not enabled
+        self.ids.tombol_edit_obat.disabled = not enabled
+        self.ids.tombol_hapus_obat.disabled = not enabled
+
+    def load_data_table(self):
+        self.loaded_rows = SessionCache.get_data_obat()
+
+    def cek_thread_selesai(self, dt):
+        if not self.loading_thread.is_alive():
+            Clock.unschedule(self.cek_thread_selesai)
+            Clock.schedule_once(lambda dt: self.prepare_table(self.loaded_rows), 1)
+
+    def prepare_table(self, rows):
         self.create_table(rows)
-        self.ids.tombol_dashboard.disabled = False
-        self.ids.tombol_add_obat.disabled = False
-        self.ids.tombol_edit_obat.disabled = False
-        self.ids.tombol_hapus_obat.disabled = False
+        Clock.schedule_once(lambda dt: self.finish_rendering(), 1)
 
-    def on_leave(self):
-        self.clear_table()
+    def finish_rendering(self):
+        self.hide_spinner()
+        self.ids.table_container_obat.add_widget(self.data_table)
+        self.set_tombol_enabled(True)
 
     def create_table(self, rows):
         if not rows:
             print("Data obat kosong!")
+            self.hide_spinner()
             return
 
         column_data = [
-            ("[font=Roboto][size=10sp]Jenis[/size][/font]", dp(30)),
-            ("[font=Roboto][size=10sp]PLU[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Nama[/size][/font]", dp(50)),
-            ("[font=Roboto][size=10sp]Satuan[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Harga Beli[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Harga Umum[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Harga Resep[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Harga Cabang[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Harga Halodoc[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Harga Karyawan[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Harga BPJS[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Kode Golongan[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Nama Golongan[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Rak[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Supplier[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Fast_Moving[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Kemasan Beli[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Isi[/size][/font]", dp(10)),
-            ("[font=Roboto][size=10sp]Tgl Kadaluarsa[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Stok Apotek[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Stok Minimal[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Stok Maksimal[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]PPN[/size][/font]", dp(10)),
+            ("[size=10sp]Jenis[/size]", dp(30)),
+            ("[size=10sp]PLU[/size]", dp(20)),
+            ("[size=10sp]Nama[/size]", dp(50)),
+            ("[size=10sp]Satuan[/size]", dp(20)),
+            ("[size=10sp]Harga Beli[/size]", dp(20)),
+            ("[size=10sp]Harga Umum[/size]", dp(20)),
+            ("[size=10sp]Harga Resep[/size]", dp(20)),
+            ("[size=10sp]Harga Cabang[/size]", dp(20)),
+            ("[size=10sp]Harga Halodoc[/size]", dp(20)),
+            ("[size=10sp]Harga Karyawan[/size]", dp(20)),
+            ("[size=10sp]Harga BPJS[/size]", dp(20)),
+            ("[size=10sp]Kode Golongan[/size]", dp(20)),
+            ("[size=10sp]Nama Golongan[/size]", dp(20)),
+            ("[size=10sp]Rak[/size]", dp(20)),
+            ("[size=10sp]Supplier[/size]", dp(20)),
+            ("[size=10sp]Fast_Moving[/size]", dp(20)),
+            ("[size=10sp]Kemasan Beli[/size]", dp(20)),
+            ("[size=10sp]Isi[/size]", dp(10)),
+            ("[size=10sp]Tgl Kadaluarsa[/size]", dp(20)),
+            ("[size=10sp]Stok Apotek[/size]", dp(20)),
+            ("[size=10sp]Stok Minimal[/size]", dp(20)),
+            ("[size=10sp]Stok Maksimal[/size]", dp(20)),
+            ("[size=10sp]PPN[/size]", dp(10)),
         ]
 
         row_data = []
         for row in rows:
-            row_data.append(tuple(f"[font=Roboto][size=10sp]{str(item)}[/size][/font]" for item in row))
+            row_data.append(tuple(f"[size=10sp]{str(item)}[/size]" for item in row))
 
         self.data_table = MDDataTable(
             size_hint=(1, 1),
@@ -148,7 +166,6 @@ class DataObat(Screen):
             check=True,
         )
         self.data_table.bind(on_check_press=self.on_check_press)
-        self.ids.table_container_obat.add_widget(self.data_table)
 
     def hapus_terpilih(self):
         if not self.selected_rows:
@@ -275,6 +292,8 @@ class DataObat(Screen):
             self.ids.table_container_obat.remove_widget(self.data_table)
             self.data_table = None
 
+    def on_leave(self):
+        self.clear_table()
 
 class InsertObat(Screen):
     kode_golongan_aktif = StringProperty("")
@@ -444,7 +463,6 @@ class InsertObat(Screen):
         )
         dialog.open()
 
-
 class EditObat(Screen):
     kode_golongan_aktif = StringProperty("")
     golongan_nama_list = ListProperty([])
@@ -459,7 +477,6 @@ class EditObat(Screen):
 
         self.data_pajak = MDApp.get_running_app().db.get_all_pajak()
         self.pajak_nama_list = [jenis for jenis, _ in self.data_pajak]
-
 
     def on_pre_enter(self, *args):
         Clock.schedule_once(self.reset_scroll, 0.1)
@@ -547,7 +564,6 @@ class EditObat(Screen):
         if hasattr(self.ids, 'dropdown_pajak'):
             self.ids.dropdown_pajak_edit.text = str(nama_pajak) if nama_pajak else "Pilih Pajak"
 
-    # Helper methods
     def _safe_get(self, data, key, default=''):
         """Safe get from dictionary with default empty string"""
         return str(data.get(key, default)) if data.get(key, default) is not None else default
@@ -669,7 +685,9 @@ class EditObat(Screen):
         )
         dialog.open()
 
+
 #----------------------------------------------------------------------------------------------------------#
+
 
 class DataGolonganObat(Screen):
     def on_enter(self):
@@ -682,44 +700,52 @@ class DataGolonganObat(Screen):
         )
         self.ids.tombol_dashboard.disabled = True
         self.ids.tombol_add_golongan.disabled = True
+        self.ids.tombol_edit_golongan.disabled = True
+        self.ids.tombol_hapus_golongan.disabled = True
         self.ids.table_container_golongan.clear_widgets()
         self.ids.table_container_golongan.add_widget(self.spinner)
 
-        # Jalankan loading dan buat tabel di thread terpisah
-        threading.Thread(target=self.load_table_with_delay).start()
+        # Mulai thread & schedule pengecekan apakah sudah selesai
+        self._table_thread = threading.Thread(target=self.load_table_data)
+        self._table_thread.start()
 
-    def on_leave(self):
-        self.clear_table()
+        Clock.schedule_interval(self.check_thread_done, 1)
 
-    def load_table_with_delay(self):
-        rows = SessionCache.get_data_golongan()
-        Clock.schedule_once(lambda dt: self.show_table(rows), 5)
-        
+    def load_table_data(self):
+        # Simulasi delay kalau perlu: time.sleep(2)
+        self._rows = SessionCache.get_data_golongan()
+
+    def check_thread_done(self, dt):
+        if not self._table_thread.is_alive():
+            Clock.unschedule(self.check_thread_done)
+            self.show_table(self._rows)
 
     def show_table(self, rows):
         self.ids.table_container_golongan.clear_widgets()
         self.ids.tombol_dashboard.disabled = False
         self.ids.tombol_add_golongan.disabled = False
+        self.ids.tombol_edit_golongan.disabled = False
+        self.ids.tombol_hapus_golongan.disabled = False
         if not rows:
             print("Data golongan kosong!")
             return
 
         column_data = [
-            ("[font=Roboto][size=10sp]Kode[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Nama Golongan[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Margin Umum[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Margin Resep[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Margin Cabang[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Margin Halodoc[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Margin Karyawan[/size][/font]", dp(20)),
-            ("[font=Roboto][size=10sp]Margin BPJS[/size][/font]", dp(20)),
+            ("[size=10sp]Kode[/size]", dp(20)),
+            ("[size=10sp]Nama Golongan[/size]", dp(20)),
+            ("[size=10sp]Margin Umum[/size]", dp(20)),
+            ("[size=10sp]Margin Resep[/size]", dp(20)),
+            ("[size=10sp]Margin Cabang[/size]", dp(20)),
+            ("[size=10sp]Margin Halodoc[/size]", dp(20)),
+            ("[size=10sp]Margin Karyawan[/size]", dp(20)),
+            ("[size=10sp]Margin BPJS[/size]", dp(20)),
         ]
 
         row_data = [
-            tuple(f"[font=Roboto][size=10sp]{str(item)}[/size][/font]" for item in row)
+            tuple(f"[size=10sp]{str(item)}[/size]" for item in row)
             for row in rows
         ]
-
+        self.kode_to_nama = {row[0]: row[1] for row in rows}
         self.data_table = MDDataTable(
             size_hint=(1, 1),
             column_data=column_data,
@@ -731,11 +757,117 @@ class DataGolonganObat(Screen):
         self.data_table.bind(on_check_press=self.on_check_press)
         self.ids.table_container_golongan.add_widget(self.data_table)
 
+    def hapus_terpilih(self):
+        if not self.selected_rows:
+            toast("Belum ada yang dipilih")
+            return
+
+        kode_ids = list(self.selected_rows)
+        print(f"kode_ids: {kode_ids}")
+
+        pesan_konfirmasi = "Yakin ingin menghapus golongan:\n\n" + "\n".join(
+            f"{kode} - {self.kode_to_nama.get(kode, 'Nama tidak ditemukan')}" for kode in kode_ids
+        )
+
+        def confirm_hapus():
+            db = MDApp.get_running_app().db
+            deleted = 0
+
+            for kode in kode_ids:
+                try:
+                    success = db.hapus_golongan(kode)
+                    if success:
+                        deleted += 1
+                    else:
+                        toast(f"Gagal hapus ID {kode}")
+                except Exception as e:
+                    toast(f"Error: {str(e)}")
+
+            if deleted > 0:
+                toast(f"{deleted} data berhasil dihapus")
+                rows = db.get_all_golongan()
+                SessionCache.set_data_golongan(rows)
+                data_golongan_screen = self.manager.get_screen('data_golongan_obat')
+                data_golongan_screen.reload_table(rows)
+                self.manager.current = 'data_golongan_obat'
+
+        self.tampilkan_dialog(
+            pesan_konfirmasi,
+            on_yes=confirm_hapus,
+            on_no=None
+        )
+
+    def edit_data_golongan_obat(self):
+        if len(self.selected_rows) == 1:
+            selected_kode = list(self.selected_rows)[0]
+            for row in self.data_table.row_data:
+                if int(self.bersihkan_field(row[0])) == selected_kode:
+                    data_row = row
+                    break
+            else:
+                toast("Data tidak ditemukan.")
+                return
+            data = {
+                "kode_golongan": self.bersihkan_field(data_row[0]),
+                "nama_golongan": self.bersihkan_field(data_row[1]),
+                "margin_umum": self.bersihkan_field(data_row[2]),
+                "margin_resep": self.bersihkan_field(data_row[3]),
+                "margin_cabang": self.bersihkan_field(data_row[4]),
+                "margin_halodoc": self.bersihkan_field(data_row[5]),
+                "margin_karyawan": self.bersihkan_field(data_row[6]),
+                "margin_bpjs": self.bersihkan_field(data_row[7]),
+            }
+            screen_edit = self.manager.get_screen('edit_golongan_obat')
+            screen_edit.isi_data_edit_golongan(data)
+            self.manager.current = 'edit_golongan_obat'
+        else:
+            dialog = MDDialog(
+                text="Pilih satu data saja untuk diedit!",
+                buttons=[MDFlatButton(text="OK", on_release=lambda x: dialog.dismiss())],
+            )
+            dialog.open()
+
+    def tampilkan_dialog(self, pesan, setelah_dialog=None, on_yes=None, on_no=None):
+        def tutup_dialog(instance):
+            dialog.dismiss()
+            if setelah_dialog:
+                setelah_dialog()
+
+        def yes_pressed(instance):
+            if on_yes:
+                on_yes()
+            tutup_dialog(instance)
+
+        def no_pressed(instance):
+            if on_no:
+                on_no()
+            tutup_dialog(instance)
+
+        dialog = MDDialog(
+            text=pesan,
+            buttons=[
+                MDFlatButton(text="No", on_release=no_pressed),
+                MDFlatButton(text="Yes", on_release=yes_pressed),
+            ],
+        )
+        dialog.open()
+
+    def bersihkan_field(self, text):
+        if not text:
+            return ""
+        return re.sub(r'\[.*?\]', '', str(text)).strip()
+    
     def on_check_press(self, instance_table, current_row):
         if not current_row:
             return print("Tidak ada data yang dipilih")
 
-        kode = current_row[0]
+        kode_bersih = self.bersihkan_field(current_row[0])
+        try:
+            kode = int(kode_bersih)
+        except ValueError:
+            print(f"Kode tidak valid: {kode_bersih}")
+            return
+
         if kode in self.selected_rows:
             self.selected_rows.remove(kode)
         else:
@@ -744,18 +876,174 @@ class DataGolonganObat(Screen):
     def reload_table(self, rows):
         self.clear_table()
         if rows:
-            Clock.schedule_once(lambda dt: self.create_table(rows), 0.3)
+            Clock.schedule_once(lambda dt: self.show_table(rows), 0.3)
 
     def clear_table(self):
         if hasattr(self, 'data_table') and self.data_table:
             self.ids.table_container_golongan.remove_widget(self.data_table)
             self.data_table = None
 
+    def on_leave(self):
+        self.clear_table()
+
 class InsertGolonganObat(Screen):
-    pass
+    def bersihkan_field_add_golongan(self):
+        fields = [
+            'nama_golongan', 'margin_umum', 'margin_resep',
+            'margin_cabang', 'margin_halodoc', 'margin_karyawan', 'margin_bpjs'
+        ]
+        for field in fields:
+            text_input = self.ids.get(field)
+            if text_input:
+                text_input.text = ""
+
+    def get_form_values(self):
+        fields = [
+            'nama_golongan', 'margin_umum', 'margin_resep',
+            'margin_cabang', 'margin_halodoc', 'margin_karyawan', 'margin_bpjs'
+        ]
+        values = {}
+        for field in fields:
+            text_input = self.ids.get(field)
+            values[field] = text_input.text if text_input else ""
+
+        return values
+
+    def simpan_data_golongan_obat(self):
+        data = self.get_form_values()
+
+        if not data['nama_golongan']:
+            self.tampilkan_dialog("Nama Golongan wajib diisi!")
+            return
+
+        try:
+            MDApp.get_running_app().db.tambah_golongan( 
+                data['nama_golongan'], 
+                data['margin_umum'],
+                data['margin_resep'],
+                data['margin_halodoc'],
+                data['margin_cabang'],
+                data['margin_karyawan'],
+                data['margin_bpjs']
+                )
+
+            rows = MDApp.get_running_app().db.get_all_golongan()
+            SessionCache.set_data_golongan(rows)
+            self.tampilkan_dialog("Data berhasil disimpan!", setelah_dialog=lambda: MDApp.get_running_app().change_screen('data_golongan_obat', 'right'))
+
+        except Exception as e:
+            print("Error saat menyimpan data:", str(e))
+            self.tampilkan_dialog(f"Terjadi kesalahan: {str(e)}")
+
+    def tampilkan_dialog(self, pesan, setelah_dialog=None):
+        def tutup_dialog(instance):
+            dialog.dismiss()
+            if setelah_dialog:
+                self.bersihkan_field_add_golongan(), 
+                setelah_dialog()
+
+        dialog = MDDialog(
+            text=pesan,
+            buttons=[MDFlatButton(text="OK", on_release=tutup_dialog)],
+        )
+        dialog.open()
 
 class EditGolonganObat(Screen):
-    pass
+    def on_pre_enter(self, *args):
+        Clock.schedule_once(self.reset_scroll, 0.1)
+
+    def reset_scroll(self, dt):
+        self.ids.scroll_edit_golongan.scroll_y = 1
+
+    def bersihkan_field_insert_golongan(self):
+        fields = [
+            'kode_golongan','nama_golongan', 'margin_umum', 'margin_resep',
+            'margin_cabang', 'margin_halodoc', 'margin_karyawan', 'margin_bpjs'
+        ]
+        for field in fields:
+            text_input = self.ids.get(field)
+            if text_input:
+                text_input.text = ""
+
+    def isi_data_edit_golongan(self, data):
+        self.bersihkan_field_insert_golongan()
+        self._set_numeric_field('kode_golongan', data, 'kode_golongan')
+        self._set_text_field('nama_golongan', data, 'nama_golongan')
+        self._set_numeric_field('margin_umum', data, 'margin_umum')
+        self._set_numeric_field('margin_resep', data, 'margin_resep')
+        self._set_numeric_field('margin_cabang', data, 'margin_cabang')
+        self._set_numeric_field('margin_halodoc', data, 'margin_halodoc')
+        self._set_numeric_field('margin_karyawan', data, 'margin_karyawan')
+        self._set_numeric_field('margin_bpjs', data, 'margin_bpjs')
+
+    def _safe_get(self, data, key, default=''):
+        """Safe get from dictionary with default empty string"""
+        return str(data.get(key, default)) if data.get(key, default) is not None else default
+
+    def _set_text_field(self, field_id, data, data_key):
+        """Set text field safely"""
+        if hasattr(self.ids, field_id):
+            self.ids[field_id].text = self._safe_get(data, data_key)
+
+    def _set_numeric_field(self, field_id, data, data_key):
+        """Set numeric field with validation"""
+        if hasattr(self.ids, field_id):
+            value = data.get(data_key)
+            self.ids[field_id].text = str(value) if value is not None else ""
+
+    def get_form_values(self):
+        fields = [
+            'kode_golongan','nama_golongan', 'margin_umum', 'margin_resep',
+            'margin_cabang', 'margin_halodoc', 'margin_karyawan', 'margin_bpjs'
+        ]
+        values = {}
+        for field in fields:
+            text_input = self.ids.get(field)
+            values[field] = text_input.text if text_input else ""
+        return values
+    
+    def simpan_edit_golongan(self):
+        data = self.get_form_values()
+        if not data['nama_golongan']:
+            self.tampilkan_dialog("Nama Golongan wajib diisi!")
+            return
+
+        try:
+            MDApp.get_running_app().db.edit_golongan( 
+                data['kode_golongan'],
+                data['nama_golongan'],
+                data['margin_umum'],
+                data['margin_resep'],
+                data['margin_halodoc'],
+                data['margin_cabang'],
+                data['margin_karyawan'],
+                data['margin_bpjs']
+                )
+
+            rows = MDApp.get_running_app().db.get_all_golongan()
+            SessionCache.set_data_golongan(rows)
+
+            def setelah_ditutup():
+                MDApp.get_running_app().change_screen('data_golongan_obat', 'right')
+                print("telah berhasil update data")
+
+            self.bersihkan_field_insert_golongan()
+            self.tampilkan_dialog("Data berhasil diperbarui!", setelah_dialog=setelah_ditutup)
+
+        except Exception as e:
+            self.tampilkan_dialog(f"Error saat update: {str(e)}")
+
+    def tampilkan_dialog(self, pesan, setelah_dialog=None):
+        def tutup_dialog(instance):
+            dialog.dismiss()
+            if setelah_dialog:
+                setelah_dialog()
+
+        dialog = MDDialog(
+            text=pesan,
+            buttons=[MDFlatButton(text="OK", on_release=tutup_dialog)],
+        )
+        dialog.open()
 
 #----------------------------------------------------------------------------------------------------------#
 
@@ -798,7 +1086,3 @@ class KasirApp(MDApp):
     def change_screen(self, screen_name, direction):
         self.root.transition.direction = direction
         self.root.current = screen_name
-
-    def simpan_data_obat(self):
-        screen = self.root.get_screen('insert_obat')
-        screen.simpan_data_obat()

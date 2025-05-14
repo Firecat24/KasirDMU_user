@@ -1,56 +1,45 @@
-sudah ketemu kode golongannya jadi kesalahannya pada spinner diganti menjadi dropdown menurut kivymd
+A. sudah ketemu kode golongannya jadi kesalahannya pada spinner diganti menjadi dropdown menurut kivymd
+
+B. ada beberapa hal yang harus diperhatikan dalam tabel view barang terutama MDDatatable yang pagination untuk mengurutkan dari id atau nama atau lainnya
 
 
-
-sudah berhasil set obat
-
-
-
-
-ada beberapa hal yang harus diperhatikan dalam tabel view barang terutama MDDatatable yang pagination untuk mengurutkan dari id atau nama atau lainnya
-
-
-
-
-ada permasalahan di kivy MD yang mana didalam librarynya
+C. ada permasalahan di kivy MD yang mana didalam librarynya
     1. datatable dan juga MDdropdownmenu, apabila pakai versi 1.2 itu ada warning karena di versi kivymd terbaru sudah tidak digunakan
     2. apabila menggunakan versi terbaru dari kivyMD ada seperti 2 library itu tidak ada pengganti lainnya yang cocok entah itu MDmenu ataupun recycleview
 
 
-
 (sudah ada solusi namun tidak tahu apakah efisien atau tidak)
-permasalahan didalam pembacaan database dan pemanfaatan didalam kivy membuat nya loading agak lama, belum ada solusi namun untuk saat ini semua berjalan normal
+D. permasalahan didalam pembacaan database dan pemanfaatan didalam kivy membuat nya loading agak lama, belum ada solusi namun untuk saat ini semua berjalan normal
     solusinya dapat menggunakan session untuk menyimpan data database lalu tinggal manfaatkan session tiap kali ditampilkan kedalam ui, apabila diedit atau ditambahkan, cukup muat ulang database kedalam session
 
 
-
 (solved)
-ada eror didalam hapus, untuk checklist erornya tidak mau ngecheck padahal sudah dicheck dan ada 2 check padahal cuman 1, karena checklist dicentang lalu pergi ke halaman add data setelah itu refresh page dan ada checklist yang nyantol
+E. ada eror didalam hapus, untuk checklist erornya tidak mau ngecheck padahal sudah dicheck dan ada 2 check padahal cuman 1, karena checklist dicentang lalu pergi ke halaman add data setelah itu refresh page dan ada checklist yang nyantol
     1. mungkin bisa menggunakan alert if apabila ada checklist didalam get_checked maka tidak boleh keluar dari page data
     2. atau bisa menggunakan disabled button pada saat check list ditekan, dan hanya bisa digunakan untuk menghapus data apabila banyak dan edit apabila hanya 1
 
 
-
 (solved) : saya menghapus tombol kembali agar orang hanya bisa simpan dan auto kembali, alih alih menggunakan tombol kembali
-sama seperti eror diatas namun ini untuk edit
+F. sama seperti eror diatas namun ini untuk edit
     
 
-
-
-ada eror didalam edit data obat, yang mana data untuk golongan dan pajak tidak dapat keluar saat tombol edit ditekan jadi tiap kali user mau edit obat, dia harus memilih golongan dan pajak terus menerus setiap kali edit
-
+G. ada eror didalam edit data obat, yang mana data untuk golongan dan pajak tidak dapat keluar saat tombol edit ditekan jadi tiap kali user mau edit obat, dia harus memilih golongan dan pajak terus menerus setiap kali edit
 
 
 (solved) : membuat checkbox menjadi manual dengan check dimasukkan ke variabel dan di akses
-ada eror di table_data mengenai checkbox sepertinya solusinya harus ganti cara menampilkan table_data tidak menggunakan dari kivymd
+H. ada eror di table_data mengenai checkbox sepertinya solusinya harus ganti cara menampilkan table_data tidak menggunakan dari kivymd
     solusi saat ini adalah checklistnya selalu direfresh menggunakan manual all check lalu all uncheck, dan itu berhasil
     solusi ke 2 tetap menggunakan kivy namun membuat tabel buatan bukan yang otomatis
         namun pertanyaannya, bisakah dia membuat seperti scroll view atau pagination ? jika tidak harus memikirkan cara lainnya, untuk checkbox nanti bisa diganti menggunakan hapus dan edit tombol biasa di sisi kanan atau kiri
 
 
 (solved)
-ada eror pada saat masuk kedalam data golongan, dari data obat lalu kembali lalu ke data golongan, ada eror, katanya list out of range
+I. ada eror pada saat masuk kedalam data golongan, dari data obat lalu kembali lalu ke data golongan, ada eror, katanya list out of range
     SOLUSI bikin checkbox manual jadi tidak menggunakan get_checked
 
 
-eror yang sama seperti diatas yakni list out of range dan tidak tahu penyebab utamanya apa namun untuk sekarang masih bisa diredam
+(solved): menggunakan loading dengan cara 2 thread dan sampai saat ini tidak ada eror sama sekali
+J. eror yang sama seperti diatas yakni list out of range dan tidak tahu penyebab utamanya apa namun untuk sekarang masih bisa diredam
+
+
+K. seperti eror D, namun sepertinya agak teredam karena fitur loading, menggunakan 2 thread
