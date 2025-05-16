@@ -1,6 +1,4 @@
-import re
-import threading
-import time
+import re, time, threading
 from datetime import datetime
 from database.db import DatabaseObat
 from kivymd.app import MDApp
@@ -16,7 +14,7 @@ from kivy.clock import Clock
 from kivy.metrics import dp
 from kivy.properties import ListProperty, StringProperty
 
-#----------------------------------------------------------------------------------------------------------#
+#---------------------------------------------------------------------------------------------#
 
 class SessionCache:
     _data_obat = []
@@ -59,7 +57,7 @@ class SessionCache:
     def clear_data_pajak(cls):
         cls._data_pajak = []
 
-#----------------------------------------------------------------------------------------------------------#
+#---------------------------------------------------------------------------------------------#
 
 class Dashboard(Screen):
     def __init__(self, **kwargs):
@@ -72,7 +70,7 @@ class Dashboard(Screen):
         if time_label:
             time_label.text = f'{current_time}'
 
-#----------------------------------------------------------------------------------------------------------#
+#---------------------------------------------------------------------------------------------#
 
 class DataObat(Screen):
     def on_enter(self):
@@ -686,7 +684,7 @@ class EditObat(Screen):
         dialog.open()
 
 
-#----------------------------------------------------------------------------------------------------------#
+#---------------------------------------------------------------------------------------------#
 
 
 class DataGolonganObat(Screen):
@@ -1045,28 +1043,330 @@ class EditGolonganObat(Screen):
         )
         dialog.open()
 
-#----------------------------------------------------------------------------------------------------------#
+#---------------------------------------------------------------------------------------------#
 
 class DataPajak(Screen):
-    pass
+    def on_enter(self):
+        self.selected_rows = set()
+        self.spinner = MDSpinner(
+            size_hint=(None, None),
+            size=(62, 62),
+            pos_hint={"center_x": 0.5, "center_y": 0.5},
+            active=True
+        )
+        self.ids.tombol_dashboard.disabled = True
+        self.ids.tombol_add_pajak.disabled = True
+        self.ids.tombol_edit_pajak.disabled = True
+        self.ids.tombol_hapus_pajak.disabled = True
+        self.ids.table_container_pajak.clear_widgets()
+        self.ids.table_container_pajak.add_widget(self.spinner)
+
+        # Mulai thread & schedule pengecekan apakah sudah selesai
+        self._table_thread = threading.Thread(target=self.load_table_data)
+        self._table_thread.start()
+
+        Clock.schedule_interval(self.check_thread_done, 1)
+
+    def load_table_data(self):
+        self._rows = SessionCache.get_data_pajak()
+        time.delay(1)
+
+    def check_thread_done(self, dt):
+        if not self._table_thread.is_alive():
+            Clock.unschedule(self.check_thread_done)
+            self.show_table(self._rows)
+
+    def show_table(self, rows):
+        self.ids.table_container_pajak.clear_widgets()
+        self.ids.tombol_dashboard.disabled = False
+        self.ids.tombol_add_pajak.disabled = False
+        self.ids.tombol_edit_pajak.disabled = False
+        self.ids.tombol_hapus_pajak.disabled = False
+        if not rows:
+            print("Data Pajak kosong!")
+            return
+
+        column_data = [
+            ("[size=20sp]Jenis Pajak[/size]", dp(40)),
+            ("[size=20sp]Persenan Pajak[/size]", dp(40)),
+        ]
+
+        row_data = [
+            tuple(f"[size=20sp]{str(item)}[/size]" for item in row)
+            for row in rows
+        ]
+        self.data_table = MDDataTable(
+            size_hint=(1, 1),
+            column_data=column_data,
+            row_data=row_data,
+            use_pagination=True,
+            pagination_menu_height="140dp",
+            check=True,
+        )
+        self.data_table.bind(on_check_press=self.on_check_press)
+        self.ids.table_container_pajak.add_widget(self.data_table)
+
+    def hapus_terpilih(self):
+        if not self.selected_rows:
+            toast("Belum ada yang dipilih")
+            return
+
+        plu_ids = list(self.selected_rows)
+
+        pesan_konfirmasi = "Apakah Anda yakin ingin menghapus data berikut?\n\n" + "\n".join(plu_ids)
+
+        def confirm_hapus():
+            db = MDApp.get_running_app().db
+            deleted = 0
+
+            for plu in plu_ids:
+                try:
+                    plu = self.bersihkan_field(plu)
+                    print(plu)
+                    success = db.hapus_pajak(plu)
+                    if success:
+                        deleted += 1
+                    else:
+                        toast(f"Gagal hapus ID {plu}")
+                except Exception as e:
+                    toast(f"Error: {str(e)}")
+
+            if deleted > 0:
+                toast(f"{deleted} data berhasil dihapus")
+                rows = db.get_all_pajak()
+                SessionCache.set_data_pajak(rows)
+                data_pajak_screen = self.manager.get_screen('data_pajak')
+                data_pajak_screen.reload_table(rows)
+                self.manager.current = 'data_pajak'
+
+        self.tampilkan_dialog(
+            pesan_konfirmasi,
+            on_yes=confirm_hapus,
+            on_no=None
+        )
+
+    def edit_data_pajak(self):
+        if len(self.selected_rows) == 1:
+            selected_kode = list(self.selected_rows)[0]
+            selected_kode = self.bersihkan_field(selected_kode)
+            for row in self.data_table.row_data:
+                if self.bersihkan_field(row[0]) == selected_kode:
+                    data_row = row
+                    break
+            else:
+                toast("Data tidak ditemukan.")
+                return
+            data = {
+                "jenis_pajak": self.bersihkan_field(data_row[0]),
+                "persen_pajak": self.bersihkan_field(data_row[1]),
+            }
+            screen_edit = self.manager.get_screen('edit_pajak')
+            screen_edit.isi_data_edit_pajak(data)
+            self.manager.current = 'edit_pajak'
+        else:
+            dialog = MDDialog(
+                text="Pilih satu data saja untuk diedit!",
+                buttons=[MDFlatButton(text="OK", on_release=lambda x: dialog.dismiss())],
+            )
+            dialog.open()
+
+    def tampilkan_dialog(self, pesan, setelah_dialog=None, on_yes=None, on_no=None):
+        def tutup_dialog(instance):
+            dialog.dismiss()
+            if setelah_dialog:
+                setelah_dialog()
+
+        def yes_pressed(instance):
+            if on_yes:
+                on_yes()
+            tutup_dialog(instance)
+
+        def no_pressed(instance):
+            if on_no:
+                on_no()
+            tutup_dialog(instance)
+
+        dialog = MDDialog(
+            text=pesan,
+            buttons=[
+                MDFlatButton(text="No", on_release=no_pressed),
+                MDFlatButton(text="Yes", on_release=yes_pressed),
+            ],
+        )
+        dialog.open()
+
+    def bersihkan_field(self, text):
+        if not text:
+            return ""
+        return re.sub(r'\[.*?\]', '', str(text)).strip()
+    
+    def on_check_press(self, instance_table, current_row):
+        if not current_row:
+            return print("Tidak ada data yang dipilih")
+
+        kode = current_row[0]
+        if kode in self.selected_rows:
+            self.selected_rows.remove(kode)
+        else:
+            self.selected_rows.add(kode)
+
+    def reload_table(self, rows):
+        self.clear_table()
+        if rows:
+            Clock.schedule_once(lambda dt: self.show_table(rows), 0.3)
+
+    def clear_table(self):
+        if hasattr(self, 'data_table') and self.data_table:
+            self.ids.table_container_pajak.remove_widget(self.data_table)
+            self.data_table = None
+
+    def on_leave(self):
+        self.clear_table()
 
 class InsertPajak(Screen):
-    pass
+    def bersihkan_field_add_pajak(self):
+        fields = [
+            'jenis_pajak', 'persen_pajak'
+        ]
+        for field in fields:
+            text_input = self.ids.get(field)
+            if text_input:
+                text_input.text = ""
+
+    def get_form_values(self):
+        fields = [
+            'jenis_pajak', 'persen_pajak'
+        ]
+        values = {}
+        for field in fields:
+            text_input = self.ids.get(field)
+            values[field] = text_input.text if text_input else ""
+
+        return values
+
+    def simpan_data_pajak(self):
+        data = self.get_form_values()
+
+        if not data['jenis_pajak']:
+            self.tampilkan_dialog("Jenis Pajak wajib diisi!")
+            return
+
+        try:
+            MDApp.get_running_app().db.tambah_pajak( 
+                data['jenis_pajak'], 
+                data['persen_pajak']
+                )
+
+            rows = MDApp.get_running_app().db.get_all_pajak()
+            SessionCache.set_data_pajak(rows)
+            self.tampilkan_dialog("Data berhasil disimpan!", setelah_dialog=lambda: MDApp.get_running_app().change_screen('data_pajak', 'right'))
+
+        except Exception as e:
+            print("Error saat menyimpan data:", str(e))
+            self.tampilkan_dialog(f"Terjadi kesalahan: {str(e)}")
+
+    def tampilkan_dialog(self, pesan, setelah_dialog=None):
+        def tutup_dialog(instance):
+            dialog.dismiss()
+            if setelah_dialog:
+                self.bersihkan_field_add_pajak(), 
+                setelah_dialog()
+
+        dialog = MDDialog(
+            text=pesan,
+            buttons=[MDFlatButton(text="OK", on_release=tutup_dialog)],
+        )
+        dialog.open()
 
 class EditPajak(Screen):
-    pass
+    def bersihkan_field_insert_pajak(self):
+        fields = [
+            'jenis_pajak', 'persen_pajak'
+        ]
+        for field in fields:
+            text_input = self.ids.get(field)
+            if text_input:
+                text_input.text = ""
 
-#----------------------------------------------------------------------------------------------------------#
+    def isi_data_edit_pajak(self, data):
+        self.bersihkan_field_insert_pajak()
+        self._set_text_field('jenis_pajak', data, 'jenis_pajak')
+        self._set_numeric_field('persen_pajak', data, 'persen_pajak')
+
+    def _safe_get(self, data, key, default=''):
+        """Safe get from dictionary with default empty string"""
+        return str(data.get(key, default)) if data.get(key, default) is not None else default
+
+    def _set_text_field(self, field_id, data, data_key):
+        """Set text field safely"""
+        if hasattr(self.ids, field_id):
+            self.ids[field_id].text = self._safe_get(data, data_key)
+
+    def _set_numeric_field(self, field_id, data, data_key):
+        """Set numeric field with validation"""
+        if hasattr(self.ids, field_id):
+            value = data.get(data_key)
+            self.ids[field_id].text = str(value) if value is not None else ""
+
+    def get_form_values(self):
+        fields = [
+            'jenis_pajak', 'persen_pajak'
+        ]
+        values = {}
+        for field in fields:
+            text_input = self.ids.get(field)
+            values[field] = text_input.text if text_input else ""
+
+        return values
+    
+    def simpan_edit_pajak(self):
+        data = self.get_form_values()
+        if not data['jenis_pajak']:
+            self.tampilkan_dialog("Jenis Pajak wajib diisi!")
+            return
+
+        try:
+            MDApp.get_running_app().db.edit_pajak( 
+                data['jenis_pajak'],
+                data['persen_pajak']
+                )
+
+            rows = MDApp.get_running_app().db.get_all_pajak()
+            SessionCache.set_data_pajak(rows)
+
+            def setelah_ditutup():
+                MDApp.get_running_app().change_screen('data_pajak', 'right')
+                print("telah berhasil update data")
+
+            self.bersihkan_field_insert_pajak()
+            self.tampilkan_dialog("Data berhasil diperbarui!", setelah_dialog=setelah_ditutup)
+
+        except Exception as e:
+            self.tampilkan_dialog(f"Error saat update: {str(e)}")
+
+    def tampilkan_dialog(self, pesan, setelah_dialog=None):
+        def tutup_dialog(instance):
+            dialog.dismiss()
+            if setelah_dialog:
+                setelah_dialog()
+
+        dialog = MDDialog(
+            text=pesan,
+            buttons=[MDFlatButton(text="OK", on_release=tutup_dialog)],
+        )
+        dialog.open()
+
+#---------------------------------------------------------------------------------------------#
 
 class Kasir(Screen):
     pass
 
-#----------------------------------------------------------------------------------------------------------#
+#---------------------------------------------------------------------------------------------#
 
 class WindowsManager(ScreenManager):
     pass
 
-#----------------------------------------------------------------------------------------------------------#
+#---------------------------------------------------------------------------------------------#
 
 class KasirApp(MDApp):
     def build(self):

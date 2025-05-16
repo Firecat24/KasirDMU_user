@@ -43,3 +43,5 @@ J. eror yang sama seperti diatas yakni list out of range dan tidak tahu penyebab
 
 
 K. seperti eror D, namun sepertinya agak teredam karena fitur loading, menggunakan 2 thread
+
+L. tadi sempat muncul kembali eror list out of range pada saat membuka tabel data pajak

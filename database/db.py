@@ -273,8 +273,18 @@ class DatabaseObat:
         self.koneksi.commit()
 
     def hapus_pajak(self, jenis_pajak):
-        self.kursor.execute("DELETE FROM data_pajak WHERE jenis_pajak = ?", (jenis_pajak,))
-        self.koneksi.commit()
+        try:
+            self.kursor.execute("DELETE FROM data_pajak WHERE jenis_pajak = ?", (jenis_pajak,))
+            self.koneksi.commit()
+
+            if self.kursor.rowcount > 0:
+                return True
+            else:
+                return False
+                
+        except Exception as e:
+            print(f"Error deleting product with ID {jenis_pajak}: {e}")
+            return False
 
     def get_all_pajak(self):
         self.kursor.execute("SELECT * FROM data_pajak")

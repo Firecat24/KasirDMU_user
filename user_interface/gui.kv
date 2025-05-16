@@ -22,7 +22,7 @@ WindowsManager:
 
     Kasir:
 
-#-------------------------------------------------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------------------#
 
 <Dashboard>:
     name: 'dashboard'
@@ -112,22 +112,18 @@ WindowsManager:
 
             Button:
                 text: 'Insert PPN'
-                on_release: app.change_screen('insert_PPN', 'left')
 
             Button:
                 text: 'Insert Golongan Obat'
-                on_release: app.change_screen('insert_golongan_obat', 'left')
 
             Button:
                 text: 'Insert PPN'
-                on_release: app.change_screen('insert_PPN', 'left')
 
             Button:
                 text: 'Insert Golongan Obat'
-                on_release: app.change_screen('insert_golongan_obat', 'left')
 
 
-#-------------------------------------------------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------------------#
 
 <DataObat>:
     name: 'data_obat'
@@ -521,7 +517,7 @@ WindowsManager:
                     pos_hint: {"center_x": 0.5}
                     on_release: root.simpan_edit()
 
-#-------------------------------------------------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------------------#
 
 <DataGolonganObat>:
     name: 'data_golongan_obat'
@@ -734,7 +730,7 @@ WindowsManager:
                     pos: self.x, self.y
                     size: self.width, 1
 
-            text: 'ISI DATA GOLONGAN OBAT'
+            text: 'EDIT DATA GOLONGAN OBAT'
             font_size: 30
             size_hint_y: None
             height: 40
@@ -820,13 +816,13 @@ WindowsManager:
                     pos_hint: {"center_x": 0.5}
                     on_release: root.simpan_edit_golongan()
 
-#-------------------------------------------------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------------------#
 
 <DataPajak>:
     name: 'data_pajak'
     BoxLayout:
         orientation: 'vertical'
-
+        
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
@@ -841,11 +837,36 @@ WindowsManager:
                     size: self.size
 
             Button:
+                id: tombol_dashboard
                 text: 'Dashboard'
                 font_size: 12
                 size_hint_x: None
                 width: 100
                 on_release: app.change_screen('dashboard',"right")
+
+            Button:
+                id: tombol_add_pajak
+                text: 'Insert Pajak'
+                font_size: 12
+                size_hint_x: None
+                width: 100
+                on_release: app.change_screen('insert_pajak',"left")
+
+            Button:
+                id: tombol_edit_pajak
+                text: 'Edit Pajak'
+                font_size: 12
+                size_hint_x: None
+                width: 100
+                on_release: root.edit_data_pajak()
+
+            Button:
+                id: tombol_hapus_pajak
+                text: 'Hapus Pajak'
+                font_size: 12
+                size_hint_x: None
+                width: 100
+                on_release: root.hapus_terpilih()
 
         Label:
             canvas.before:
@@ -870,8 +891,10 @@ WindowsManager:
             color: 0, 0, 0, 1
             text_size: self.size
 
-        BoxLayout:
-            orientation:'vertical'
+        # Bagian utama konten
+        FloatLayout:
+            id: table_container_pajak
+            orientation: 'vertical'
             canvas.before:
                 Color:
                     rgba: 0.95, 0.95, 0.95, 1
@@ -879,15 +902,157 @@ WindowsManager:
                     pos: self.pos
                     size: self.size
 
-            Label:
-                text:'Insert PAJAK'
-                font_size: 30
-
-
 <InsertPajak>:
-<EditPajak>:
+    name: 'insert_pajak'
+    BoxLayout:
+        orientation: 'vertical'
+        
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: 40
+            padding: 5
+            spacing: 10
+            canvas.before:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
 
-#-------------------------------------------------------------------------------------------------------------------#
+            Button:
+                text: 'Dashboard'
+                font_size: 12
+                size_hint_x: None
+                width: 100
+                on_release: app.change_screen('dashboard',"down")
+            Button:
+                text: 'Data Pajak'
+                font_size: 12
+                size_hint_x: None
+                width: 100
+                on_release: app.change_screen('data_pajak',"right")
+
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            canvas.after:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.x, self.y
+                    size: self.width, 1
+
+            text: 'ISI DATA PAJAK'
+            font_size: 30
+            size_hint_y: None
+            height: 40
+            halign: 'center'
+            valign: 'middle'
+            color: 0, 0, 0, 1
+            text_size: self.size
+
+        ScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: 10
+                spacing: 10
+                size_hint_y: None
+                height: self.minimum_height
+                pos_hint: {"center_x": 0.5}
+
+                MDTextField:
+                    id: jenis_pajak
+                    hint_text: "Jenis Pajak"
+
+                MDTextField:
+                    id: persen_pajak
+                    hint_text: "Persen Pajak"
+                    input_filter: "float"
+
+                MDRaisedButton:
+                    text: "Simpan Data"
+                    pos_hint: {"center_x": 0.5}
+                    on_release: root.simpan_data_pajak()
+
+<EditPajak>:
+    name: 'edit_pajak'
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            canvas.after:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.x, self.y
+                    size: self.width, 1
+
+            text: 'EDIT DATA PAJAK'
+            font_size: 30
+            size_hint_y: None
+            height: 40
+            halign: 'center'
+            valign: 'middle'
+            color: 0, 0, 0, 1
+            text_size: self.size
+        
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            canvas.after:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.x, self.y
+                    size: self.width, 1
+
+            text:'Apabila Tidak Ada Perubahan Tekan Tombol Simpan'
+            font_size: 15
+            size_hint_y: None
+            height: 30
+            halign: 'center'
+            valign: 'middle'
+            color: 0, 0, 0, 1
+            text_size: self.size
+
+        ScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: 10
+                spacing: 10
+                size_hint_y: None
+                height: self.minimum_height
+                pos_hint: {"center_x": 0.5}
+
+                MDTextField:
+                    id: jenis_pajak
+                    hint_text: "Jenis Pajak"
+
+                MDTextField:
+                    id: persen_pajak
+                    hint_text: "Persen Pajak"
+                    input_filter: "float"
+
+                MDRaisedButton:
+                    text: "Simpan Data"
+                    pos_hint: {"center_x": 0.5}
+                    on_release: root.simpan_edit_pajak()
+
+#-----------------------------------------------------------------------------------------#
                 
 <Kasir>:
     name: 'Kasir'
