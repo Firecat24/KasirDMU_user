@@ -1358,7 +1358,7 @@ class EditPajak(Screen):
 
 #---------------------------------------------------------------------------------------------#
 
-class Kasir(Screen):
+class Dooka(Screen):
     pass
 
 #---------------------------------------------------------------------------------------------#
@@ -1368,9 +1368,9 @@ class WindowsManager(ScreenManager):
 
 #---------------------------------------------------------------------------------------------#
 
-class KasirApp(MDApp):
+class DookaApp(MDApp):
     def build(self):
-        self.db = DatabaseObat("database/kasir_dmu_user.db")
+        self.db = DatabaseObat("database/dooka_user.db")
 
         if not SessionCache.get_data_obat():
             SessionCache.set_data_obat(self.db.get_all_obat())
