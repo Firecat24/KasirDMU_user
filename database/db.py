@@ -61,6 +61,35 @@ class DatabaseObat:
                 margin_bpjs REAL DEFAULT 0
             )
         """)
+        self.kursor.execute("""
+            CREATE TABLE IF NOT EXISTS transaksi (
+                no_ref TEXT PRIMARY KEY,
+                tanggal TEXT NOT NULL,
+                pasien TEXT DEFAULT 'Umum',
+                kredit INTEGER DEFAULT 0,
+                tanggal_tempo TEXT,
+                cara_bayar TEXT,
+                harga REAL,
+                diskon_toko REAL,
+                ongkir REAL,
+                total_penjualan REAL,
+                pembayaran REAL,
+                nama_kasir TEXT
+            )
+        """)
+        self.kursor.execute("""
+            CREATE TABLE IF NOT EXISTS transaksi_item (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                no_ref TEXT NOT NULL,
+                nama_obat TEXT NOT NULL,
+                satuan TEXT NOT NULL,
+                harga_satuan REAL NOT NULL,
+                jumlah INTEGER NOT NULL,
+                diskon REAL,
+                total REAL NOT NULL,
+                FOREIGN KEY (no_ref) REFERENCES transaksi(no_ref) ON DELETE CASCADE
+            )
+        """)
         self.koneksi.commit()
 
 
@@ -174,6 +203,26 @@ class DatabaseObat:
     def jumlah_obat(self):
         self.kursor.execute("SELECT COUNT(*) FROM data_obat")
         return self.kursor.fetchone()[0]
+    
+    def search_data_obat(self, keyword, jenis_pembeli):
+        if jenis_pembeli == 'Umum':
+            kolom_harga = 'harga_umum'
+        elif jenis_pembeli == 'Karyawan':
+            kolom_harga = 'harga_karyawan'
+        elif jenis_pembeli == 'Resep':
+            kolom_harga = 'harga_resep'
+        elif jenis_pembeli == 'Halodoc':
+            kolom_harga = 'harga_halodoc'
+        elif jenis_pembeli == 'Cabang':
+            kolom_harga = 'harga_cabang'
+        elif jenis_pembeli == 'BPJS':
+            kolom_harga = 'harga_bpjs'
+        else:
+            kolom_harga = 'harga_umum'
+
+        query = f"SELECT nama_produk, satuan, {kolom_harga} FROM data_obat WHERE nama_produk LIKE ?"
+        self.kursor.execute(query, ('%' + keyword + '%',))
+        return self.kursor.fetchall()
     
 
 # ==================== GOLONGAN ====================
@@ -297,6 +346,84 @@ class DatabaseObat:
             return result[0]
         else:
             return None 
+
+
+# ==================== TRANSAKSI ====================
+
+
+    def new_transaksi(self, no_ref, tanggal, pasien, kredit, tanggal_tempo, cara_bayar, harga, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir):
+        self.kursor.execute("""
+            INSERT INTO transaksi (no_ref, tanggal, pasien, kredit, tanggal_tempo, cara_bayar, harga, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir)
+            VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (no_ref, tanggal, pasien, kredit, tanggal_tempo, cara_bayar, harga, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir))
+
+    def edit_transaksi(self, no_ref, tanggal=None, pasien=None, kredit=None, tanggal_tempo=None, cara_bayar=None, harga=None, diskon_toko=None, ongkir=None, total_penjualan=None, pembayaran=None, nama_kasir=None):
+        query = "UPDATE transaksi SET "
+        params = []
+
+        if tanggal is not None:
+            query += "tanggal=?, "
+            params.append(tanggal)
+        if pasien is not None:
+            query += "pasien=?, "
+            params.append(pasien)
+        if kredit is not None:
+            query += "kredit=?, "
+            params.append(kredit)
+        if tanggal_tempo is not None:
+            query += "tanggal_tempo=?, "
+            params.append(tanggal_tempo)
+        if cara_bayar is not None:
+            query += "cara_bayar=?, "
+            params.append(cara_bayar)
+        if harga is not None:
+            query += "harga=?, "
+            params.append(harga)
+        if diskon_toko is not None:
+            query += "diskon_toko=?, "
+            params.append(diskon_toko)
+        if ongkir is not None:
+            query += "ongkir=?, "
+            params.append(ongkir)
+        if total_penjualan is not None:
+            query += "total_penjualan=?, "
+            params.append(total_penjualan)
+        if pembayaran is not None:
+            query += "pembayaran=?, "
+            params.append(pembayaran)
+        if nama_kasir is not None:
+            query += "nama_kasir=? "
+            params.append(nama_kasir)
+
+        query = query.rstrip(", ") + " WHERE no_ref=?"
+        params.append(no_ref)
+        self.kursor.execute(query, tuple(params))
+        self.koneksi.commit()
+
+    def hapus_transaksi(self, no_ref):
+        try:
+            self.kursor.execute("DELETE FROM transaksi WHERE no_ref=?", (no_ref,))
+            self.koneksi.commit()
+
+            if self.kursor.rowcount > 0:
+                return True
+            else:
+                return False
+                
+        except Exception as e:
+            print(f"Error deleting transaction with reference {no_ref}: {e}")
+            return False
+        
+    def get_all_transaksi(self):
+        self.kursor.execute("SELECT * FROM transaksi")
+        rows = self.kursor.fetchall()
+        return [row[1:] for row in rows]
+
+
+# ==================== TRANSAKSI ITEM ====================
+
+
+
 
 
 # ==================== TUTUP DATABASE ====================

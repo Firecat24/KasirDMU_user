@@ -1058,9 +1058,8 @@ WindowsManager:
     name: 'Kasir'
     BoxLayout:
         orientation: 'vertical'
-        
+        # Top Header
         BoxLayout:
-            orientation: 'horizontal'
             size_hint_y: None
             height: 40
             padding: 5
@@ -1073,11 +1072,21 @@ WindowsManager:
                     size: self.size
 
             Button:
-                text: 'Dashboard'
-                font_size: 12
+                text: ' Dashboard'
                 size_hint_x: None
                 width: 100
-                on_release: app.change_screen('dashboard',"right")
+                font_size: 12
+                on_release: app.change_screen('dashboard', "right")
+
+            Label:
+                id: time_label
+                text: '__-__-__ || --:--:--'
+                font_size: 14
+                halign: 'right'
+                valign: 'middle'
+                size_hint_x: 1
+                color: 0, 0, 0, 1
+                text_size: self.size
 
         Label:
             canvas.before:
@@ -1094,23 +1103,479 @@ WindowsManager:
                     size: self.width, 1
 
             text: 'KASIR'
-            font_size: 30
+            font_size: 25
             size_hint_y: None
-            height: 40
+            height: 30
             halign: 'center'
             valign: 'middle'
             color: 0, 0, 0, 1
             text_size: self.size
 
         BoxLayout:
-            orientation: 'vertical'
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: 60
+            spacing: 10
+            padding: 10
+
+            TextInput:
+                id: search_input
+                hint_text: "Cari nama obat..."
+                multiline: False
+                size_hint_x: None
+                width: 300
+                height: 40
+                font_size: 12
+                on_text_validate:
+                    app.root.get_screen('Kasir').cari_obat(self.text)
+
+            Button:
+                text: "Cari"
+                size_hint_x: None
+                width: 100
+                height: 40
+                on_release:
+                    app.root.get_screen('Kasir').cari_obat(search_input.text)
+
+            Spinner:
+                id: jenis_spinner
+                text: 'Umum'
+                values: ['Umum', 'Karyawan', 'BPJS', 'Halodoc', 'Resep', 'Cabang']
+                size_hint_x: None
+                width:100
+                height: 40
+                font_size: 12
+
+        # Keranjang Label
+        Label:
+            text: "KERANJANG BELANJA"
+            font_size: 18
+            size_hint_y: None
+            height: 30
+            color: 0.1, 0.1, 0.1, 1
+
+        BoxLayout:
+            size_hint_y: None
+            height: 40
+            spacing: 0
             canvas.before:
                 Color:
-                    rgba: 0.95, 0.95, 0.95, 1
+                    rgba: .9, .9, .9, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+                Color:
+                    rgba: 0, 0, 0, 1
+                Line:
+                    rectangle: (*self.pos, *self.size)
+                    width: 1
+
+            # Header Nama
+            BoxLayout:
+                size_hint_x: 0.25
+                canvas.before:
+                    Color:
+                        rgba: 0, 0, 0, 1
+                    Line:
+                        points: [self.right, self.y, self.right, self.top]
+                        width: 1
+                Label:
+                    text: "Nama"
+                    color: 0, 0, 0, 1
+
+            # Header Satuan
+            BoxLayout:
+                size_hint_x: 0.1
+                canvas.before:
+                    Color:
+                        rgba: 0, 0, 0, 1
+                    Line:
+                        points: [self.right, self.y, self.right, self.top]
+                        width: 1
+                Label:
+                    text: "Satuan"
+                    color: 0, 0, 0, 1
+
+            # Header Harga
+            BoxLayout:
+                size_hint_x: 0.15
+                canvas.before:
+                    Color:
+                        rgba: 0, 0, 0, 1
+                    Line:
+                        points: [self.right, self.y, self.right, self.top]
+                        width: 1
+                Label:
+                    text: "Harga"
+                    color: 0, 0, 0, 1
+
+            # Header Qty
+            BoxLayout:
+                size_hint_x: 0.1
+                canvas.before:
+                    Color:
+                        rgba: 0, 0, 0, 1
+                    Line:
+                        points: [self.right, self.y, self.right, self.top]
+                        width: 1
+                Label:
+                    text: "Qty"
+                    color: 0, 0, 0, 1
+
+            # Header Diskon
+            BoxLayout:
+                size_hint_x: 0.1
+                canvas.before:
+                    Color:
+                        rgba: 0, 0, 0, 1
+                    Line:
+                        points: [self.right, self.y, self.right, self.top]
+                        width: 1
+                Label:
+                    text: "Diskon (%)"
+                    color: 0, 0, 0, 1
+
+            # Header Total
+            BoxLayout:
+                size_hint_x: 0.15
+                canvas.before:
+                    Color:
+                        rgba: 0, 0, 0, 1
+                    Line:
+                        points: [self.right, self.y, self.right, self.top]
+                        width: 1
+                Label:
+                    text: "Total"
+                    color: 0, 0, 0, 1
+
+            # Header Aksi
+            BoxLayout:
+                size_hint_x: 0.15
+                Label:
+                    text: "Aksi"
+                    color: 0, 0, 0, 1
+
+
+
+        # List Barang di Keranjang
+        RecycleView:
+            id: keranjang_view
+            viewclass: 'KeranjangItem'
+            scroll_type: ['bars', 'content']
+            bar_width: 10
+
+            RecycleBoxLayout:
+                default_size: None, 40
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: 'vertical'
+                spacing: 5
+
+            
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: self.minimum_height
+            padding: 10
+            spacing: 10
+            canvas.before:
+                Color:
+                    rgba: 0.9, 0.9, 0.9, 1
                 Rectangle:
                     pos: self.pos
                     size: self.size
 
-            Label:
-                text: 'Insert Golongan Obat'
-                font_size: 30
+            BoxLayout:
+                spacing: 10
+                size_hint_y: None
+                size_hint_x: 0.6
+                height: 180
+
+                # Diskon Apotek
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_x: 0.3
+
+                    Label:
+                        text: 'Diskon Apotek (Rp)'
+                        font_size: 12
+                        color: 0, 0, 0, 1
+                    TextInput:
+                        id: diskon_rp
+                        multiline: False
+                        input_filter: 'int'
+                        disabled: root.ids.diskon_persen.text != ''
+                        on_text: root.update_totals()
+
+                    Label:
+                        text: 'Diskon Apotek (%)'
+                        font_size: 12
+                        color: 0, 0, 0, 1
+                    TextInput:
+                        id: diskon_persen
+                        multiline: False
+                        input_filter: 'int'
+                        disabled: root.ids.diskon_rp.text != ''
+                        on_text: root.update_totals()
+
+                    Label:
+                        text: 'Ongkir (Rp)'
+                        font_size: 12
+                        color: 0, 0, 0, 1
+                    TextInput:
+                        id: ongkir_input
+                        multiline: False
+                        input_filter: 'int'
+                        on_text: root.update_totals()
+
+
+                # Cara Bayar (Pop-up trigger)
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_x: 0.3
+                    padding: [20, 0, 0, 20]
+
+                    Label:
+                        text: 'Cara Bayar'
+                        font_size: 14
+                        color: 0, 0, 0, 1
+
+                    Button:
+                        text: 'Pilih'
+                        on_release: root.open_cara_bayar_popup()
+
+                    Label:
+                        text: 'Pembayaran (Rp)'
+                        font_size: 14
+                        color: 0, 0, 0, 1
+
+                    TextInput:
+                        id: uang_pelanggan_input
+                        multiline: False
+                        input_filter: 'int'
+                        on_text: root.update_totals()
+
+                # Ongkir
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_x: 0.4
+                    size_hint_y: None
+                    height: 180
+
+                    BoxLayout:
+                        padding: [30, 0, 0, 0]
+                        Label:
+                            id: total_setelah_diskon
+                            text: 'Rp0'
+                            text_size: self.size
+                            halign: 'left'
+                            valign: 'middle'
+                            color: 0, 0, 0, 1
+                    BoxLayout:
+                        padding: [30, 0, 0, 0]
+                        Label:
+                            id: total_setelah_ongkir
+                            text_size: self.size
+                            halign: 'left'
+                            valign: 'middle'
+                            text: 'Rp0'
+                            color: 0, 0, 0, 1
+
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_x: 0.4
+                size_hint_y: None
+                height: 180
+                BoxLayout:
+                    padding: [50, 0, 0, 0]
+                    canvas.before:
+                        Color:
+                            rgba: 0.8, 0.8, 0.8, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    Label:
+                        id: kembalian_label
+                        text: 'Kembalian   : Rp{:,.0f}'.format(root.kembalian).replace(',', '.')
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        color: 0, 0, 0, 1
+                        font_size: 26
+                BoxLayout:
+                    padding: [50, 0, 0, 0]
+                    canvas.before:
+                        Color:
+                            rgba: 0.8, 0.9, 0.9, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    Label:
+                        text: "Total Tagihan: Rp{:,.0f}".format(root.total_akhir).replace(',', '.')
+                        text_size: self.size
+                        halign: 'left'
+                        valign: 'middle'
+                        color: 0, 0, 0, 1
+                        font_size: 26
+
+<PopupLayout@BoxLayout>:
+    orientation: 'vertical'
+    spacing: 10
+    padding: 10
+    ScrollView:
+        BoxLayout:
+            id: tombol_layout
+            orientation: 'vertical'
+            size_hint_y: None
+            height: self.minimum_height
+
+<KeranjangItem>:
+    spacing: 0
+    size_hint_y: None
+    height: 40
+    orientation: 'horizontal'
+
+    BoxLayout:
+        size_hint_x: 0.25
+        Label:
+            text: root.nama
+
+    BoxLayout:
+        size_hint_x: 0.1
+        Label:
+            text: root.satuan
+
+    BoxLayout:
+        size_hint_x: 0.15
+        Label:
+            text: str("Rp{:,.0f}".format(root.harga).replace(',', '.'))
+
+    BoxLayout:
+        size_hint_x: 0.1
+        TextInput:
+            text: str(root.qty)
+            input_filter: 'int'
+            multiline: False
+            on_focus: if not self.focus: root.on_qty_changed(self.text); self.text = '1' if self.text.strip() == '' or self.text.strip() == '0' else self.text
+
+    BoxLayout:
+        size_hint_x: 0.1
+        TextInput:
+            text: str(root.diskon)
+            input_filter: 'int'
+            multiline: False
+            on_focus: if not self.focus: root.on_diskon_changed(self.text); self.text = '0' if self.text.strip() == '' else self.text
+
+    BoxLayout:
+        size_hint_x: 0.15
+        Label:
+            text: str("Rp{:,.0f}".format(root.total).replace(',', '.'))
+
+    BoxLayout:
+        size_hint_x: 0.15
+        Button:
+            text: "Hapus"
+            on_release: app.root.get_screen('Kasir').hapus_item(root.index)    
+# <KeranjangItem@BoxLayout>:
+#     index: 0
+#     nama: ''
+#     satuan: ''
+#     harga: 0
+#     qty: 1
+#     diskon: 0
+#     total: 0
+#     spacing: 0
+#     size_hint_y: None
+#     height: 40
+#     orientation: 'horizontal'
+
+#     canvas.before:
+#         Color:
+#             rgba: 0, 0, 0, 1
+#         Line:
+#             rectangle: (*self.pos, *self.size)
+#             width: 1
+
+#     BoxLayout:
+#         size_hint_x: 0.25
+#         canvas.before:
+#             Color:
+#                 rgba: 0, 0, 0, 1
+#             Line:
+#                 points: [self.right, self.y, self.right, self.top]
+#                 width: 1
+#         Label:
+#             text: root.nama
+
+#     BoxLayout:
+#         size_hint_x: 0.1
+#         canvas.before:
+#             Color:
+#                 rgba: 0, 0, 0, 1
+#             Line:
+#                 points: [self.right, self.y, self.right, self.top]
+#                 width: 1
+#         Label:
+#             text: root.satuan
+
+#     BoxLayout:
+#         size_hint_x: 0.15
+#         canvas.before:
+#             Color:
+#                 rgba: 0, 0, 0, 1
+#             Line:
+#                 points: [self.right, self.y, self.right, self.top]
+#                 width: 1
+#         Label:
+#             text: str("Rp{:,.0f}".format(root.harga).replace(',', '.'))
+
+#     BoxLayout:
+#         size_hint_x: 0.1
+#         canvas.before:
+#             Color:
+#                 rgba: 0, 0, 0, 1
+#             Line:
+#                 points: [self.right, self.y, self.right, self.top]
+#                 width: 1
+#         TextInput:
+#             text: str(root.qty)
+#             input_filter: 'int'
+#             multiline: False
+#             on_text: app.root.get_screen('Kasir').update_item(root.index, self.text, self.parent.parent.children[1].children[0].text)
+
+
+#     BoxLayout:
+#         size_hint_x: 0.1
+#         canvas.before:
+#             Color:
+#                 rgba: 0, 0, 0, 1
+#             Line:
+#                 points: [self.right, self.y, self.right, self.top]
+#                 width: 1
+#         TextInput:
+#             text: str(root.diskon)
+#             input_filter: 'int'
+#             multiline: False
+#             on_text: app.root.get_screen('Kasir').update_item(root.index, self.parent.parent.children[2].children[0].text, self.text)
+
+
+#     BoxLayout:
+#         size_hint_x: 0.15
+#         canvas.before:
+#             Color:
+#                 rgba: 0, 0, 0, 1
+#             Line:
+#                 points: [self.right, self.y, self.right, self.top]
+#                 width: 1
+#         Label:
+#             text: str("Rp{:,.0f}".format(root.total).replace(',', '.'))
+
+#     # Kolom Aksi
+#     BoxLayout:
+#         size_hint_x: 0.15
+#         Button:
+#             text: 'Hapus'
+#             on_release:
+#                 app.root.get_screen('Kasir').hapus_item(root.index)

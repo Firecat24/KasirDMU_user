@@ -1,6 +1,11 @@
+# Built-in modules
 import re, time, threading
 from datetime import datetime
+
+# Local modules
 from database.db import DatabaseObat
+
+# KivyMD modules
 from kivymd.app import MDApp
 from kivymd.uix.datatables import MDDataTable
 from kivymd.uix.dialog import MDDialog
@@ -8,11 +13,19 @@ from kivymd.uix.button import MDFlatButton
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.toast import toast
 from kivymd.uix.spinner import MDSpinner
+from kivy.uix.boxlayout import BoxLayout
+
+# Kivy modules
+from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.clock import Clock
 from kivy.metrics import dp
-from kivy.properties import ListProperty, StringProperty
+from kivy.uix.popup import Popup
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.factory import Factory
+from kivy.properties import ListProperty, StringProperty, NumericProperty
 
 #---------------------------------------------------------------------------------------------#
 
@@ -1359,7 +1372,190 @@ class EditPajak(Screen):
 #---------------------------------------------------------------------------------------------#
 
 class Kasir(Screen):
-    pass
+    hasil_pencarian = ListProperty()
+    daftar_belanja = ListProperty()
+    total_akhir = NumericProperty(0)
+    kembalian = NumericProperty(0)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_interval(self.update_time, 1)
+
+    def on_pre_enter(self):
+        self.ids.diskon_rp.text = ''
+        self.ids.diskon_persen.text = ''
+        self.ids.ongkir_input.text = ''
+        self.ids.uang_pelanggan_input.text = ''
+        self.update_totals()
+
+    def update_totals(self):
+        total_belanja = sum(item['total'] for item in self.daftar_belanja)
+        
+        total_setelah_diskon = total_belanja
+
+        if self.ids.diskon_rp.text:
+            try:
+                total_setelah_diskon = total_belanja - int(self.ids.diskon_rp.text)
+            except ValueError:
+                total_setelah_diskon = 0
+
+        elif self.ids.diskon_persen.text:
+            try:
+                persen = int(self.ids.diskon_persen.text)
+                total_setelah_diskon = total_belanja * (1 - (persen / 100.0))
+            except ValueError:
+                total_setelah_diskon = 0
+
+        try:
+            ongkir = int(self.ids.ongkir_input.text) if self.ids.ongkir_input.text else 0
+        except ValueError:
+            ongkir = 0
+            
+        total_setelah_ongkir = total_setelah_diskon + ongkir
+
+        self.total_akhir = total_setelah_ongkir
+        self.ids.total_setelah_diskon.text = "Total Setelah Diskon = Rp{:,.0f}".format(total_setelah_diskon).replace(',', '.')
+        self.ids.total_setelah_ongkir.text = "Total Setelah Ongkir = Rp{:,.0f}".format(total_setelah_ongkir).replace(',', '.')
+
+        try:
+            uang_pelanggan = int(self.ids.uang_pelanggan_input.text)
+            kembalian = uang_pelanggan - total_setelah_ongkir
+            self.kembalian = max(0, kembalian)
+            self.ids.kembalian_label.text = "Kembalian     : Rp{:,.0f}".format(self.kembalian).replace(',', '.')
+        except (ValueError, AttributeError):
+            self.kembalian = 0
+            self.ids.kembalian_label.text = "Kembalian     : Rp.0"
+
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
+
+    def tampilkan_popup_obat(self, hasil_pencarian):
+        layout = Factory.PopupLayout()
+        tombol_layout = layout.ids.tombol_layout
+
+        for obat in hasil_pencarian:
+            nama, satuan, harga = obat
+            btn = Button(
+                text=f"{nama} ({satuan}) - Rp{harga}",
+                size_hint_y=None,
+                height=40
+            )
+
+            btn.bind(on_release=lambda btn, data=obat: (self.tambah_ke_keranjang(data[0], data[1], data[2]), popup.dismiss()))
+            tombol_layout.add_widget(btn)
+
+        popup = Popup(
+            title="Pilih Obat",
+            content=layout,
+            size_hint=(0.9, 0.8),
+            auto_dismiss=True
+        )
+        popup.open()
+
+    def tambah_ke_keranjang(self, nama, satuan, harga):
+        harga_int = int(harga)
+        self.daftar_belanja.append({
+            'nama': nama,
+            'satuan': satuan,
+            'harga': int(round(harga_int / 500.0) * 500),
+            'qty': 1,
+            'diskon': 0,
+            'total': int(round(harga_int / 500.0) * 500),
+        })
+        self.update_totals()
+        self.refresh_keranjang()
+
+    def update_item(self, index, qty_str, diskon_str):
+        try:
+            item = self.daftar_belanja[index]
+            harga = int(round(item['harga'] / 500.0) * 500)
+            qty = int(qty_str.strip()) if qty_str.strip().isdigit() else 1
+            diskon = int(diskon_str.strip()) if diskon_str.strip().isdigit() else 0
+            qty = max(qty, 1)
+            diskon = max(min(diskon, 100), 0)
+            total = round((harga * qty) * (1 - (diskon / 100)) / 500.0) * 500
+            self.daftar_belanja[index]['qty'] = qty
+            self.daftar_belanja[index]['diskon'] = diskon
+            self.daftar_belanja[index]['total'] = int(total)
+            self.update_totals()
+            self.refresh_keranjang()
+        except Exception as e:
+            print("Error update item:", e)
+
+    def hapus_item(self, index):
+        if 0 <= index < len(self.daftar_belanja):
+            del self.daftar_belanja[index]
+            self.update_totals()
+            self.refresh_keranjang()
+
+    def refresh_keranjang(self):
+        self.ids.keranjang_view.data = [
+            {
+                'index': i,
+                'nama': item['nama'],
+                'satuan': item['satuan'],
+                'harga': item['harga'],
+                'qty': item['qty'],
+                'diskon': item['diskon'],
+                'total': item['total'],
+            }
+            for i, item in enumerate(self.daftar_belanja)
+        ]
+
+    def cari_obat(self, keyword):
+        jenis = self.ids.jenis_spinner.text
+        hasil = MDApp.get_running_app().db.search_data_obat(keyword, jenis)
+        if hasil:
+            self.tampilkan_popup_obat(hasil)
+        else:
+            print("Obat tidak ditemukan")
+
+    def open_cara_bayar_popup(self):
+        popup = Popup(
+            title='Informasi',
+            content=Label(text='Menu Cara Bayar'),
+            size_hint=(None, None),
+            size=(300, 150),
+            auto_dismiss=True
+        )
+        popup.open()
+
+class KeranjangItem(BoxLayout):
+    index = NumericProperty()
+    nama = StringProperty()
+    satuan = StringProperty()
+    harga = NumericProperty()
+    qty = NumericProperty()
+    diskon = NumericProperty()
+    total = NumericProperty()
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._update_scheduled = False  # ✅ inisialisasi aman di sini
+
+    def _do_update(self, *args):
+        app = MDApp.get_running_app()
+        kasir_screen = app.root.get_screen('Kasir')
+        kasir_screen.update_item(self.index, str(self.qty), str(self.diskon))
+        self._update_scheduled = False
+
+    def on_qty_changed(self, qty_text):
+        qty_text = qty_text.strip()
+        self.qty = int(qty_text) if qty_text.isdigit() else 1  # default 1 jika kosong atau tidak valid
+        if not self._update_scheduled:
+            Clock.schedule_once(self._do_update, 0)
+            self._update_scheduled = True
+
+    def on_diskon_changed(self, diskon_text):
+        diskon_text = diskon_text.strip()
+        self.diskon = int(diskon_text) if diskon_text.isdigit() else 0  # default 0 jika kosong atau tidak valid
+        if not self._update_scheduled:
+            Clock.schedule_once(self._do_update, 0)
+            self._update_scheduled = True
+
 
 #---------------------------------------------------------------------------------------------#
 
@@ -1370,6 +1566,7 @@ class WindowsManager(ScreenManager):
 
 class DookaApp(MDApp):
     def build(self):
+        Window.size = (1024, 800)
         self.db = DatabaseObat("database/dooka_user.db")
 
         if not SessionCache.get_data_obat():
@@ -1382,6 +1579,10 @@ class DookaApp(MDApp):
             SessionCache.set_data_pajak(self.db.get_all_pajak())
 
         return Builder.load_file('user_interface/gui.kv')
+    
+    def on_stop(self):
+        if hasattr(self, "db"):
+            self.db.close_connection()
     
     def change_screen(self, screen_name, direction):
         self.root.transition.direction = direction

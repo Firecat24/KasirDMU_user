@@ -45,3 +45,10 @@ J. eror yang sama seperti diatas yakni list out of range dan tidak tahu penyebab
 K. seperti eror D, namun sepertinya agak teredam karena fitur loading, menggunakan 2 thread
 
 L. tadi sempat muncul kembali eror list out of range pada saat membuka tabel data pajak
+
+M. Membuat kasir
+    1. membuat tampilan ui
+    2. membuat tabel sendiri
+    3. membuat search bar yang bisa di klik dengan cara di pop up setelah itu dimasukkan ke daftar belanja setelah di klik
+    4. membenarkan pritilan kecil seperti harga yang di format seperti rupiah dan membuatkan tiap 500 terdekat
+    5. membuat dropdown yang ada pilihan karyawan dll untuk margin harga
