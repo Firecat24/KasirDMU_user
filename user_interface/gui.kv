@@ -21,6 +21,7 @@ WindowsManager:
     EditPajak:
 
     Kasir:
+    RiwayatTransaksi:
 
 #-----------------------------------------------------------------------------------------#
 
@@ -1072,11 +1073,18 @@ WindowsManager:
                     size: self.size
 
             Button:
-                text: ' Dashboard'
+                text: 'Dashboard'
                 size_hint_x: None
                 width: 100
                 font_size: 12
                 on_release: app.change_screen('dashboard', "right")
+
+            Button:
+                text: 'Riwayat Transaksi'
+                size_hint_x: None
+                width: 150
+                font_size: 12
+                on_release: app.change_screen('riwayat_transaksi', "left")
 
             Label:
                 id: time_label
@@ -1114,45 +1122,111 @@ WindowsManager:
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
-            height: 60
+            height: 50
             spacing: 10
             padding: 10
 
-            TextInput:
-                id: search_input
-                hint_text: "Cari nama obat..."
-                multiline: False
+            RelativeLayout:
                 size_hint_x: None
-                width: 300
-                height: 40
-                font_size: 12
-                on_text_validate:
-                    app.root.get_screen('Kasir').cari_obat(self.text)
+                width: 200
+                height: 30
 
-            Button:
-                text: "Cari"
-                size_hint_x: None
-                width: 100
-                height: 40
-                on_release:
-                    app.root.get_screen('Kasir').cari_obat(search_input.text)
+                TextInput:
+                    id: search_input
+                    hint_text: "Cari obat..."
+                    multiline: False
+                    font_size: 12
+                    size_hint: 1, None
+                    height: 30
+                    padding: [8, 8, 35, 8]
+                    foreground_color: 0, 0, 0, 1
+                    hint_text_color: 0.5, 0.5, 0.5, 1
+
+                IconButton:
+                    source: 'assets/image/3.png'
+                    size_hint: None, None
+                    size: 20, 20
+                    pos: (self.parent.width - 25, 5)
+                    on_release:
+                        app.root.get_screen('Kasir').cari_obat(search_input.text)
 
             Spinner:
-                id: jenis_spinner
+                id: jenis_pelanggan_spinner
                 text: 'Umum'
                 values: ['Umum', 'Karyawan', 'BPJS', 'Halodoc', 'Resep', 'Cabang']
-                size_hint_x: None
-                width:100
-                height: 40
+                size_hint: None, None
+                width: 100
+                height: 30
                 font_size: 12
 
-        # Keranjang Label
-        Label:
-            text: "KERANJANG BELANJA"
-            font_size: 18
-            size_hint_y: None
-            height: 30
-            color: 0.1, 0.1, 0.1, 1
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: 30
+                size_hint_x: None
+                font_size: 12
+                width: 100
+                spacing: 10
+                ToggleButton:
+                    id: toggle_kredit
+                    text: 'Kredit' if root.is_kredit else 'Tunai'
+                    state: 'down' if root.is_kredit else 'normal'
+                    on_state:
+                        root.toggle_kredit(self.state == 'down')
+                        self.text = 'Kredit' if self.state == 'down' else 'Tunai'
+
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: 30
+                size_hint_x: None
+                width: 150
+                spacing: 10
+
+                TextInput:
+                    id: input_tanggal_tempo
+                    hint_text: "YYYY-MM-DD"
+                    font_size: 12
+                    multiline: False
+                    disabled: not root.is_kredit
+                    input_filter: lambda text, from_undo: ''.join(c for c in text if c in '0123456789-')
+
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: 30
+                spacing: 10
+                padding_left: 10
+
+                TextInput:
+                    id: input_nama_pasien
+                    font_size: 12
+                    hint_text: "Masukkan nama pasien"
+                    size_hint_x: None
+                    width: 150
+                    multiline: False
+                    on_text_validate:
+                        if self.text.strip(): root.cari_pasien(self.text.strip())
+                    on_focus: root.periksa_pasien_kosong(self)
+
+                Label:
+                    id: label_nama_pasien
+                    text: "Pasien Umum"
+                    size_hint_x: None
+                    width: 250
+                    font_size: 12
+                    color: 0.2, 0.2, 0.2, 1
+                    canvas.before:
+                        Color:
+                            rgba: 0.95, 0.95, 0.95, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                        Color:
+                            rgba: 0, 0, 0, 1
+                        Line:
+                            rectangle: (*self.pos, *self.size)
+                            width: 1
 
         BoxLayout:
             size_hint_y: None
@@ -1256,8 +1330,6 @@ WindowsManager:
                     color: 0, 0, 0, 1
 
 
-
-        # List Barang di Keranjang
         RecycleView:
             id: keranjang_view
             viewclass: 'KeranjangItem'
@@ -1271,8 +1343,6 @@ WindowsManager:
                 height: self.minimum_height
                 orientation: 'vertical'
                 spacing: 5
-
-            
 
         BoxLayout:
             orientation: 'horizontal'
@@ -1343,7 +1413,8 @@ WindowsManager:
                         color: 0, 0, 0, 1
 
                     Button:
-                        text: 'Pilih'
+                        id: cara_bayar
+                        text: 'Tunai'
                         on_release: root.open_cara_bayar_popup()
 
                     Label:
@@ -1356,6 +1427,7 @@ WindowsManager:
                         multiline: False
                         input_filter: 'int'
                         on_text: root.update_totals()
+                        on_text_validate: root.simpan_transaksi()
 
                 # Ongkir
                 BoxLayout:
@@ -1420,6 +1492,97 @@ WindowsManager:
                         color: 0, 0, 0, 1
                         font_size: 26
 
+<RiwayatTransaksi>:
+    name: 'riwayat_transaksi'
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+
+        BoxLayout:
+            size_hint_y: None
+            height: 40
+            spacing: 10
+
+            Button:
+                text: '← Kembali ke Kasir'
+                on_release: app.root.current = 'Kasir'
+
+            Button:
+                text: '🔄 Muat Ulang'
+                on_release: root.muat_riwayat_transaksi()
+
+        GridLayout:
+            cols: 9
+            size_hint_y: None
+            height: 30
+            spacing: 5
+
+            Label: 
+                text: 'Tanggal'
+            Label: 
+                text: 'No Ref'
+            Label: 
+                text: 'Pasien'
+            Label: 
+                text: 'Kredit'
+            Label: 
+                text: 'Tempo'
+            Label: 
+                text: 'Cara Bayar'
+            Label: 
+                text: 'Harga'
+            Label: 
+                text: 'Total'
+            Label: 
+                text: 'Kasir'
+
+        RecycleView:
+            id: rv_riwayat
+            viewclass: 'RowRiwayat'
+            scroll_type: ['bars', 'content']
+            bar_width: 10
+
+            RecycleBoxLayout:
+                default_size: None, 30
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: 'vertical'
+                spacing: 2
+
+
+<RowRiwayat@GridLayout>:
+    cols: 9
+    size_hint_y: None
+    height: 30
+    spacing: 5
+
+    Label: 
+        text: root.tanggal
+    Label: 
+        text: root.no_ref
+    Label: 
+        text: root.pasien
+    Label: 
+        text: 'Ya' if root.kredit == '1' else 'Tidak'
+    Label: 
+        text: root.tempo
+    Label: 
+        text: root.cara_bayar
+    Label: 
+        text: root.harga
+    Label: 
+        text: root.total
+    Label: 
+        text: root.kasir
+    Button:
+        text: 'Lihat'
+        size_hint_x: None
+        width: 40
+        on_release:
+            app.root.get_screen('Kasir').load_transaksi(root.no_ref)
+            app.root.current = 'Kasir'
 <PopupLayout@BoxLayout>:
     orientation: 'vertical'
     spacing: 10
@@ -1431,29 +1594,76 @@ WindowsManager:
             size_hint_y: None
             height: self.minimum_height
 
+<PopupLayoutPasien@BoxLayout>:
+    orientation: 'vertical'
+    spacing: 10
+    padding: 10
+    ScrollView:
+        BoxLayout:
+            id: tombol_layout
+            orientation: 'vertical'
+            size_hint_y: None
+            height: self.minimum_height
+
+    Button:
+        text: "Ke Halaman Pasien"
+        size_hint_y: None
+        height: 40
+        # on_release: app.root.current = 'halaman_pasien'  # atau sesuai nama Screen
+
 <KeranjangItem>:
     spacing: 0
     size_hint_y: None
     height: 40
     orientation: 'horizontal'
+    canvas.before:
+        Color:
+            rgba: 0, 0, 0, 1
+        Line:
+            rectangle: (*self.pos, *self.size)
+            width: 1
 
     BoxLayout:
         size_hint_x: 0.25
+        canvas.before:
+            Color:
+                rgba: 0, 0, 0, 1
+            Line:
+                points: [self.right, self.y, self.right, self.top]
+                width: 1
         Label:
             text: root.nama
 
     BoxLayout:
         size_hint_x: 0.1
+        canvas.before:
+            Color:
+                rgba: 0, 0, 0, 1
+            Line:
+                points: [self.right, self.y, self.right, self.top]
+                width: 1
         Label:
             text: root.satuan
 
     BoxLayout:
         size_hint_x: 0.15
+        canvas.before:
+            Color:
+                rgba: 0, 0, 0, 1
+            Line:
+                points: [self.right, self.y, self.right, self.top]
+                width: 1
         Label:
             text: str("Rp{:,.0f}".format(root.harga).replace(',', '.'))
 
     BoxLayout:
         size_hint_x: 0.1
+        canvas.before:
+            Color:
+                rgba: 0, 0, 0, 1
+            Line:
+                points: [self.right, self.y, self.right, self.top]
+                width: 1
         TextInput:
             text: str(root.qty)
             input_filter: 'int'
@@ -1462,6 +1672,12 @@ WindowsManager:
 
     BoxLayout:
         size_hint_x: 0.1
+        canvas.before:
+            Color:
+                rgba: 0, 0, 0, 1
+            Line:
+                points: [self.right, self.y, self.right, self.top]
+                width: 1
         TextInput:
             text: str(root.diskon)
             input_filter: 'int'
@@ -1470,6 +1686,12 @@ WindowsManager:
 
     BoxLayout:
         size_hint_x: 0.15
+        canvas.before:
+            Color:
+                rgba: 0, 0, 0, 1
+            Line:
+                points: [self.right, self.y, self.right, self.top]
+                width: 1
         Label:
             text: str("Rp{:,.0f}".format(root.total).replace(',', '.'))
 
@@ -1477,105 +1699,9 @@ WindowsManager:
         size_hint_x: 0.15
         Button:
             text: "Hapus"
-            on_release: app.root.get_screen('Kasir').hapus_item(root.index)    
-# <KeranjangItem@BoxLayout>:
-#     index: 0
-#     nama: ''
-#     satuan: ''
-#     harga: 0
-#     qty: 1
-#     diskon: 0
-#     total: 0
-#     spacing: 0
-#     size_hint_y: None
-#     height: 40
-#     orientation: 'horizontal'
+            on_release: app.root.get_screen('Kasir').hapus_item(root.index)
 
-#     canvas.before:
-#         Color:
-#             rgba: 0, 0, 0, 1
-#         Line:
-#             rectangle: (*self.pos, *self.size)
-#             width: 1
-
-#     BoxLayout:
-#         size_hint_x: 0.25
-#         canvas.before:
-#             Color:
-#                 rgba: 0, 0, 0, 1
-#             Line:
-#                 points: [self.right, self.y, self.right, self.top]
-#                 width: 1
-#         Label:
-#             text: root.nama
-
-#     BoxLayout:
-#         size_hint_x: 0.1
-#         canvas.before:
-#             Color:
-#                 rgba: 0, 0, 0, 1
-#             Line:
-#                 points: [self.right, self.y, self.right, self.top]
-#                 width: 1
-#         Label:
-#             text: root.satuan
-
-#     BoxLayout:
-#         size_hint_x: 0.15
-#         canvas.before:
-#             Color:
-#                 rgba: 0, 0, 0, 1
-#             Line:
-#                 points: [self.right, self.y, self.right, self.top]
-#                 width: 1
-#         Label:
-#             text: str("Rp{:,.0f}".format(root.harga).replace(',', '.'))
-
-#     BoxLayout:
-#         size_hint_x: 0.1
-#         canvas.before:
-#             Color:
-#                 rgba: 0, 0, 0, 1
-#             Line:
-#                 points: [self.right, self.y, self.right, self.top]
-#                 width: 1
-#         TextInput:
-#             text: str(root.qty)
-#             input_filter: 'int'
-#             multiline: False
-#             on_text: app.root.get_screen('Kasir').update_item(root.index, self.text, self.parent.parent.children[1].children[0].text)
-
-
-#     BoxLayout:
-#         size_hint_x: 0.1
-#         canvas.before:
-#             Color:
-#                 rgba: 0, 0, 0, 1
-#             Line:
-#                 points: [self.right, self.y, self.right, self.top]
-#                 width: 1
-#         TextInput:
-#             text: str(root.diskon)
-#             input_filter: 'int'
-#             multiline: False
-#             on_text: app.root.get_screen('Kasir').update_item(root.index, self.parent.parent.children[2].children[0].text, self.text)
-
-
-#     BoxLayout:
-#         size_hint_x: 0.15
-#         canvas.before:
-#             Color:
-#                 rgba: 0, 0, 0, 1
-#             Line:
-#                 points: [self.right, self.y, self.right, self.top]
-#                 width: 1
-#         Label:
-#             text: str("Rp{:,.0f}".format(root.total).replace(',', '.'))
-
-#     # Kolom Aksi
-#     BoxLayout:
-#         size_hint_x: 0.15
-#         Button:
-#             text: 'Hapus'
-#             on_release:
-#                 app.root.get_screen('Kasir').hapus_item(root.index)
+<IconButton@ButtonBehavior+Image>:
+    source: ''
+    size_hint: None, None
+    size: 20, 20

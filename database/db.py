@@ -69,7 +69,7 @@ class DatabaseObat:
                 kredit INTEGER DEFAULT 0,
                 tanggal_tempo TEXT,
                 cara_bayar TEXT,
-                harga REAL,
+                jenis_pelanggan REAL,
                 diskon_toko REAL,
                 ongkir REAL,
                 total_penjualan REAL,
@@ -88,6 +88,14 @@ class DatabaseObat:
                 diskon REAL,
                 total REAL NOT NULL,
                 FOREIGN KEY (no_ref) REFERENCES transaksi(no_ref) ON DELETE CASCADE
+            )
+        """)
+        self.kursor.execute("""
+            CREATE TABLE IF NOT EXISTS data_pasien (
+                id_pasien INTEGER PRIMARY KEY AUTOINCREMENT,
+                nama_pasien TEXT NOT NULL,
+                nomor_telfon TEXT NOT NULL,
+                alamat TEXT NOT NULL
             )
         """)
         self.koneksi.commit()
@@ -351,13 +359,13 @@ class DatabaseObat:
 # ==================== TRANSAKSI ====================
 
 
-    def new_transaksi(self, no_ref, tanggal, pasien, kredit, tanggal_tempo, cara_bayar, harga, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir):
+    def new_transaksi(self, no_ref, tanggal, pasien, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir):
         self.kursor.execute("""
-            INSERT INTO transaksi (no_ref, tanggal, pasien, kredit, tanggal_tempo, cara_bayar, harga, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir)
+            INSERT INTO transaksi (no_ref, tanggal, pasien, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir)
             VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (no_ref, tanggal, pasien, kredit, tanggal_tempo, cara_bayar, harga, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir))
+        """, (no_ref, tanggal, pasien, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir))
 
-    def edit_transaksi(self, no_ref, tanggal=None, pasien=None, kredit=None, tanggal_tempo=None, cara_bayar=None, harga=None, diskon_toko=None, ongkir=None, total_penjualan=None, pembayaran=None, nama_kasir=None):
+    def edit_transaksi(self, no_ref, tanggal=None, pasien=None, kredit=None, tanggal_tempo=None, cara_bayar=None, jenis_pelanggan=None, diskon_toko=None, ongkir=None, total_penjualan=None, pembayaran=None, nama_kasir=None):
         query = "UPDATE transaksi SET "
         params = []
 
@@ -376,9 +384,9 @@ class DatabaseObat:
         if cara_bayar is not None:
             query += "cara_bayar=?, "
             params.append(cara_bayar)
-        if harga is not None:
-            query += "harga=?, "
-            params.append(harga)
+        if jenis_pelanggan is not None:
+            query += "jenis_pelanggan=?, "
+            params.append(jenis_pelanggan)
         if diskon_toko is not None:
             query += "diskon_toko=?, "
             params.append(diskon_toko)
@@ -417,13 +425,132 @@ class DatabaseObat:
     def get_all_transaksi(self):
         self.kursor.execute("SELECT * FROM transaksi")
         rows = self.kursor.fetchall()
-        return [row[1:] for row in rows]
+        return rows
+    
+    def get_transaksi_by_no_ref(self, no_ref):
+        self.kursor.execute("SELECT * FROM transaksi WHERE no_ref=?", (no_ref,))
+        return self.kursor.fetchone()
 
 
 # ==================== TRANSAKSI ITEM ====================
 
 
+    def new_transaksi_item(self, no_ref, nama_obat, satuan, harga_satuan, jumlah, diskon, total):
+        self.kursor.execute("""
+            INSERT INTO transaksi_item (no_ref, nama_obat, satuan, harga_satuan, jumlah, diskon, total)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (no_ref, nama_obat, satuan, harga_satuan, jumlah, diskon, total))
+        self.koneksi.commit()
 
+    def edit_transaksi_item(self, id, no_ref=None, nama_obat=None, satuan=None, harga_satuan=None, jumlah=None, diskon=None, total=None):
+        query = "UPDATE transaksi_item SET "
+        params = []
+
+        if no_ref is not None:
+            query += "no_ref=?, "
+            params.append(no_ref)
+        if nama_obat is not None:
+            query += "nama_obat=?, "
+            params.append(nama_obat)
+        if satuan is not None:
+            query += "satuan=?, "
+            params.append(satuan)
+        if harga_satuan is not None:
+            query += "harga_satuan=?, "
+            params.append(harga_satuan)
+        if jumlah is not None:
+            query += "jumlah=?, "
+            params.append(jumlah)
+        if diskon is not None:
+            query += "diskon=?, "
+            params.append(diskon)
+        if total is not None:
+            query += "total=? "
+            params.append(total)
+
+        query = query.rstrip(", ") + " WHERE id=?"
+        params.append(id)
+        self.kursor.execute(query, tuple(params))
+        self.koneksi.commit()
+
+    def hapus_transaksi_item(self, id):
+        try:
+            self.kursor.execute("DELETE FROM transaksi_item WHERE id=?", (id,))
+            self.koneksi.commit()
+
+            if self.kursor.rowcount > 0:
+                return True
+            else:
+                return False
+
+        except Exception as e:
+            print(f"Error deleting transaction item with ID {id}: {e}")
+            return False
+
+    def hapus_data_transaksi_item(self, no_ref):
+        self.kursor.execute("DELETE FROM transaksi_item WHERE no_ref = ?", (no_ref,))
+        self.koneksi.commit()
+        
+    def get_all_transaksi_item(self):
+        self.kursor.execute("SELECT * FROM transaksi_item")
+        rows = self.kursor.fetchall()
+        return rows
+
+    def get_transaksi_item_by_no_ref(self, no_ref):
+        self.kursor.execute("SELECT * FROM transaksi_item WHERE no_ref=?", (no_ref,))
+        return self.kursor.fetchall()
+
+
+# ==================== DATA PASIEN ====================
+
+
+    def tambah_pasien(self, nama_pasien, nomor_telfon, alamat):
+        self.kursor.execute("""
+            INSERT INTO data_pasien (nama_pasien, nomor_telfon, alamat) VALUES (?, ?, ?)
+        """, (nama_pasien, nomor_telfon, alamat))
+        self.koneksi.commit()
+
+    def edit_pasien(self, id_pasien, nama_pasien=None, nomor_telfon=None, alamat=None):
+        query = "UPDATE data_pasien SET "
+        params = []
+
+        if nama_pasien is not None:
+            query += "nama_pasien=?, "
+            params.append(nama_pasien)
+        if nomor_telfon is not None:
+            query += "nomor_telfon=?, "
+            params.append(nomor_telfon)
+        if alamat is not None:
+            query += "alamat=? "
+            params.append(alamat)
+
+        query = query.rstrip(", ") + " WHERE id_pasien=?"
+        params.append(id_pasien)
+        self.kursor.execute(query, tuple(params))
+        self.koneksi.commit()
+    
+    def hapus_pasien(self, id_pasien):
+        try:
+            self.kursor.execute("DELETE FROM data_pasien WHERE id_pasien=?", (id_pasien,))
+            self.koneksi.commit()
+
+            if self.kursor.rowcount > 0:
+                return True
+            else:
+                return False
+                
+        except Exception as e:
+            print(f"Error deleting patient with ID {id_pasien}: {e}")
+            return False
+    
+    def get_all_pasien(self):
+        self.kursor.execute("SELECT * FROM data_pasien")
+        rows = self.kursor.fetchall()
+        return [row[1:] for row in rows]
+    
+    def search_data_pasien(self, keyword):
+        self.kursor.execute("SELECT * FROM data_pasien WHERE nama_pasien LIKE ?", ('%' + keyword + '%',))
+        return self.kursor.fetchall()
 
 
 # ==================== TUTUP DATABASE ====================
@@ -431,3 +558,12 @@ class DatabaseObat:
 
     def close_connection(self):
         self.koneksi.close()
+
+
+# ==================== OTHER ====================
+
+
+    def automatis_no_ref(self):
+        self.kursor.execute("SELECT no_ref FROM transaksi ORDER BY no_ref DESC LIMIT 1")
+        last = self.kursor.fetchone()
+        return last

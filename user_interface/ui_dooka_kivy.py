@@ -13,6 +13,7 @@ from kivymd.uix.button import MDFlatButton
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.toast import toast
 from kivymd.uix.spinner import MDSpinner
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 
 # Kivy modules
@@ -25,7 +26,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.factory import Factory
-from kivy.properties import ListProperty, StringProperty, NumericProperty
+from kivy.properties import ListProperty, StringProperty, NumericProperty, BooleanProperty
 
 #---------------------------------------------------------------------------------------------#
 
@@ -696,9 +697,7 @@ class EditObat(Screen):
         )
         dialog.open()
 
-
 #---------------------------------------------------------------------------------------------#
-
 
 class DataGolonganObat(Screen):
     def on_enter(self):
@@ -1376,17 +1375,22 @@ class Kasir(Screen):
     daftar_belanja = ListProperty()
     total_akhir = NumericProperty(0)
     kembalian = NumericProperty(0)
+    is_kredit = BooleanProperty(False)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         Clock.schedule_interval(self.update_time, 1)
+        self.no_ref_sedang_diedit = None
+        self.mode_edit = False
 
     def on_pre_enter(self):
-        self.ids.diskon_rp.text = ''
-        self.ids.diskon_persen.text = ''
-        self.ids.ongkir_input.text = ''
-        self.ids.uang_pelanggan_input.text = ''
-        self.update_totals()
+        if not getattr(self, 'mode_edit', False):
+            self.ids.diskon_rp.text = ''
+            self.ids.diskon_persen.text = ''
+            self.ids.ongkir_input.text = ''
+            self.ids.uang_pelanggan_input.text = ''
+            self.reset_form_kasir()
+            self.update_totals()
 
     def update_totals(self):
         total_belanja = sum(item['total'] for item in self.daftar_belanja)
@@ -1506,7 +1510,7 @@ class Kasir(Screen):
         ]
 
     def cari_obat(self, keyword):
-        jenis = self.ids.jenis_spinner.text
+        jenis = self.ids.jenis_pelanggan_spinner.text
         hasil = MDApp.get_running_app().db.search_data_obat(keyword, jenis)
         if hasil:
             self.tampilkan_popup_obat(hasil)
@@ -1523,6 +1527,174 @@ class Kasir(Screen):
         )
         popup.open()
 
+    def toggle_kredit(self, value):
+        self.is_kredit = value
+        if not value:
+            self.ids.input_tanggal_tempo.text = ''
+
+    def generate_no_ref(self):
+        last = MDApp.get_running_app().db.automatis_no_ref()
+        if last and last[0].isdigit():
+            last_number = int(last[0])
+            new_number = last_number + 1
+        else:
+            new_number = 1
+
+        return f"{new_number:07d}"
+    
+    def periksa_pasien_kosong(self, input_widget):
+        if not input_widget.focus and input_widget.text.strip() == "":
+            self.ids.label_nama_pasien.text = "Umum"
+
+    def cari_pasien(self, keyword):
+        hasil = MDApp.get_running_app().db.search_data_pasien(keyword)
+        if hasil:
+            self.tampilkan_popup_pasien(hasil)
+        else:
+            self.tampilkan_popup("Pasien tidak ditemukan")
+
+    def tampilkan_popup_pasien(self, daftar_pasien):
+        layout = Factory.PopupLayoutPasien()
+        tombol_layout = layout.ids.tombol_layout
+
+        popup = Popup(
+            title="Pilih Pasien",
+            content=layout,
+            size_hint=(0.9, 0.8),
+            auto_dismiss=True
+        )
+        for pasien in daftar_pasien:
+            _, nama, no_telp, alamat = pasien
+            btn = Button(
+                text=f"{nama} ({no_telp}) - {alamat}",
+                size_hint_y=None,
+                height=40
+            )
+
+            btn.bind(on_release=lambda btn, data=pasien: (
+                setattr(self.ids.label_nama_pasien, 'text', data[1]),
+                setattr(self.ids.input_nama_pasien, 'text', ''),
+                popup.dismiss()
+            ))
+            tombol_layout.add_widget(btn)
+        popup.open()
+
+    def simpan_transaksi(self):
+        db = MDApp.get_running_app().db
+        now = datetime.now()
+        if not self.mode_edit:
+            no_ref = db.generate_no_ref()
+        else:
+            no_ref = self.no_ref_sedang_diedit
+        pasien = self.ids.label_nama_pasien.text.strip() or "Umum"
+        kredit = 1 if self.is_kredit else 0
+        tanggal_tempo = self.ids.input_tanggal_tempo.text if kredit else None
+        cara_bayar = self.ids.cara_bayar.text
+        jenis_pelanggan = self.ids.jenis_pelanggan_spinner.text
+        nama_kasir = "User_percobaan"
+        tanggal = now.strftime("%Y-%m-%d")
+
+        try:
+            diskon = int(self.ids.diskon_rp.text)
+        except ValueError:
+            diskon = 0
+        try:
+            ongkir = int(self.ids.ongkir_input.text)
+        except ValueError:
+            ongkir = 0
+        try:
+            pembayaran = int(self.ids.uang_pelanggan_input.text)
+        except ValueError:
+            pembayaran = 0
+        total = self.total_akhir
+        if self.mode_edit:
+            db.edit_transaksi(no_ref, tanggal=tanggal, pasien=pasien, kredit=kredit, tanggal_tempo=tanggal_tempo, cara_bayar=cara_bayar, jenis_pelanggan=jenis_pelanggan, diskon_toko=diskon, ongkir=ongkir, total_penjualan=total, pembayaran=pembayaran, nama_kasir=nama_kasir)
+            db.hapus_data_transaksi_item(no_ref)
+        else:
+            db.new_transaksi(no_ref, tanggal, pasien, kredit, tanggal_tempo, cara_bayar,
+                            jenis_pelanggan, diskon, ongkir, total, pembayaran, nama_kasir)
+
+        for item in self.daftar_belanja:
+            db.new_transaksi_item(no_ref, item['nama'], item['satuan'], item['harga'],
+                                item['qty'], item['diskon'], item['total'])
+            
+        self.daftar_belanja.clear()
+        self.refresh_keranjang()
+        self.update_totals()
+        self.mode_edit = False
+        self.no_ref_sedang_diedit = None
+        self.reset_form_kasir()
+
+        self.tampilkan_popup("Transaksi berhasil disimpan!")
+        
+    def tampilkan_popup(self, pesan):
+        popup = Popup(
+            title="Info",
+            content=Label(text=pesan),
+            size_hint=(None, None),
+            size=(300, 150)
+        )
+        popup.open()
+
+    def load_transaksi(self, no_ref):
+        self.no_ref_sedang_diedit = no_ref
+        self.mode_edit = True
+        db = MDApp.get_running_app().db
+        transaksi = db.get_transaksi_by_no_ref(no_ref)
+        print(transaksi)
+        if not transaksi:
+            self.tampilkan_popup("Transaksi tidak ditemukan")
+            return
+
+        self.ids.label_nama_pasien.text = transaksi[2]
+        self.ids.jenis_pelanggan_spinner.text = str(transaksi[6])
+        self.is_kredit = transaksi[3] == 1
+        self.ids.toggle_kredit.state = 'down' if self.is_kredit else 'normal'
+        self.ids.input_tanggal_tempo.text = transaksi[4] or ''
+        self.ids.cara_bayar.text = transaksi[5]
+        self.ids.diskon_rp.text = str(int(transaksi[7]))
+        self.ids.diskon_persen.text = ''
+        self.ids.ongkir_input.text = str(int(transaksi[8]))
+        self.ids.uang_pelanggan_input.text = str(int(transaksi[10]))
+        item_list = db.get_transaksi_item_by_no_ref(no_ref)
+        self.daftar_belanja.clear()
+        for item in item_list:
+            self.daftar_belanja.append({
+                'nama': item[2],
+                'satuan': item[3],
+                'harga': int(item[4]),
+                'qty': int(item[5]),
+                'diskon': int(item[6]),
+                'total': int(item[7]),
+            })
+
+        self.refresh_keranjang()
+        self.update_totals()
+
+    def reset_form_kasir(self):
+        if not self.mode_edit:
+            self.no_ref_sedang_diedit = None
+
+        self.ids.label_nama_pasien.text = "Umum"
+        self.ids.input_tanggal_tempo.text = ''
+        self.ids.jenis_pelanggan_spinner.text = 'Umum'
+        self.ids.diskon_rp.text = ''
+        self.ids.diskon_persen.text = ''
+        self.ids.ongkir_input.text = ''
+        self.ids.uang_pelanggan_input.text = ''
+        self.ids.kembalian_label.text = "Kembalian     : Rp.0"
+        self.ids.total_setelah_diskon.text = "Total Setelah Diskon = Rp.0"
+        self.ids.total_setelah_ongkir.text = "Total Setelah Ongkir = Rp.0"
+        self.ids.cara_bayar.text = "Tunai"
+        self.is_kredit = False
+        self.ids.input_tanggal_tempo.disabled = True
+        self.daftar_belanja.clear()
+        self.refresh_keranjang()
+        self.total_akhir = 0
+        self.kembalian = 0
+        self.mode_edit = False
+        self.update_totals()
+        
 class KeranjangItem(BoxLayout):
     index = NumericProperty()
     nama = StringProperty()
@@ -1534,7 +1706,7 @@ class KeranjangItem(BoxLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._update_scheduled = False  # ✅ inisialisasi aman di sini
+        self._update_scheduled = False
 
     def _do_update(self, *args):
         app = MDApp.get_running_app()
@@ -1544,18 +1716,59 @@ class KeranjangItem(BoxLayout):
 
     def on_qty_changed(self, qty_text):
         qty_text = qty_text.strip()
-        self.qty = int(qty_text) if qty_text.isdigit() else 1  # default 1 jika kosong atau tidak valid
+        self.qty = int(qty_text) if qty_text.isdigit() else 1
         if not self._update_scheduled:
             Clock.schedule_once(self._do_update, 0)
             self._update_scheduled = True
 
     def on_diskon_changed(self, diskon_text):
         diskon_text = diskon_text.strip()
-        self.diskon = int(diskon_text) if diskon_text.isdigit() else 0  # default 0 jika kosong atau tidak valid
+        self.diskon = int(diskon_text) if diskon_text.isdigit() else 0
         if not self._update_scheduled:
             Clock.schedule_once(self._do_update, 0)
             self._update_scheduled = True
 
+class RowRiwayat(GridLayout):
+    tanggal = StringProperty()
+    no_ref = StringProperty()
+    pasien = StringProperty()
+    kredit = StringProperty()
+    tempo = StringProperty()
+    cara_bayar = StringProperty()
+    harga = StringProperty()
+    total = StringProperty()
+    kasir = StringProperty()
+
+class RiwayatTransaksi(Screen):
+    def muat_riwayat_transaksi(self):
+        db = MDApp.get_running_app().db
+        semua = db.get_all_transaksi()
+        rv_data = []
+
+        for tr in semua:
+            tanggal = tr[1]
+            no_ref = tr[0]
+            pasien = tr[2]
+            kredit = str(tr[3])
+            tempo = tr[4] or '-'
+            cara_bayar = tr[5]
+            harga = f"Rp{int(tr[9]):,}".replace(",", ".")
+            total = f"Rp{int(tr[10]):,}".replace(",", ".")
+            kasir = tr[11]
+
+            rv_data.append({
+                'tanggal': tanggal,
+                'no_ref': no_ref,
+                'pasien': pasien,
+                'kredit': kredit,
+                'tempo': tempo,
+                'cara_bayar': cara_bayar,
+                'harga': harga,
+                'total': total,
+                'kasir': kasir
+            })
+
+        self.ids.rv_riwayat.data = rv_data
 
 #---------------------------------------------------------------------------------------------#
 
@@ -1567,6 +1780,7 @@ class WindowsManager(ScreenManager):
 class DookaApp(MDApp):
     def build(self):
         Window.size = (1024, 800)
+        Window.set_icon("assets\image\DOOKA_Logo_besar.png")
         self.db = DatabaseObat("database/dooka_user.db")
 
         if not SessionCache.get_data_obat():
