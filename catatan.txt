@@ -1,8 +1,10 @@
+(Solved)
 A. sudah ketemu kode golongannya jadi kesalahannya pada spinner diganti menjadi dropdown menurut kivymd
 
+(Solved: tidak menggunakan MDDatatable namunmembuat tabel sendiri)
 B. ada beberapa hal yang harus diperhatikan dalam tabel view barang terutama MDDatatable yang pagination untuk mengurutkan dari id atau nama atau lainnya
 
-
+(Solved: tidak menggunakan MDDatatable namunmembuat tabel sendiri)
 C. ada permasalahan di kivy MD yang mana didalam librarynya
     1. datatable dan juga MDdropdownmenu, apabila pakai versi 1.2 itu ada warning karena di versi kivymd terbaru sudah tidak digunakan
     2. apabila menggunakan versi terbaru dari kivyMD ada seperti 2 library itu tidak ada pengganti lainnya yang cocok entah itu MDmenu ataupun recycleview
@@ -22,7 +24,7 @@ E. ada eror didalam hapus, untuk checklist erornya tidak mau ngecheck padahal su
 (solved) : saya menghapus tombol kembali agar orang hanya bisa simpan dan auto kembali, alih alih menggunakan tombol kembali
 F. sama seperti eror diatas namun ini untuk edit
     
-
+(Solved)
 G. ada eror didalam edit data obat, yang mana data untuk golongan dan pajak tidak dapat keluar saat tombol edit ditekan jadi tiap kali user mau edit obat, dia harus memilih golongan dan pajak terus menerus setiap kali edit
 
 
@@ -41,10 +43,12 @@ I. ada eror pada saat masuk kedalam data golongan, dari data obat lalu kembali l
 (solved): menggunakan loading dengan cara 2 thread dan sampai saat ini tidak ada eror sama sekali
 J. eror yang sama seperti diatas yakni list out of range dan tidak tahu penyebab utamanya apa namun untuk sekarang masih bisa diredam
 
-
+(Solved)
 K. seperti eror D, namun sepertinya agak teredam karena fitur loading, menggunakan 2 thread
 
+(Solved)
 L. tadi sempat muncul kembali eror list out of range pada saat membuka tabel data pajak
+
 
 M. Membuat kasir
     1. membuat tampilan ui
@@ -52,3 +56,5 @@ M. Membuat kasir
     3. membuat search bar yang bisa di klik dengan cara di pop up setelah itu dimasukkan ke daftar belanja setelah di klik
     4. membenarkan pritilan kecil seperti harga yang di format seperti rupiah dan membuatkan tiap 500 terdekat
     5. membuat dropdown yang ada pilihan karyawan dll untuk margin harga
+
+N. Memperbarui Tabel dari MDDatatable ke tabel manual dan sudah ada checkboxnya, dan seluruh fungsi telah berjalan dengan bagus dan tidak ada kendala 
