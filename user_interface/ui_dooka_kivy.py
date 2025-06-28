@@ -1,5 +1,5 @@
 # Built-in modules
-import re, time, threading
+import re
 from datetime import datetime
 
 # Local modules
@@ -7,12 +7,10 @@ from database.db import DatabaseObat
 
 # KivyMD modules
 from kivymd.app import MDApp
-from kivymd.uix.datatables import MDDataTable
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.toast import toast
-from kivymd.uix.spinner import MDSpinner
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
@@ -1263,24 +1261,29 @@ class Kasir(Screen):
 
     def update_totals(self):
         total_belanja = sum(item['total'] for item in self.daftar_belanja)
-        
+        diskon_id = self.get_digits_only(self.ids.diskon_rp.text)
+        ongkir_id = self.get_digits_only(self.ids.ongkir_input.text)
+        uang_pelanggan_id = self.get_digits_only(self.ids.uang_pelanggan_input.text)
         total_setelah_diskon = total_belanja
 
-        if self.ids.diskon_rp.text:
+        if diskon_id:
             try:
-                total_setelah_diskon = total_belanja - int(self.ids.diskon_rp.text)
+                total_setelah_diskon = total_belanja - int(diskon_id)
             except ValueError:
                 total_setelah_diskon = 0
 
         elif self.ids.diskon_persen.text:
             try:
                 persen = int(self.ids.diskon_persen.text)
+                if persen > 100:
+                    persen = 100
+                    self.ids.diskon_persen.text = '100'
                 total_setelah_diskon = total_belanja * (1 - (persen / 100.0))
             except ValueError:
                 total_setelah_diskon = 0
 
         try:
-            ongkir = int(self.ids.ongkir_input.text) if self.ids.ongkir_input.text else 0
+            ongkir = int(ongkir_id) if ongkir_id else 0
         except ValueError:
             ongkir = 0
             
@@ -1291,13 +1294,32 @@ class Kasir(Screen):
         self.ids.total_setelah_ongkir.text = "Total Setelah Ongkir = Rp{:,.0f}".format(total_setelah_ongkir).replace(',', '.')
 
         try:
-            uang_pelanggan = int(self.ids.uang_pelanggan_input.text)
+            uang_pelanggan = int(uang_pelanggan_id) if uang_pelanggan_id else 0
             kembalian = uang_pelanggan - total_setelah_ongkir
             self.kembalian = max(0, kembalian)
             self.ids.kembalian_label.text = "Kembalian     : Rp{:,.0f}".format(self.kembalian).replace(',', '.')
         except (ValueError, AttributeError):
             self.kembalian = 0
             self.ids.kembalian_label.text = "Kembalian     : Rp.0"
+
+    def get_digits_only(self, text):
+        digits = ''.join(filter(str.isdigit, text))
+        return int(digits) if digits else 0
+
+    def intonly_format(self, field_id):
+        field = self.ids[field_id]
+
+        def _sanitize(dt):
+            digits_only = ''.join(filter(str.isdigit, field.text))
+            if not digits_only:
+                field.text = ''
+                return
+            formatted = "{:,}".format(int(digits_only)).replace(",", ".")
+            if field.text != formatted:
+                field.text = formatted
+                Clock.schedule_once(lambda dt2: setattr(field, 'cursor', (len(formatted), 0)), 0)
+
+        Clock.schedule_once(_sanitize, 0)
 
     def update_time(self, dt):
         current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
@@ -1347,7 +1369,7 @@ class Kasir(Screen):
             harga = int(round(item['harga'] / 500.0) * 500)
             qty = int(qty_str.strip()) if qty_str.strip().isdigit() else 1
             diskon = int(diskon_str.strip()) if diskon_str.strip().isdigit() else 0
-            qty = max(qty, 1)
+            qty = max(min(qty, 999), 1)
             diskon = max(min(diskon, 100), 0)
             total = round((harga * qty) * (1 - (diskon / 100)) / 500.0) * 500
             self.daftar_belanja[index]['qty'] = qty
@@ -1472,7 +1494,7 @@ class Kasir(Screen):
         except ValueError:
             ongkir = 0
         try:
-            pembayaran = int(self.ids.uang_pelanggan_input.text)
+            pembayaran = int(self.get_digits_only(self.ids.uang_pelanggan_input.text))
         except ValueError:
             pembayaran = 0
         total = self.total_akhir

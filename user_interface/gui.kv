@@ -1444,9 +1444,11 @@ WindowsManager:
                     TextInput:
                         id: diskon_rp
                         multiline: False
-                        input_filter: 'int'
+                        input_filter: None
                         disabled: root.ids.diskon_persen.text != ''
-                        on_text: root.update_totals()
+                        on_text: 
+                            root.update_totals()
+                            root.intonly_format("diskon_rp")
 
                     Label:
                         text: 'Diskon Apotek (%)'
@@ -1466,8 +1468,10 @@ WindowsManager:
                     TextInput:
                         id: ongkir_input
                         multiline: False
-                        input_filter: 'int'
-                        on_text: root.update_totals()
+                        input_filter: None
+                        on_text:
+                            root.update_totals()
+                            root.intonly_format("ongkir_input")
 
 
                 # Cara Bayar (Pop-up trigger)
@@ -1494,8 +1498,10 @@ WindowsManager:
                     TextInput:
                         id: uang_pelanggan_input
                         multiline: False
-                        input_filter: 'int'
-                        on_text: root.update_totals()
+                        input_filter: None
+                        on_text:
+                            root.update_totals()
+                            root.intonly_format("uang_pelanggan_input")
                         on_text_validate: root.simpan_transaksi()
 
                 # Ongkir
