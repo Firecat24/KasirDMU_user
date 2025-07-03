@@ -1,4 +1,4 @@
-import sqlite3
+import sqlite3, datetime
 
 class DatabaseObat:
     def __init__(self, nama_database):
@@ -75,7 +75,10 @@ class DatabaseObat:
                 total_penjualan REAL,
                 pembayaran REAL,
                 nama_kasir TEXT,
+                status TEXT DEFAULT 'normal',
+                last_updated TEXT,
                 FOREIGN KEY (id_pelanggan) REFERENCES data_pelanggan(id_pelanggan)
+                
             )
         """)
         self.kursor.execute("""
@@ -362,12 +365,16 @@ class DatabaseObat:
 
 
     def new_transaksi(self, no_ref, tanggal, id_pelanggan, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir):
+        status = "normal"
+        last_updated = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.kursor.execute("""
-            INSERT INTO transaksi (no_ref, tanggal, id_pelanggan, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir)
-            VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (no_ref, tanggal, id_pelanggan, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir))
+            INSERT INTO transaksi (no_ref, tanggal, id_pelanggan, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir, status, last_updated)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (no_ref, tanggal, id_pelanggan, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir, status, last_updated))
 
     def edit_transaksi(self, no_ref, tanggal=None, id_pelanggan=None, kredit=None, tanggal_tempo=None, cara_bayar=None, jenis_pelanggan=None, diskon_toko=None, ongkir=None, total_penjualan=None, pembayaran=None, nama_kasir=None):
+        last_updated = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        status = "diedit"
         query = "UPDATE transaksi SET "
         params = []
 
@@ -402,27 +409,25 @@ class DatabaseObat:
             query += "pembayaran=?, "
             params.append(pembayaran)
         if nama_kasir is not None:
-            query += "nama_kasir=? "
+            query += "nama_kasir=?, "
             params.append(nama_kasir)
 
+        query += "status=?, "
+        params.append(status)
+        query += "last_updated=? "
+        params.append(last_updated)
         query = query.rstrip(", ") + " WHERE no_ref=?"
         params.append(no_ref)
         self.kursor.execute(query, tuple(params))
         self.koneksi.commit()
 
     def hapus_transaksi(self, no_ref):
-        try:
-            self.kursor.execute("DELETE FROM transaksi WHERE no_ref=?", (no_ref,))
-            self.koneksi.commit()
-
-            if self.kursor.rowcount > 0:
-                return True
-            else:
-                return False
-                
-        except Exception as e:
-            print(f"Error deleting transaction with reference {no_ref}: {e}")
-            return False
+        last_updated = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.kursor.execute(
+            "UPDATE transaksi SET status = ?, last_updated = ? WHERE no_ref = ?",
+            ('dihapus', last_updated , no_ref)
+        )
+        self.koneksi.commit()
         
     def get_all_transaksi(self):
         self.kursor.execute("SELECT * FROM transaksi")

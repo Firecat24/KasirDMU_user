@@ -1607,7 +1607,7 @@ WindowsManager:
                 on_release: root.muat_riwayat_transaksi()
 
         GridLayout:
-            cols: 9
+            cols: 12
             size_hint_y: None
             height: 30
             spacing: 5
@@ -1630,6 +1630,10 @@ WindowsManager:
                 text: 'Total'
             Label: 
                 text: 'Kasir'
+            Label: 
+                text: 'Status'
+            Label: 
+                text: 'Aksi'
 
         RecycleView:
             id: rv_riwayat
@@ -1647,7 +1651,7 @@ WindowsManager:
 
 
 <RowRiwayat>:
-    cols: 10
+    cols: 12
     size_hint_y: None
     height: 30
     spacing: 5
@@ -1670,13 +1674,26 @@ WindowsManager:
         text: root.total
     Label: 
         text: root.kasir
+    Label: 
+        text: root.status
     Button:
         text: 'Lihat'
         size_hint_x: None
-        width: 40
+        width: 50
+        disabled: root.status == 'dihapus'
+        opacity: 0 if root.status == 'dihapus' else 1
         on_release:
             app.root.get_screen('Kasir').load_transaksi(root.no_ref)
             app.root.current = 'Kasir'
+    Button:
+        text: 'Hapus'
+        size_hint_x: None
+        width: 40
+        disabled: root.status == 'dihapus'
+        opacity: 0 if root.status == 'dihapus' else 1
+        on_release:
+            app.root.get_screen('Kasir').konfirmasi_hapus_transaksi(root.no_ref)
+
 <PopupLayout@BoxLayout>:
     orientation: 'vertical'
     spacing: 10

@@ -1595,6 +1595,31 @@ class Kasir(Screen):
         self.kembalian = 0
         self.mode_edit = False
         self.update_totals()
+
+    def hapus_transaksi(self, no_ref):
+        db = MDApp.get_running_app().db
+        db.hapus_transaksi(no_ref)
+        toast(f"Transaksi {no_ref} telah dihapus.")
+        Clock.schedule_once(lambda dt: self.manager.get_screen('riwayat_transaksi').muat_riwayat_transaksi(), 0.2)
+        self.manager.current = 'riwayat_transaksi'
+
+    def konfirmasi_hapus_transaksi(self, no_ref):
+        layout = BoxLayout(orientation='vertical', spacing=10, padding=20)
+        layout.add_widget(Label(text=f"Yakin ingin menghapus transaksi {no_ref}?", halign='center'))
+
+        tombol = BoxLayout(spacing=10, size_hint_y=None, height=40)
+        btn_ya = Button(text="Ya")
+        btn_tidak = Button(text="Tidak")
+        tombol.add_widget(btn_ya)
+        tombol.add_widget(btn_tidak)
+        layout.add_widget(tombol)
+
+        popup = Popup(title='Konfirmasi Hapus', content=layout, size_hint=(None, None), size=(400, 200), auto_dismiss=False)
+
+        btn_ya.bind(on_release=lambda *args: (self.hapus_transaksi(no_ref), popup.dismiss()))
+        btn_tidak.bind(on_release=popup.dismiss)
+
+        popup.open()
         
 class KeranjangItem(BoxLayout):
     index = NumericProperty()
@@ -1639,6 +1664,7 @@ class RowRiwayat(GridLayout):
     harga = StringProperty()
     total = StringProperty()
     kasir = StringProperty()
+    status = StringProperty()
 
 class RiwayatTransaksi(Screen):
     def muat_riwayat_transaksi(self):
@@ -1656,6 +1682,7 @@ class RiwayatTransaksi(Screen):
             harga = f"Rp{int(tr[9]):,}".replace(",", ".")
             total = f"Rp{int(tr[10]):,}".replace(",", ".")
             kasir = tr[11]
+            status = tr[12] if len(tr) > 12 else 'normal'
 
             rv_data.append({
                 'tanggal': tanggal,
@@ -1666,7 +1693,8 @@ class RiwayatTransaksi(Screen):
                 'cara_bayar': cara_bayar,
                 'harga': harga,
                 'total': total,
-                'kasir': kasir
+                'kasir': kasir,
+                'status': status
             })
 
         self.ids.rv_riwayat.data = rv_data
