@@ -1268,21 +1268,40 @@ WindowsManager:
                 padding_left: 10
 
                 TextInput:
-                    id: input_nama_pasien
+                    id: input_nama_pelanggan
                     font_size: 12
-                    hint_text: "Masukkan nama pasien"
+                    hint_text: "Masukkan nama pelanggan"
                     size_hint_x: None
-                    width: 150
+                    width: 200
                     multiline: False
                     on_text_validate:
-                        if self.text.strip(): root.cari_pasien(self.text.strip())
-                    on_focus: root.periksa_pasien_kosong(self)
+                        if self.text.strip(): root.cari_pelanggan(self.text.strip())
+                    on_focus: root.periksa_pelanggan_kosong(self)
 
                 Label:
-                    id: label_nama_pasien
-                    text: "Pasien Umum"
+                    id: label_nama_pelanggan
+                    text: "Pelanggan Umum"
                     size_hint_x: None
                     width: 250
+                    font_size: 12
+                    color: 0.2, 0.2, 0.2, 1
+                    canvas.before:
+                        Color:
+                            rgba: 0.95, 0.95, 0.95, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                        Color:
+                            rgba: 0, 0, 0, 1
+                        Line:
+                            rectangle: (*self.pos, *self.size)
+                            width: 1
+
+                Label:
+                    id: label_poin_pelanggan
+                    text: "Poin Pelanggan"
+                    size_hint_x: None
+                    width: 100
                     font_size: 12
                     color: 0.2, 0.2, 0.2, 1
                     canvas.before:
@@ -1598,7 +1617,7 @@ WindowsManager:
             Label: 
                 text: 'No Ref'
             Label: 
-                text: 'Pasien'
+                text: 'pelanggan'
             Label: 
                 text: 'Kredit'
             Label: 
@@ -1628,7 +1647,7 @@ WindowsManager:
 
 
 <RowRiwayat>:
-    cols: 9
+    cols: 10
     size_hint_y: None
     height: 30
     spacing: 5
@@ -1638,7 +1657,7 @@ WindowsManager:
     Label: 
         text: root.no_ref
     Label: 
-        text: root.pasien
+        text: root.pelanggan
     Label: 
         text: 'Ya' if root.kredit == '1' else 'Tidak'
     Label: 
@@ -1669,7 +1688,7 @@ WindowsManager:
             size_hint_y: None
             height: self.minimum_height
 
-<PopupLayoutPasien@BoxLayout>:
+<PopupLayoutPelanggan@BoxLayout>:
     orientation: 'vertical'
     spacing: 10
     padding: 10
@@ -1681,7 +1700,7 @@ WindowsManager:
             height: self.minimum_height
 
     Button:
-        text: "Ke Halaman Pasien"
+        text: "Ke Halaman Pelanggan"
         size_hint_y: None
         height: 40
         # on_release: app.root.current = 'halaman_pasien'  # atau sesuai nama Screen

@@ -65,7 +65,7 @@ class DatabaseObat:
             CREATE TABLE IF NOT EXISTS transaksi (
                 no_ref TEXT PRIMARY KEY,
                 tanggal TEXT NOT NULL,
-                pasien TEXT DEFAULT 'Umum',
+                id_pelanggan INTEGER,
                 kredit INTEGER DEFAULT 0,
                 tanggal_tempo TEXT,
                 cara_bayar TEXT,
@@ -74,7 +74,8 @@ class DatabaseObat:
                 ongkir REAL,
                 total_penjualan REAL,
                 pembayaran REAL,
-                nama_kasir TEXT
+                nama_kasir TEXT,
+                FOREIGN KEY (id_pelanggan) REFERENCES data_pelanggan(id_pelanggan)
             )
         """)
         self.kursor.execute("""
@@ -91,11 +92,12 @@ class DatabaseObat:
             )
         """)
         self.kursor.execute("""
-            CREATE TABLE IF NOT EXISTS data_pasien (
-                id_pasien INTEGER PRIMARY KEY AUTOINCREMENT,
-                nama_pasien TEXT NOT NULL,
+            CREATE TABLE IF NOT EXISTS data_pelanggan (
+                id_pelanggan INTEGER PRIMARY KEY AUTOINCREMENT,
+                nama_pelanggan TEXT NOT NULL,
                 nomor_telfon TEXT NOT NULL,
-                alamat TEXT NOT NULL
+                alamat TEXT NOT NULL,
+                poin INTEGER DEFAULT 0
             )
         """)
         self.koneksi.commit()
@@ -359,22 +361,22 @@ class DatabaseObat:
 # ==================== TRANSAKSI ====================
 
 
-    def new_transaksi(self, no_ref, tanggal, pasien, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir):
+    def new_transaksi(self, no_ref, tanggal, id_pelanggan, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir):
         self.kursor.execute("""
-            INSERT INTO transaksi (no_ref, tanggal, pasien, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir)
+            INSERT INTO transaksi (no_ref, tanggal, id_pelanggan, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir)
             VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (no_ref, tanggal, pasien, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir))
+        """, (no_ref, tanggal, id_pelanggan, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir))
 
-    def edit_transaksi(self, no_ref, tanggal=None, pasien=None, kredit=None, tanggal_tempo=None, cara_bayar=None, jenis_pelanggan=None, diskon_toko=None, ongkir=None, total_penjualan=None, pembayaran=None, nama_kasir=None):
+    def edit_transaksi(self, no_ref, tanggal=None, id_pelanggan=None, kredit=None, tanggal_tempo=None, cara_bayar=None, jenis_pelanggan=None, diskon_toko=None, ongkir=None, total_penjualan=None, pembayaran=None, nama_kasir=None):
         query = "UPDATE transaksi SET "
         params = []
 
         if tanggal is not None:
             query += "tanggal=?, "
             params.append(tanggal)
-        if pasien is not None:
-            query += "pasien=?, "
-            params.append(pasien)
+        if id_pelanggan is not None:
+            query += "id_pelanggan=?, "
+            params.append(id_pelanggan)
         if kredit is not None:
             query += "kredit=?, "
             params.append(kredit)
@@ -501,37 +503,40 @@ class DatabaseObat:
         return self.kursor.fetchall()
 
 
-# ==================== DATA PASIEN ====================
+# ==================== DATA PELANGGAN ====================
 
 
-    def tambah_pasien(self, nama_pasien, nomor_telfon, alamat):
+    def tambah_pelanggan(self, nama_pelanggan, nomor_telfon, alamat):
         self.kursor.execute("""
-            INSERT INTO data_pasien (nama_pasien, nomor_telfon, alamat) VALUES (?, ?, ?)
-        """, (nama_pasien, nomor_telfon, alamat))
+            INSERT INTO data_pelanggan (nama_pelanggan, nomor_telfon, alamat) VALUES (?, ?, ?)
+        """, (nama_pelanggan, nomor_telfon, alamat))
         self.koneksi.commit()
 
-    def edit_pasien(self, id_pasien, nama_pasien=None, nomor_telfon=None, alamat=None):
-        query = "UPDATE data_pasien SET "
+    def edit_pelanggan(self, id_pelanggan, nama_pelanggan=None, nomor_telfon=None, alamat=None, poin=None):
+        query = "UPDATE data_pelanggan SET "
         params = []
 
-        if nama_pasien is not None:
-            query += "nama_pasien=?, "
-            params.append(nama_pasien)
+        if nama_pelanggan is not None:
+            query += "nama_pelanggan=?, "
+            params.append(nama_pelanggan)
         if nomor_telfon is not None:
             query += "nomor_telfon=?, "
             params.append(nomor_telfon)
         if alamat is not None:
             query += "alamat=? "
             params.append(alamat)
+        if poin is not None:
+            query += "poin=? "
+            params.append(poin)
 
-        query = query.rstrip(", ") + " WHERE id_pasien=?"
-        params.append(id_pasien)
+        query = query.rstrip(", ") + " WHERE id_pelanggan=?"
+        params.append(id_pelanggan)
         self.kursor.execute(query, tuple(params))
         self.koneksi.commit()
     
-    def hapus_pasien(self, id_pasien):
+    def hapus_pelanggan(self, id_pelanggan):
         try:
-            self.kursor.execute("DELETE FROM data_pasien WHERE id_pasien=?", (id_pasien,))
+            self.kursor.execute("DELETE FROM data_pelanggan WHERE id_pelanggan=?", (id_pelanggan,))
             self.koneksi.commit()
 
             if self.kursor.rowcount > 0:
@@ -540,18 +545,35 @@ class DatabaseObat:
                 return False
                 
         except Exception as e:
-            print(f"Error deleting patient with ID {id_pasien}: {e}")
+            print(f"Error deleting patient with ID {id_pelanggan}: {e}")
             return False
     
-    def get_all_pasien(self):
-        self.kursor.execute("SELECT * FROM data_pasien")
+    def get_all_pelanggan(self):
+        self.kursor.execute("SELECT * FROM data_pelanggan")
         rows = self.kursor.fetchall()
         return [row[1:] for row in rows]
     
-    def search_data_pasien(self, keyword):
-        self.kursor.execute("SELECT * FROM data_pasien WHERE nama_pasien LIKE ?", ('%' + keyword + '%',))
+    def search_data_pelanggan(self, keyword):
+        self.kursor.execute("SELECT * FROM data_pelanggan WHERE nama_pelanggan LIKE ?", ('%' + keyword + '%',))
         return self.kursor.fetchall()
+    
+    def get_poin_pelanggan(self, nama_pelanggan):
+        self.kursor.execute("SELECT poin FROM data_pelanggan WHERE nama_pelanggan = ?", (nama_pelanggan,))
+        result = self.kursor.fetchone()
+        if result:
+            return result[0]
+        else:
+            return 0
 
+    def get_id_pelanggan(self, nama_pelanggan):
+        self.kursor.execute("SELECT id_pelanggan FROM data_pelanggan WHERE nama_pelanggan=?", (nama_pelanggan,))
+        result = self.kursor.fetchone()
+        return result[0] if result else None
+
+    def get_nama_pelanggan_by_id(self, id_pelanggan):
+        self.kursor.execute("SELECT nama_pelanggan FROM data_pelanggan WHERE id_pelanggan=?", (id_pelanggan,))
+        result = self.kursor.fetchone()
+        return result[0] if result else None
 
 # ==================== TUTUP DATABASE ====================
 

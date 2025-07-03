@@ -1242,6 +1242,7 @@ class Kasir(Screen):
     daftar_belanja = ListProperty()
     total_akhir = NumericProperty(0)
     kembalian = NumericProperty(0)
+    poin_pelanggan = NumericProperty(0)
     is_kredit = BooleanProperty(False)
 
     def __init__(self, **kwargs):
@@ -1433,38 +1434,40 @@ class Kasir(Screen):
 
         return f"{new_number:07d}"
     
-    def periksa_pasien_kosong(self, input_widget):
+    def periksa_pelanggan_kosong(self, input_widget):
         if not input_widget.focus and input_widget.text.strip() == "":
-            self.ids.label_nama_pasien.text = "Umum"
+            self.ids.label_nama_pelanggan.text = "Umum"
 
-    def cari_pasien(self, keyword):
-        hasil = MDApp.get_running_app().db.search_data_pasien(keyword)
+    def cari_pelanggan(self, keyword):
+        hasil = MDApp.get_running_app().db.search_data_pelanggan(keyword)
         if hasil:
-            self.tampilkan_popup_pasien(hasil)
+            self.tampilkan_popup_pelanggan(hasil)
         else:
-            self.tampilkan_popup("Pasien tidak ditemukan")
+            self.tampilkan_popup("pelanggan tidak ditemukan")
 
-    def tampilkan_popup_pasien(self, daftar_pasien):
-        layout = Factory.PopupLayoutPasien()
+    def tampilkan_popup_pelanggan(self, daftar_pelanggan):
+        layout = Factory.PopupLayoutPelanggan()
         tombol_layout = layout.ids.tombol_layout
 
         popup = Popup(
-            title="Pilih Pasien",
+            title="Pilih PELANGGAN",
             content=layout,
             size_hint=(0.9, 0.8),
             auto_dismiss=True
         )
-        for pasien in daftar_pasien:
-            _, nama, no_telp, alamat = pasien
+        for pelanggan in daftar_pelanggan:
+            _, nama, no_telp, alamat, poin = pelanggan
+            self.poin_pelanggan = poin
             btn = Button(
-                text=f"{nama} ({no_telp}) - {alamat}",
+                text=f"{nama} ({no_telp}) - {alamat} - Poin: {poin}",
                 size_hint_y=None,
                 height=40
             )
 
-            btn.bind(on_release=lambda btn, data=pasien: (
-                setattr(self.ids.label_nama_pasien, 'text', data[1]),
-                setattr(self.ids.input_nama_pasien, 'text', ''),
+            btn.bind(on_release=lambda btn, data=pelanggan: (
+                setattr(self.ids.label_nama_pelanggan, 'text', data[1]),
+                setattr(self.ids.input_nama_pelanggan, 'text', ''),
+                setattr(self.ids.label_poin_pelanggan, 'text', f"Poin: {self.poin_pelanggan}"),
                 popup.dismiss()
             ))
             tombol_layout.add_widget(btn)
@@ -1477,7 +1480,8 @@ class Kasir(Screen):
             no_ref = self.generate_no_ref()
         else:
             no_ref = self.no_ref_sedang_diedit
-        pasien = self.ids.label_nama_pasien.text.strip() or "Umum"
+        nama_pelanggan = self.ids.label_nama_pelanggan.text.strip()
+        pelanggan = db.get_id_pelanggan(nama_pelanggan) if nama_pelanggan != "Umum" else None
         kredit = 1 if self.is_kredit else 0
         tanggal_tempo = self.ids.input_tanggal_tempo.text if kredit else None
         cara_bayar = self.ids.cara_bayar.text
@@ -1499,10 +1503,10 @@ class Kasir(Screen):
             pembayaran = 0
         total = self.total_akhir
         if self.mode_edit:
-            db.edit_transaksi(no_ref, tanggal=tanggal, pasien=pasien, kredit=kredit, tanggal_tempo=tanggal_tempo, cara_bayar=cara_bayar, jenis_pelanggan=jenis_pelanggan, diskon_toko=diskon, ongkir=ongkir, total_penjualan=total, pembayaran=pembayaran, nama_kasir=nama_kasir)
+            db.edit_transaksi(no_ref, tanggal=tanggal, id_pelanggan=pelanggan, kredit=kredit, tanggal_tempo=tanggal_tempo, cara_bayar=cara_bayar, jenis_pelanggan=jenis_pelanggan, diskon_toko=diskon, ongkir=ongkir, total_penjualan=total, pembayaran=pembayaran, nama_kasir=nama_kasir)
             db.hapus_data_transaksi_item(no_ref)
         else:
-            db.new_transaksi(no_ref, tanggal, pasien, kredit, tanggal_tempo, cara_bayar,
+            db.new_transaksi(no_ref, tanggal, pelanggan, kredit, tanggal_tempo, cara_bayar,
                             jenis_pelanggan, diskon, ongkir, total, pembayaran, nama_kasir)
 
         for item in self.daftar_belanja:
@@ -1536,7 +1540,13 @@ class Kasir(Screen):
             self.tampilkan_popup("Transaksi tidak ditemukan")
             return
 
-        self.ids.label_nama_pasien.text = transaksi[2]
+        nama_pelanggan = db.get_nama_pelanggan_by_id(transaksi[2]) if transaksi[2] else "Umum"
+        self.ids.label_nama_pelanggan.text = nama_pelanggan
+        if nama_pelanggan != "Umum":
+            self.ids.label_poin_pelanggan.text = f"Poin: {db.get_poin_pelanggan(nama_pelanggan)}"
+        else:
+            self.ids.label_poin_pelanggan.text = "Poin: 0"
+
         self.ids.jenis_pelanggan_spinner.text = str(transaksi[6])
         self.is_kredit = transaksi[3] == 1
         self.ids.toggle_kredit.state = 'down' if self.is_kredit else 'normal'
@@ -1565,7 +1575,8 @@ class Kasir(Screen):
         if not self.mode_edit:
             self.no_ref_sedang_diedit = None
 
-        self.ids.label_nama_pasien.text = "Umum"
+        self.ids.label_nama_pelanggan.text = "Umum"
+        self.ids.label_poin_pelanggan.text = "Poin: 0"
         self.ids.input_tanggal_tempo.text = ''
         self.ids.jenis_pelanggan_spinner.text = 'Umum'
         self.ids.diskon_rp.text = ''
@@ -1621,7 +1632,7 @@ class KeranjangItem(BoxLayout):
 class RowRiwayat(GridLayout):
     tanggal = StringProperty()
     no_ref = StringProperty()
-    pasien = StringProperty()
+    pelanggan = StringProperty()
     kredit = StringProperty()
     tempo = StringProperty()
     cara_bayar = StringProperty()
@@ -1638,7 +1649,7 @@ class RiwayatTransaksi(Screen):
         for tr in semua:
             tanggal = tr[1]
             no_ref = tr[0]
-            pasien = tr[2]
+            pelanggan = db.get_nama_pelanggan_by_id(tr[2]) or "Umum"
             kredit = str(tr[3])
             tempo = tr[4] or '-'
             cara_bayar = tr[5]
@@ -1649,7 +1660,7 @@ class RiwayatTransaksi(Screen):
             rv_data.append({
                 'tanggal': tanggal,
                 'no_ref': no_ref,
-                'pasien': pasien,
+                'pelanggan': pelanggan,
                 'kredit': kredit,
                 'tempo': tempo,
                 'cara_bayar': cara_bayar,
@@ -1669,7 +1680,7 @@ class WindowsManager(ScreenManager):
 
 class DookaApp(MDApp):
     def build(self):
-        Window.size = (1024, 800)
+        Window.size = (1200, 800)
         Window.set_icon("assets\image\DOOKA_Logo_besar.png")
         self.db = DatabaseObat("database/dooka_user.db")
 
