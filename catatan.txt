@@ -60,3 +60,7 @@ M. Membuat kasir
 N. Memperbarui Tabel dari MDDatatable ke tabel manual dan sudah ada checkboxnya, dan seluruh fungsi telah berjalan dengan bagus dan tidak ada kendala
 
 O. Memperbaiki format input dari 10000 menjadi 10.000 di kasir dan juga memperbaiki format qty di keranjang belanja, namun belum ada perubahan didalam format input text obat golongan pajak
+
+terkini(belum disave didalam github karena masih belum done semuanya)
+P. Perbaikan didalam golongan dan pajak didalam edit obat, dan sudah tersinkron, permasalahannya dikarenakan belum ter set didalam global variabel didalam class tersebut, baik golongan, maupun pajak, 
+    selanjutnya diharapkan untuk melanjutkan tampilan didalam form nya

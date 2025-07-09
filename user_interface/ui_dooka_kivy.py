@@ -266,8 +266,17 @@ class InsertObat(Screen):
 
         self.data_pajak = MDApp.get_running_app().db.get_all_pajak()
         self.pajak_nama_list = [jenis for jenis, _ in self.data_pajak]
+        Clock.schedule_once(self.build_dropdowns, 0.1)
 
-    def on_kv_post(self, base_widget):
+    def build_dropdowns(self, dt):
+        # Pastikan ids sudah siap
+        if not all([
+            hasattr(self.ids, 'dropdown_golongan'),
+            hasattr(self.ids, 'dropdown_pajak')
+        ]):
+            print("Dropdown belum siap!")
+            return
+
         menu_items_golongan = [
             {
                 "text": nama,
@@ -281,12 +290,12 @@ class InsertObat(Screen):
             caller=self.ids.dropdown_golongan,
             items=menu_items_golongan,
             max_height=dp(200),
-            width=dp(150)
+            width=dp(200),
         )
 
         menu_items_pajak = [
             {
-                "text": str(nama),
+                "text": nama,
                 "viewclass": "OneLineListItem",
                 "on_release": lambda x=nama: self.set_selected_pajak(x),
             }
@@ -297,7 +306,7 @@ class InsertObat(Screen):
             caller=self.ids.dropdown_pajak,
             items=menu_items_pajak,
             max_height=dp(200),
-            width=dp(150)
+            width=dp(200),
         )
 
     def set_selected_golongan(self, selected_nama):
@@ -424,6 +433,8 @@ class InsertObat(Screen):
         dialog.open()
 
 class EditObat(Screen):
+    kode_golongan_nama = StringProperty("Pilih Golongan")
+    kode_pajak_nama = StringProperty("Pilih Pajak")
     kode_golongan_aktif = StringProperty("")
     golongan_nama_list = ListProperty([])
     kode_pajak_aktif = StringProperty("")
@@ -437,6 +448,7 @@ class EditObat(Screen):
 
         self.data_pajak = MDApp.get_running_app().db.get_all_pajak()
         self.pajak_nama_list = [jenis for jenis, _ in self.data_pajak]
+        Clock.schedule_once(self.build_dropdowns, 0.1)
 
     def on_pre_enter(self, *args):
         Clock.schedule_once(self.reset_scroll, 0.1)
@@ -444,7 +456,14 @@ class EditObat(Screen):
     def reset_scroll(self, dt):
         self.ids.scroll_edit.scroll_y = 1
 
-    def on_kv_post(self, base_widget):
+    def build_dropdowns(self, dt):
+        if not all([
+            hasattr(self.ids, 'dropdown_golongan_edit'),
+            hasattr(self.ids, 'dropdown_pajak_edit')
+        ]):
+            print("Dropdown belum siap!")
+            return
+
         menu_items_golongan = [
             {
                 "text": nama,
@@ -458,12 +477,12 @@ class EditObat(Screen):
             caller=self.ids.dropdown_golongan_edit,
             items=menu_items_golongan,
             max_height=dp(200),
-            width=dp(150)
+            width=dp(200),
         )
 
         menu_items_pajak = [
             {
-                "text": str(nama),
+                "text": nama,
                 "viewclass": "OneLineListItem",
                 "on_release": lambda x=nama: self.set_selected_pajak(x),
             }
@@ -474,7 +493,7 @@ class EditObat(Screen):
             caller=self.ids.dropdown_pajak_edit,
             items=menu_items_pajak,
             max_height=dp(200),
-            width=dp(150)
+            width=dp(200),
         )
 
     def bersihkan_field_insert_obat(self):
@@ -489,13 +508,12 @@ class EditObat(Screen):
             if text_input:
                 text_input.text = ""
 
-        self.ids.dropdown_golongan_edit.text = "Pilih Golongan"
-        self.ids.dropdown_pajak_edit.text = "Pilih Pajak"
         self.kode_golongan_aktif = ""
+        self.kode_golongan_nama = "Pilih Golongan"
         self.kode_pajak_aktif = ""
+        self.kode_pajak_nama = "Pilih Pajak"
 
     def isi_data_edit(self, data):
-        self.bersihkan_field_insert_obat()
         self.editing_plu = self._safe_get(data, 'plu')
         
         # Isi field teks
@@ -514,17 +532,24 @@ class EditObat(Screen):
         self._set_numeric_field('stok_min', data, 'stok_min')
         self._set_numeric_field('stok_max', data, 'stok_max')
 
-        # Handle dropdown golongan
-        self.kode_golongan_aktif = self._safe_get(data, 'kode_golongan')
+        self.kode_golongan_aktif = self._safe_get(data, 'kode_golongan') or self._safe_get(data, 'golongan')
         nama_golongan = self.get_nama_golongan(self.kode_golongan_aktif)
-        if hasattr(self.ids, 'dropdown_golongan'):
-            self.ids.dropdown_golongan_edit.text = nama_golongan if nama_golongan else "Pilih Golongan"
-        
-        # Handle dropdown pajak
+        self.kode_golongan_nama = nama_golongan or "Pilih Golongan"
+
         self.kode_pajak_aktif = self._safe_get(data, 'kode_pajak')
+        if not self.kode_pajak_aktif:
+            for nama, kode in self.data_pajak:
+                if nama == data.get("pajak"):
+                    self.kode_pajak_aktif = str(kode)
+                    break
+
         nama_pajak = self.get_nama_pajak(self.kode_pajak_aktif)
-        if hasattr(self.ids, 'dropdown_pajak'):
-            self.ids.dropdown_pajak_edit.text = str(nama_pajak) if nama_pajak else "Pilih Pajak"
+        self.kode_pajak_nama = nama_pajak or "Pilih Pajak"
+
+        print("Golongan aktif:", self.kode_golongan_aktif)
+        print("Nama golongan:", self.kode_golongan_nama)
+        print("Pajak aktif:", self.kode_pajak_aktif)
+        print("Nama pajak:", self.kode_pajak_nama)
 
     def _safe_get(self, data, key, default=''):
         """Safe get from dictionary with default empty string"""
@@ -542,24 +567,26 @@ class EditObat(Screen):
             self.ids[field_id].text = str(value) if value is not None else ""
 
     def get_nama_golongan(self, kode):
+        kode = str(kode).strip()
         for k, nama in self.data_golongan:
-            if str(k) == str(kode):
+            if str(k).strip() == kode:
                 return nama
         return None
 
     def get_nama_pajak(self, kode):
-        for jenis, k in self.data_pajak:
-            if str(k) == str(kode):
-                return jenis
+        kode = str(kode).strip()
+        for nama, k in self.data_pajak:
+            if str(k).strip() == kode:
+                return nama
         return None
 
     def set_selected_golongan(self, selected_nama):
-        self.ids.dropdown_golongan_edit.text = selected_nama
+        self.kode_golongan_nama = selected_nama
         self.menu_golongan.dismiss()
         self.update_kode_golongan(selected_nama)
 
     def set_selected_pajak(self, selected_nama):
-        self.ids.dropdown_pajak_edit.text = str(selected_nama)
+        self.kode_pajak_nama = selected_nama
         self.menu_pajak.dismiss()
         self.update_kode_pajak(selected_nama)
 

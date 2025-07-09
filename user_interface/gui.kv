@@ -305,16 +305,16 @@ WindowsManager:
                     hint_text: "Harga Beli"
                     input_filter: "float"
 
-                MDRaisedButton:
+                MDTextField:
                     id: dropdown_golongan
-                    text: "Pilih Golongan"
-                    pos_hint: {"center_x": 0.5}
-                    on_release: root.menu_golongan.open()
-
-                MDLabel:
-                    id: label_kode_golongan
+                    hint_text: "Pilih Golongan"
                     text: root.kode_golongan_aktif
-                    halign: "center"
+                    readonly: True
+                    icon_right: "menu-down"
+                    mode: "rectangle"
+                    on_focus: if self.focus: root.menu_golongan.open()
+                    size_hint_x: 0.8
+                    pos_hint: {"center_x": 0.5}
 
                 MDTextField:
                     id: rak
@@ -356,15 +356,16 @@ WindowsManager:
                     hint_text: "Stok Maksimum"
                     input_filter: "int"
 
-                MDRaisedButton:
+                MDTextField:
                     id: dropdown_pajak
-                    text: "Pilih Pajak"
-                    on_release: root.menu_pajak.open()
-
-                MDLabel:
-                    id: label_kode_pajak
+                    hint_text: "Pilih Pajak"
                     text: root.kode_pajak_aktif
-                    halign: "center"
+                    readonly: True
+                    icon_right: "menu-down"
+                    mode: "rectangle"
+                    on_focus: if self.focus: root.menu_pajak.open()
+                    size_hint_x: 0.8
+                    pos_hint: {"center_x": 0.5}
 
                 MDRaisedButton:
                     text: "Simpan Data"
@@ -460,16 +461,16 @@ WindowsManager:
                     hint_text: "Harga Beli"
                     input_filter: "float"
 
-                MDRaisedButton:
+                MDTextField:
                     id: dropdown_golongan_edit
-                    text: "Pilih Golongan"
+                    hint_text: "Pilih Golongan"
+                    text: root.kode_golongan_nama
+                    readonly: True
+                    icon_right: "menu-down"
+                    mode: "rectangle"
+                    on_focus: if self.focus: root.menu_golongan.open()
+                    size_hint_x: 0.8
                     pos_hint: {"center_x": 0.5}
-                    on_release: root.menu_golongan.open()
-
-                MDLabel:
-                    id: label_kode_golongan_edit
-                    text: root.kode_golongan_aktif
-                    halign: "center"
 
                 MDTextField:
                     id: rak
@@ -511,16 +512,16 @@ WindowsManager:
                     hint_text: "Stok Maksimum"
                     input_filter: "int"
 
-                MDRaisedButton:
+                MDTextField:
                     id: dropdown_pajak_edit
-                    text: "Pilih Pajak"
+                    hint_text: "Pilih Pajak"
+                    text: root.kode_pajak_nama
+                    readonly: True
+                    icon_right: "menu-down"
+                    mode: "rectangle"
+                    on_focus: if self.focus: root.menu_pajak.open()
+                    size_hint_x: 0.8
                     pos_hint: {"center_x": 0.5}
-                    on_release: root.menu_pajak.open()
-
-                MDLabel:
-                    id: label_kode_pajak_edit
-                    text: root.kode_pajak_aktif
-                    halign: "center"
 
                 MDRaisedButton:
                     text: "Simpan Data"
