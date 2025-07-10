@@ -303,7 +303,7 @@ WindowsManager:
                 MDTextField:
                     id: harga_beli
                     hint_text: "Harga Beli"
-                    input_filter: "float"
+                    on_text: app.formatter.intonly_format(self)
 
                 MDTextField:
                     id: dropdown_golongan
@@ -459,7 +459,7 @@ WindowsManager:
                 MDTextField:
                     id: harga_beli
                     hint_text: "Harga Beli"
-                    input_filter: "float"
+                    on_text: app.formatter.intonly_format(self)
 
                 MDTextField:
                     id: dropdown_golongan_edit
@@ -1468,7 +1468,7 @@ WindowsManager:
                         disabled: root.ids.diskon_persen.text != ''
                         on_text: 
                             root.update_totals()
-                            root.intonly_format("diskon_rp")
+                            app.formatter.intonly_format(self)
 
                     Label:
                         text: 'Diskon Apotek (%)'
@@ -1491,7 +1491,7 @@ WindowsManager:
                         input_filter: None
                         on_text:
                             root.update_totals()
-                            root.intonly_format("ongkir_input")
+                            app.formatter.intonly_format(self)
 
 
                 # Cara Bayar (Pop-up trigger)
@@ -1521,7 +1521,7 @@ WindowsManager:
                         input_filter: None
                         on_text:
                             root.update_totals()
-                            root.intonly_format("uang_pelanggan_input")
+                            app.formatter.intonly_format(self)
                         on_text_validate: root.simpan_transaksi()
 
                 # Ongkir

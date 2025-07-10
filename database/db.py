@@ -237,6 +237,9 @@ class DatabaseObat:
         self.kursor.execute(query, ('%' + keyword + '%',))
         return self.kursor.fetchall()
     
+    def is_plu_exist(self, plu):
+        result = self.kursor.execute("SELECT 1 FROM data_obat WHERE plu = ?", (plu,)).fetchone()
+        return result is not None
 
 # ==================== GOLONGAN ====================
 

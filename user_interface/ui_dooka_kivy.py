@@ -1,6 +1,7 @@
 # Built-in modules
 import re
 from datetime import datetime
+from utils.formatting import FormatHelper, get_digits_only
 
 # Local modules
 from database.db import DatabaseObat
@@ -267,16 +268,8 @@ class InsertObat(Screen):
         self.data_pajak = MDApp.get_running_app().db.get_all_pajak()
         self.pajak_nama_list = [jenis for jenis, _ in self.data_pajak]
         Clock.schedule_once(self.build_dropdowns, 0.1)
-
+        
     def build_dropdowns(self, dt):
-        # Pastikan ids sudah siap
-        if not all([
-            hasattr(self.ids, 'dropdown_golongan'),
-            hasattr(self.ids, 'dropdown_pajak')
-        ]):
-            print("Dropdown belum siap!")
-            return
-
         menu_items_golongan = [
             {
                 "text": nama,
@@ -372,7 +365,7 @@ class InsertObat(Screen):
 
         margin_data = MDApp.get_running_app().db.get_margin_golongan(kode_golongan)
 
-        harga_beli = float(data['harga_beli'])
+        harga_beli = int(get_digits_only(data['harga_beli']))
 
         harga_resep = round(harga_beli * (1 + margin_data['margin_resep'] / 100))
         harga_umum = round(harga_beli * (1 + margin_data['margin_umum'] / 100))
@@ -381,10 +374,14 @@ class InsertObat(Screen):
         harga_karyawan = round(harga_beli * (1 + margin_data['margin_karyawan'] / 100))
         harga_bpjs = round(harga_beli * (1 + margin_data['margin_bpjs'] / 100))
 
+        # HANDLING ERRORS
         if not data['plu'] or not data['nama_produk']:
             self.tampilkan_dialog("PLU dan Nama Produk wajib diisi!")
             return
-
+        if MDApp.get_running_app().db.is_plu_exist(data['plu']):
+            self.tampilkan_dialog(f"PLU '{data['plu']}' sudah terdaftar. Gunakan PLU lain.")
+            return
+        #_____________________________________________________________________________________#
         try:
             MDApp.get_running_app().db.new_produk( 
                 data['jenis'], 
@@ -416,7 +413,6 @@ class InsertObat(Screen):
             self.tampilkan_dialog("Data berhasil disimpan!", setelah_dialog=lambda: MDApp.get_running_app().change_screen('data_obat', 'right'))
 
         except Exception as e:
-            print("Error saat menyimpan data:", str(e))
             self.tampilkan_dialog(f"Terjadi kesalahan: {str(e)}")
 
     def tampilkan_dialog(self, pesan, setelah_dialog=None):
@@ -457,13 +453,6 @@ class EditObat(Screen):
         self.ids.scroll_edit.scroll_y = 1
 
     def build_dropdowns(self, dt):
-        if not all([
-            hasattr(self.ids, 'dropdown_golongan_edit'),
-            hasattr(self.ids, 'dropdown_pajak_edit')
-        ]):
-            print("Dropdown belum siap!")
-            return
-
         menu_items_golongan = [
             {
                 "text": nama,
@@ -546,11 +535,6 @@ class EditObat(Screen):
         nama_pajak = self.get_nama_pajak(self.kode_pajak_aktif)
         self.kode_pajak_nama = nama_pajak or "Pilih Pajak"
 
-        print("Golongan aktif:", self.kode_golongan_aktif)
-        print("Nama golongan:", self.kode_golongan_nama)
-        print("Pajak aktif:", self.kode_pajak_aktif)
-        print("Nama pajak:", self.kode_pajak_nama)
-
     def _safe_get(self, data, key, default=''):
         """Safe get from dictionary with default empty string"""
         return str(data.get(key, default)) if data.get(key, default) is not None else default
@@ -619,19 +603,20 @@ class EditObat(Screen):
     def simpan_edit(self):
         data = self.get_form_values()
 
-        # Validasi wajib isi
+        # HANDLING ERRORS
         if not data['plu'] or not data['nama_produk']:
             self.tampilkan_dialog("PLU dan Nama Produk wajib diisi!")
             return
+        #_____________________________________________________________________________________#
 
         try:
             db = MDApp.get_running_app().db
 
             kode_golongan = self.kode_golongan_aktif
-            nama_golongan = self.ids.dropdown_golongan_edit.text
-            kode_ppn = self.kode_pajak_aktif
+            nama_golongan = self.kode_golongan_nama
+            kode_ppn = self.kode_pajak_nama
             margin_data = db.get_margin_golongan(kode_golongan)
-            harga_beli = float(data['harga_beli'])
+            harga_beli = int(get_digits_only(data['harga_beli']))
 
             harga_resep = round(harga_beli * (1 + margin_data['margin_resep'] / 100))
             harga_umum = round(harga_beli * (1 + margin_data['margin_umum'] / 100))
@@ -642,7 +627,7 @@ class EditObat(Screen):
 
             # Simpan ke DB
             db.edit_produk(
-                data['jenis'], data['plu'], data['nama_produk'], data['satuan'], data['harga_beli'],
+                data['jenis'], data['plu'], data['nama_produk'], data['satuan'], harga_beli,
                 harga_umum, harga_resep, harga_cabang, harga_halodoc, harga_karyawan, harga_bpjs,
                 kode_golongan, nama_golongan, data['rak'], data['supplier'], data['fast_moving'],
                 data['kemasan_beli'], data['isi'], data['tanggal_kadaluarsa'], data['stok_apotek'],
@@ -888,7 +873,6 @@ class InsertGolonganObat(Screen):
             self.tampilkan_dialog("Data berhasil disimpan!", setelah_dialog=lambda: MDApp.get_running_app().change_screen('data_golongan_obat', 'right'))
 
         except Exception as e:
-            print("Error saat menyimpan data:", str(e))
             self.tampilkan_dialog(f"Terjadi kesalahan: {str(e)}")
 
     def tampilkan_dialog(self, pesan, setelah_dialog=None):
@@ -1169,7 +1153,6 @@ class InsertPajak(Screen):
             self.tampilkan_dialog("Data berhasil disimpan!", setelah_dialog=lambda: MDApp.get_running_app().change_screen('data_pajak', 'right'))
 
         except Exception as e:
-            print("Error saat menyimpan data:", str(e))
             self.tampilkan_dialog(f"Terjadi kesalahan: {str(e)}")
 
     def tampilkan_dialog(self, pesan, setelah_dialog=None):
@@ -1289,9 +1272,9 @@ class Kasir(Screen):
 
     def update_totals(self):
         total_belanja = sum(item['total'] for item in self.daftar_belanja)
-        diskon_id = self.get_digits_only(self.ids.diskon_rp.text)
-        ongkir_id = self.get_digits_only(self.ids.ongkir_input.text)
-        uang_pelanggan_id = self.get_digits_only(self.ids.uang_pelanggan_input.text)
+        diskon_id = get_digits_only(self.ids.diskon_rp.text)
+        ongkir_id = get_digits_only(self.ids.ongkir_input.text)
+        uang_pelanggan_id = get_digits_only(self.ids.uang_pelanggan_input.text)
         total_setelah_diskon = total_belanja
 
         if diskon_id:
@@ -1329,25 +1312,6 @@ class Kasir(Screen):
         except (ValueError, AttributeError):
             self.kembalian = 0
             self.ids.kembalian_label.text = "Kembalian     : Rp.0"
-
-    def get_digits_only(self, text):
-        digits = ''.join(filter(str.isdigit, text))
-        return int(digits) if digits else 0
-
-    def intonly_format(self, field_id):
-        field = self.ids[field_id]
-
-        def _sanitize(dt):
-            digits_only = ''.join(filter(str.isdigit, field.text))
-            if not digits_only:
-                field.text = ''
-                return
-            formatted = "{:,}".format(int(digits_only)).replace(",", ".")
-            if field.text != formatted:
-                field.text = formatted
-                Clock.schedule_once(lambda dt2: setattr(field, 'cursor', (len(formatted), 0)), 0)
-
-        Clock.schedule_once(_sanitize, 0)
 
     def update_time(self, dt):
         current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
@@ -1406,7 +1370,7 @@ class Kasir(Screen):
             self.update_totals()
             self.refresh_keranjang()
         except Exception as e:
-            print("Error update item:", e)
+            self.tampilkan_popup("Error saat memperbarui item. Pastikan input valid. PESAN ERROR: " + str(e))
 
     def hapus_item(self, index):
         if 0 <= index < len(self.daftar_belanja):
@@ -1434,7 +1398,7 @@ class Kasir(Screen):
         if hasil:
             self.tampilkan_popup_obat(hasil)
         else:
-            print("Obat tidak ditemukan")
+            self.tampilkan_popup("Obat tidak ditemukan")
 
     def open_cara_bayar_popup(self):
         popup = Popup(
@@ -1525,7 +1489,7 @@ class Kasir(Screen):
         except ValueError:
             ongkir = 0
         try:
-            pembayaran = int(self.get_digits_only(self.ids.uang_pelanggan_input.text))
+            pembayaran = int(get_digits_only(self.ids.uang_pelanggan_input.text))
         except ValueError:
             pembayaran = 0
         total = self.total_akhir
@@ -1738,6 +1702,7 @@ class DookaApp(MDApp):
         Window.size = (1200, 800)
         Window.set_icon("assets\image\DOOKA_Logo_besar.png")
         self.db = DatabaseObat("database/dooka_user.db")
+        self.formatter = FormatHelper()
 
         if not SessionCache.get_data_obat():
             SessionCache.set_data_obat(self.db.get_all_obat())
