@@ -531,7 +531,7 @@ class DatabaseObat:
             query += "nomor_telfon=?, "
             params.append(nomor_telfon)
         if alamat is not None:
-            query += "alamat=? "
+            query += "alamat=?, "
             params.append(alamat)
         if poin is not None:
             query += "poin=? "
@@ -559,7 +559,7 @@ class DatabaseObat:
     def get_all_pelanggan(self):
         self.kursor.execute("SELECT * FROM data_pelanggan")
         rows = self.kursor.fetchall()
-        return [row[1:] for row in rows]
+        return rows
     
     def search_data_pelanggan(self, keyword):
         self.kursor.execute("SELECT * FROM data_pelanggan WHERE nama_pelanggan LIKE ?", ('%' + keyword + '%',))

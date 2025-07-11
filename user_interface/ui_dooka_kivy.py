@@ -34,6 +34,7 @@ class SessionCache:
     _data_obat = []
     _data_golongan = []
     _data_pajak = []
+    _data_pelanggan = []
 
     @classmethod
     def get_data_obat(cls):
@@ -47,6 +48,7 @@ class SessionCache:
     def clear_data_obat(cls):
         cls._data_obat = []
 
+    #---------------------------------------------------------------------------------------------#
     @classmethod
     def get_data_golongan(cls):
         return cls._data_golongan
@@ -59,6 +61,8 @@ class SessionCache:
     def clear_data_golongan(cls):
         cls._data_golongan = []
 
+    #---------------------------------------------------------------------------------------------#
+
     @classmethod
     def get_data_pajak(cls):    
         return cls._data_pajak
@@ -70,6 +74,20 @@ class SessionCache:
     @classmethod
     def clear_data_pajak(cls):
         cls._data_pajak = []
+
+    #---------------------------------------------------------------------------------------------#
+
+    @classmethod
+    def get_data_pelanggan(cls):    
+        return cls._data_pelanggan
+
+    @classmethod
+    def set_data_pelanggan(cls, data):
+        cls._data_pelanggan = data
+
+    @classmethod
+    def clear_data_pelanggan(cls):
+        cls._data_pelanggan = []
 
 #---------------------------------------------------------------------------------------------#
 
@@ -203,7 +221,7 @@ class DataObat(Screen):
 
             screen_edit = self.manager.get_screen('edit_obat')
             screen_edit.isi_data_edit(data)
-            self.manager.current = 'edit_obat'
+            MDApp.get_running_app().change_screen('edit_obat', 'left')
             self.reset_centang()
         else:
             self.reset_centang()
@@ -416,16 +434,22 @@ class InsertObat(Screen):
             self.tampilkan_dialog(f"Terjadi kesalahan: {str(e)}")
 
     def tampilkan_dialog(self, pesan, setelah_dialog=None):
+        dialog = None
+
         def tutup_dialog(instance):
             dialog.dismiss()
-            if setelah_dialog:
-                self.bersihkan_field_add_obat(), 
-                setelah_dialog()
 
         dialog = MDDialog(
             text=pesan,
             buttons=[MDFlatButton(text="OK", on_release=tutup_dialog)],
         )
+
+        if setelah_dialog:
+            def on_tutup(*args):
+                self.bersihkan_field_add_obat()
+                setelah_dialog()
+            dialog.bind(on_dismiss=on_tutup)
+
         dialog.open()
 
 class EditObat(Screen):
@@ -485,7 +509,7 @@ class EditObat(Screen):
             width=dp(200),
         )
 
-    def bersihkan_field_insert_obat(self):
+    def bersihkan_field_edit_obat(self):
         fields = [
             'jenis', 'plu', 'nama_produk', 'satuan', 'harga_beli',
             'rak', 'supplier', 'fast_moving', 'kemasan_beli',
@@ -504,6 +528,7 @@ class EditObat(Screen):
 
     def isi_data_edit(self, data):
         self.editing_plu = self._safe_get(data, 'plu')
+        print(data)
         
         # Isi field teks
         self._set_text_field('jenis', data, 'jenis')
@@ -640,7 +665,7 @@ class EditObat(Screen):
             def setelah_ditutup():
                 MDApp.get_running_app().change_screen('data_obat', 'right')
 
-            self.bersihkan_field_insert_obat()
+            self.bersihkan_field_edit_obat()
             self.tampilkan_dialog("Data berhasil diperbarui!", setelah_dialog=setelah_ditutup)
 
         except Exception as e:
@@ -649,13 +674,15 @@ class EditObat(Screen):
     def tampilkan_dialog(self, pesan, setelah_dialog=None):
         def tutup_dialog(instance):
             dialog.dismiss()
-            if setelah_dialog:
-                setelah_dialog()
 
         dialog = MDDialog(
             text=pesan,
             buttons=[MDFlatButton(text="OK", on_release=tutup_dialog)],
         )
+
+        if setelah_dialog:
+            dialog.bind(on_dismiss=lambda *args: setelah_dialog())
+
         dialog.open()
 
 #---------------------------------------------------------------------------------------------#
@@ -771,7 +798,7 @@ class DataGolonganObat(Screen):
             }
             screen_edit = self.manager.get_screen('edit_golongan_obat')
             screen_edit.isi_data_edit_golongan(data)
-            self.manager.current = 'edit_golongan_obat'
+            MDApp.get_running_app().change_screen('edit_golongan_obat', 'left')
             self.reset_centang()
         else:
             dialog = MDDialog(
@@ -876,16 +903,22 @@ class InsertGolonganObat(Screen):
             self.tampilkan_dialog(f"Terjadi kesalahan: {str(e)}")
 
     def tampilkan_dialog(self, pesan, setelah_dialog=None):
+        dialog = None
+
         def tutup_dialog(instance):
             dialog.dismiss()
-            if setelah_dialog:
-                self.bersihkan_field_add_golongan(), 
-                setelah_dialog()
 
         dialog = MDDialog(
             text=pesan,
             buttons=[MDFlatButton(text="OK", on_release=tutup_dialog)],
         )
+
+        if setelah_dialog:
+            def on_tutup(*args):
+                self.bersihkan_field_add_golongan()
+                setelah_dialog()
+            dialog.bind(on_dismiss=on_tutup)
+
         dialog.open()
 
 class EditGolonganObat(Screen):
@@ -895,7 +928,7 @@ class EditGolonganObat(Screen):
     def reset_scroll(self, dt):
         self.ids.scroll_edit_golongan.scroll_y = 1
 
-    def bersihkan_field_insert_golongan(self):
+    def bersihkan_field_edit_golongan(self):
         fields = [
             'kode_golongan','nama_golongan', 'margin_umum', 'margin_resep',
             'margin_cabang', 'margin_halodoc', 'margin_karyawan', 'margin_bpjs'
@@ -906,7 +939,7 @@ class EditGolonganObat(Screen):
                 text_input.text = ""
 
     def isi_data_edit_golongan(self, data):
-        self.bersihkan_field_insert_golongan()
+        self.bersihkan_field_edit_golongan()
         self._set_numeric_field('kode_golongan', data, 'kode_golongan')
         self._set_text_field('nama_golongan', data, 'nama_golongan')
         self._set_numeric_field('margin_umum', data, 'margin_umum')
@@ -966,7 +999,7 @@ class EditGolonganObat(Screen):
             def setelah_ditutup():
                 MDApp.get_running_app().change_screen('data_golongan_obat', 'right')
 
-            self.bersihkan_field_insert_golongan()
+            self.bersihkan_field_edit_golongan()
             self.tampilkan_dialog("Data berhasil diperbarui!", setelah_dialog=setelah_ditutup)
 
         except Exception as e:
@@ -975,13 +1008,15 @@ class EditGolonganObat(Screen):
     def tampilkan_dialog(self, pesan, setelah_dialog=None):
         def tutup_dialog(instance):
             dialog.dismiss()
-            if setelah_dialog:
-                setelah_dialog()
 
         dialog = MDDialog(
             text=pesan,
             buttons=[MDFlatButton(text="OK", on_release=tutup_dialog)],
         )
+
+        if setelah_dialog:
+            dialog.bind(on_dismiss=lambda *args: setelah_dialog())
+
         dialog.open()
 
 #---------------------------------------------------------------------------------------------#
@@ -1075,7 +1110,7 @@ class DataPajak(Screen):
             }
             screen_edit = self.manager.get_screen('edit_pajak')
             screen_edit.isi_data_edit_pajak(data)
-            self.manager.current = 'edit_pajak'
+            MDApp.get_running_app().change_screen('edit_pajak', 'left')
             self.reset_centang()
         else:
             dialog = MDDialog(
@@ -1156,20 +1191,26 @@ class InsertPajak(Screen):
             self.tampilkan_dialog(f"Terjadi kesalahan: {str(e)}")
 
     def tampilkan_dialog(self, pesan, setelah_dialog=None):
+        dialog = None
+
         def tutup_dialog(instance):
             dialog.dismiss()
-            if setelah_dialog:
-                self.bersihkan_field_add_pajak(), 
-                setelah_dialog()
 
         dialog = MDDialog(
             text=pesan,
             buttons=[MDFlatButton(text="OK", on_release=tutup_dialog)],
         )
+
+        if setelah_dialog:
+            def on_tutup(*args):
+                self.bersihkan_field_add_pajak()
+                setelah_dialog()
+            dialog.bind(on_dismiss=on_tutup)
+
         dialog.open()
 
 class EditPajak(Screen):
-    def bersihkan_field_insert_pajak(self):
+    def bersihkan_field_edit_pajak(self):
         fields = [
             'jenis_pajak', 'persen_pajak'
         ]
@@ -1179,7 +1220,7 @@ class EditPajak(Screen):
                 text_input.text = ""
 
     def isi_data_edit_pajak(self, data):
-        self.bersihkan_field_insert_pajak()
+        self.bersihkan_field_edit_pajak()
         self._set_text_field('jenis_pajak', data, 'jenis_pajak')
         self._set_numeric_field('persen_pajak', data, 'persen_pajak')
 
@@ -1227,7 +1268,7 @@ class EditPajak(Screen):
             def setelah_ditutup():
                 MDApp.get_running_app().change_screen('data_pajak', 'right')
 
-            self.bersihkan_field_insert_pajak()
+            self.bersihkan_field_edit_pajak()
             self.tampilkan_dialog("Data berhasil diperbarui!", setelah_dialog=setelah_ditutup)
 
         except Exception as e:
@@ -1236,13 +1277,302 @@ class EditPajak(Screen):
     def tampilkan_dialog(self, pesan, setelah_dialog=None):
         def tutup_dialog(instance):
             dialog.dismiss()
-            if setelah_dialog:
-                setelah_dialog()
 
         dialog = MDDialog(
             text=pesan,
             buttons=[MDFlatButton(text="OK", on_release=tutup_dialog)],
         )
+
+        # Pastikan tetap dijalankan meskipun user tidak klik tombol
+        if setelah_dialog:
+            dialog.bind(on_dismiss=lambda *args: setelah_dialog())
+
+        dialog.open()
+
+#---------------------------------------------------------------------------------------------#
+
+class DataPelanggan(Screen):
+    def on_enter(self):
+        self.selected_rows = set()
+        self.checkbox_refs = {}
+        self.load_table_data()
+        self.show_table(self._rows)
+
+    def load_table_data(self):
+        self._rows = SessionCache.get_data_pelanggan()
+
+    def show_table(self, rows):
+        grid = self.ids.grid_pelanggan
+        grid.clear_widgets()
+        grid.cols = 6
+
+        self.selected_rows.clear()
+        self.checkbox_refs.clear()
+
+        headers = ["ID", "Nama", "Nomer Telefon", "Alamat", "Poin", "Pilih"]
+        for header in headers:
+            grid.add_widget(Factory.TabelLabel(text=header, bold=True))
+
+        for row in rows:
+            kode = str(row[0])
+            for value in row:
+                grid.add_widget(Factory.TabelLabel(text=str(value)))
+
+            cb_box = Factory.TabelCheckBox()
+            cb = cb_box.ids.checkbox
+            self.checkbox_refs[kode] = cb
+            cb.bind(active=lambda cb_obj, value, kode=kode: self.on_checkbox_toggle(kode, value))
+            grid.add_widget(cb_box)
+
+    def on_checkbox_toggle(self, kode, value):
+        if value:
+            self.selected_rows.add(kode)
+        else:
+            self.selected_rows.discard(kode)
+
+    def hapus_terpilih(self):
+        db = MDApp.get_running_app().db
+        if not self.selected_rows:
+            toast("Belum ada yang dipilih")
+            return
+        ids = list(self.selected_rows)
+        pesan_list = []
+        for i, id_ in enumerate(ids, 1):
+            nama = db.get_nama_pelanggan_by_id(id_)
+            nama = nama or "Tidak ditemukan"
+            pesan_list.append(f"{i}. {id_} - {nama}")
+        pesan_konfirmasi = "Yakin ingin menghapus data berikut?\n\n" + "\n".join(pesan_list)
+
+        def confirm_hapus():
+            db = MDApp.get_running_app().db
+            deleted = 0
+            for kode in ids:
+                kode_bersih = self.bersihkan_field(kode)
+                try:
+                    if db.hapus_pelanggan(kode_bersih):
+                        deleted += 1
+                    else:
+                        toast(f"Gagal hapus {kode_bersih}")
+                except Exception as e:
+                    toast(f"Error: {str(e)}")
+
+            if deleted > 0:
+                toast(f"{deleted} data berhasil dihapus")
+                rows = db.get_all_pelanggan()
+                SessionCache.set_data_pelanggan(rows)
+                self.reload_table(rows)
+                self.reset_centang()
+
+        def batal_hapus():
+            self.reset_centang()
+
+        self.tampilkan_dialog(pesan_konfirmasi, on_yes=confirm_hapus, on_no=batal_hapus)
+
+    def edit_data_pelanggan(self):
+        if len(self.selected_rows) == 1:
+            selected_kode = list(self.selected_rows)[0]
+            selected_kode = self.bersihkan_field(selected_kode)
+            for row in self._rows:
+                if self.bersihkan_field(row[0]) == selected_kode:
+                    data_row = row
+                    break
+            else:
+                toast("Data tidak ditemukan.")
+                return
+            
+            data = {
+                "id": data_row[0],
+                "nama_pelanggan": self.bersihkan_field(data_row[1]),
+                "nomor_telfon": self.bersihkan_field(data_row[2]),
+                "alamat": self.bersihkan_field(data_row[3]),
+                "poin": data_row[4],
+            }
+            screen_edit = self.manager.get_screen('edit_pelanggan')
+            screen_edit.isi_data_edit_pelanggan(data)
+            MDApp.get_running_app().change_screen('edit_pelanggan', 'left')
+            self.reset_centang()
+        else:
+            dialog = MDDialog(
+                text="Pilih satu data saja untuk diedit!",
+                buttons=[MDFlatButton(text="OK", on_release=lambda x: dialog.dismiss())],
+            )
+            dialog.open()
+            self.reset_centang()
+
+    def tampilkan_dialog(self, pesan, on_yes=None, on_no=None):
+        dialog = MDDialog(
+            text=pesan,
+            buttons=[
+                MDFlatButton(text="No", on_release=lambda x: (on_no() if on_no else None, dialog.dismiss())),
+                MDFlatButton(text="Yes", on_release=lambda x: (on_yes() if on_yes else None, dialog.dismiss())),
+            ],
+        )
+        dialog.open()
+
+    def bersihkan_field(self, text):
+        return re.sub(r'\[.*?\]', '', str(text)).strip() if text else ""
+
+    def reload_table(self, rows):
+        self.clear_table()
+        self.show_table(rows)
+
+    def reset_centang(self):
+        for plu in list(self.selected_rows):
+            if plu in self.checkbox_refs:
+                self.checkbox_refs[plu].active = False
+        self.selected_rows.clear()
+
+    def clear_table(self):
+        self.ids.grid_pelanggan.clear_widgets()
+
+    def on_leave(self):
+        self.clear_table()
+
+class InsertPelanggan(Screen):
+    def bersihkan_field_add_pelanggan(self):
+        fields = [
+            'nama_pelanggan', 'nomor_telfon', 'alamat'
+        ]
+        for field in fields:
+            text_input = self.ids.get(field)
+            if text_input:
+                text_input.text = ""
+
+    def get_form_values(self):
+        fields = [
+            'nama_pelanggan', 'nomor_telfon', 'alamat'
+        ]
+        values = {}
+        for field in fields:
+            text_input = self.ids.get(field)
+            values[field] = text_input.text if text_input else ""
+
+        return values
+
+    def simpan_data_pelanggan(self):
+        data = self.get_form_values()
+
+        if not data['nama_pelanggan']:
+            self.tampilkan_dialog("Nama Pelanggan wajib diisi!")
+            return
+
+        try:
+            MDApp.get_running_app().db.tambah_pelanggan(
+                data['nama_pelanggan'], 
+                data['nomor_telfon'],
+                data['alamat'],
+                )
+
+            rows = MDApp.get_running_app().db.get_all_pelanggan()
+            SessionCache.set_data_pelanggan(rows)
+            self.tampilkan_dialog("Data berhasil disimpan!", setelah_dialog=lambda: MDApp.get_running_app().change_screen('data_pelanggan', 'right'))
+
+        except Exception as e:
+            self.tampilkan_dialog(f"Terjadi kesalahan: {str(e)}")
+
+    def tampilkan_dialog(self, pesan, setelah_dialog=None):
+        dialog = None
+
+        def tutup_dialog(instance):
+            dialog.dismiss()
+
+        dialog = MDDialog(
+            text=pesan,
+            buttons=[MDFlatButton(text="OK", on_release=tutup_dialog)],
+        )
+
+        if setelah_dialog:
+            def on_tutup(*args):
+                self.bersihkan_field_add_pelanggan()
+                setelah_dialog()
+            dialog.bind(on_dismiss=on_tutup)
+
+        dialog.open()
+
+class EditPelanggan(Screen):
+    def bersihkan_field_edit_pelanggan(self):
+        fields = [
+            'nama_pelanggan', 'nomor_telfon', 'alamat'
+        ]
+        for field in fields:
+            text_input = self.ids.get(field)
+            if text_input:
+                text_input.text = ""
+                
+    def get_form_values(self):
+        fields = [
+            'id', 'nama_pelanggan', 'nomor_telfon', 'alamat', 'poin'
+        ]
+        values = {}
+        for field in fields:
+            text_input = self.ids.get(field)
+            values[field] = text_input.text if text_input else ""
+
+        return values
+
+    def isi_data_edit_pelanggan(self, data):
+        self.bersihkan_field_edit_pelanggan()
+        self._set_numeric_field('id', data, 'id')
+        self._set_text_field('nama_pelanggan', data, 'nama_pelanggan')
+        self._set_numeric_field('nomor_telfon', data, 'nomor_telfon')
+        self._set_text_field('alamat', data, 'alamat')
+        self._set_numeric_field('poin', data, 'poin')
+
+    def _safe_get(self, data, key, default=''):
+        """Safe get from dictionary with default empty string"""
+        return str(data.get(key, default)) if data.get(key, default) is not None else default
+
+    def _set_text_field(self, field_id, data, data_key):
+        """Set text field safely"""
+        if hasattr(self.ids, field_id):
+            self.ids[field_id].text = self._safe_get(data, data_key)
+
+    def _set_numeric_field(self, field_id, data, data_key):
+        """Set numeric field with validation"""
+        if hasattr(self.ids, field_id):
+            value = data.get(data_key)
+            self.ids[field_id].text = str(value) if value is not None else ""
+    
+    def simpan_edit_pelanggan(self):
+        data = self.get_form_values()
+        if not data['nama_pelanggan']:
+            self.tampilkan_dialog("Nama Pelanggan wajib diisi!")
+            return
+
+        try:
+            MDApp.get_running_app().db.edit_pelanggan(
+                data['id'],
+                data['nama_pelanggan'], 
+                data['nomor_telfon'],
+                data['alamat'],
+                data['poin'],
+                )
+
+            rows = MDApp.get_running_app().db.get_all_pelanggan()
+            SessionCache.set_data_pelanggan(rows)
+
+            def setelah_ditutup():
+                MDApp.get_running_app().change_screen('data_pelanggan', 'right')
+
+            self.bersihkan_field_edit_pelanggan()
+            self.tampilkan_dialog("Data berhasil diperbarui!", setelah_dialog=setelah_ditutup)
+
+        except Exception as e:
+            self.tampilkan_dialog(f"Error saat update: {str(e)}")
+
+    def tampilkan_dialog(self, pesan, setelah_dialog=None):
+        def tutup_dialog(instance):
+            dialog.dismiss()
+
+        dialog = MDDialog(
+            text=pesan,
+            buttons=[MDFlatButton(text="OK", on_release=tutup_dialog)],
+        )
+
+        # Pastikan tetap dijalankan meskipun user tidak klik tombol
+        if setelah_dialog:
+            dialog.bind(on_dismiss=lambda *args: setelah_dialog())
+
         dialog.open()
 
 #---------------------------------------------------------------------------------------------#
@@ -1712,6 +2042,9 @@ class DookaApp(MDApp):
 
         if not SessionCache.get_data_pajak():
             SessionCache.set_data_pajak(self.db.get_all_pajak())
+
+        if not SessionCache.get_data_pelanggan():
+            SessionCache.set_data_pelanggan(self.db.get_all_pelanggan())
 
         return Builder.load_file('user_interface/gui.kv')
     

@@ -20,6 +20,10 @@ WindowsManager:
     InsertPajak:
     EditPajak:
 
+    DataPelanggan:
+    InsertPelanggan:
+    EditPelanggan:
+
     Kasir:
     RiwayatTransaksi:
 
@@ -46,7 +50,7 @@ WindowsManager:
             Spinner:
                 id: menu_spinner
                 text: 'Menu'
-                values: ['Obat', 'Golongan', 'Pajak']
+                values: ['Obat', 'Golongan', 'Pajak', 'Pelanggan']
                 size_hint_x: None
                 width: 100
                 font_size: 12
@@ -54,6 +58,7 @@ WindowsManager:
                     if self.text == 'Obat': app.change_screen('data_obat','left')
                     elif self.text == 'Golongan': app.change_screen('data_golongan_obat','left')
                     elif self.text == 'Pajak': app.change_screen('data_pajak','left')
+                    elif self.text == 'Pelanggan': app.change_screen('data_pelanggan','left')
                     self.text = 'Menu'
 
             Button:
@@ -279,10 +284,8 @@ WindowsManager:
                 pos_hint: {"center_x": 0.5}
 
                 MDTextField:
-                    hint_text: "ID"
-                    helper_text: "Biarkan kosong untuk auto increment"
-                    helper_text_mode: "on_focus"
-                    readonly: True
+                    hint_text: "ID (Biarkan Kosong)"
+                    disabled: True
 
                 MDTextField:
                     id: jenis
@@ -436,9 +439,7 @@ WindowsManager:
 
                 MDTextField:
                     hint_text: "ID"
-                    helper_text: "Biarkan kosong untuk auto increment"
-                    helper_text_mode: "on_focus"
-                    readonly: True
+                    disabled: True
 
                 MDTextField:
                     id: jenis
@@ -686,10 +687,8 @@ WindowsManager:
                 pos_hint: {"center_x": 0.5}
 
                 MDTextField:
-                    hint_text: "Kode Golongan"
-                    helper_text: "Biarkan kosong untuk Isi Otomatis"
-                    helper_text_mode: "on_focus"
-                    readonly: True
+                    hint_text: "Kode Golongan (Biarkan Kosong)"
+                    disabled: True
 
                 MDTextField:
                     id: nama_golongan
@@ -1078,6 +1077,275 @@ WindowsManager:
                     text: "Simpan Data"
                     pos_hint: {"center_x": 0.5}
                     on_release: root.simpan_edit_pajak()
+
+#-----------------------------------------------------------------------------------------#
+
+<DataPelanggan>:
+    name: 'data_pelanggan'
+    BoxLayout:
+        orientation: 'vertical'
+        
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: 40
+            padding: 5
+            spacing: 10
+            canvas.before:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            Button:
+                id: tombol_dashboard
+                text: 'Dashboard'
+                font_size: 12
+                size_hint_x: None
+                width: 100
+                on_release: app.change_screen('dashboard',"right")
+
+            Button:
+                id: tombol_add_pelanggan
+                text: 'Insert Pelanggan'
+                font_size: 12
+                size_hint_x: None
+                width: 100
+                on_release: app.change_screen('insert_pelanggan',"left")
+
+            Button:
+                id: tombol_edit_pelanggan
+                text: 'Edit Pelanggan'
+                font_size: 12
+                size_hint_x: None
+                width: 100
+                on_release: root.edit_data_pelanggan()
+
+            Button:
+                id: tombol_hapus_pelanggan
+                text: 'Hapus Pelanggan'
+                font_size: 12
+                size_hint_x: None
+                width: 100
+                on_release: root.hapus_terpilih()
+
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            canvas.after:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.x, self.y
+                    size: self.width, 1
+
+            text: 'DATA PELANGGAN'
+            font_size: 30
+            size_hint_y: None
+            height: 40
+            halign: 'center'
+            valign: 'middle'
+            color: 0, 0, 0, 1
+            text_size: self.size
+
+        BoxLayout:
+            id: table_container_pelanggan
+            orientation: "vertical"
+            size_hint: 1, 1
+
+            ScrollView:
+                id: scroll_pelanggan
+                do_scroll_x: True
+                do_scroll_y: True
+
+                GridLayout:
+                    id: grid_pelanggan
+                    cols: 9
+                    size_hint_y: None
+                    height: self.minimum_height
+                    color: 0, 0, 0, 1
+                    row_default_height: dp(30)
+                    row_force_default: True
+
+<InsertPelanggan>:
+    name: 'insert_pelanggan'
+    BoxLayout:
+        orientation: 'vertical'
+        
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: 40
+            padding: 5
+            spacing: 10
+            canvas.before:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            Button:
+                text: 'Dashboard'
+                font_size: 12
+                size_hint_x: None
+                width: 100
+                on_release: app.change_screen('dashboard',"down")
+            Button:
+                text: 'Data Pelanggan'
+                font_size: 12
+                size_hint_x: None
+                width: 100
+                on_release: app.change_screen('data_pelanggan',"right")
+
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            canvas.after:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.x, self.y
+                    size: self.width, 1
+
+            text: 'ISI DATA PELANGGAN'
+            font_size: 30
+            size_hint_y: None
+            height: 40
+            halign: 'center'
+            valign: 'middle'
+            color: 0, 0, 0, 1
+            text_size: self.size
+
+        ScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: 10
+                spacing: 10
+                size_hint_y: None
+                height: self.minimum_height
+                pos_hint: {"center_x": 0.5}
+
+                MDTextField:
+                    hint_text: "ID (Biarkan Kosong)"
+                    disabled: True
+
+                MDTextField:
+                    id: nama_pelanggan
+                    hint_text: "Nama Pelanggan"
+
+                MDTextField:
+                    id: nomor_telfon
+                    hint_text: "Nomer Telfon"
+
+                MDTextField:
+                    id: alamat
+                    hint_text: "Alamat"
+
+                MDTextField:
+                    id: poin
+                    hint_text: "Poin Pelanggan"
+                    disabled: True
+
+                MDRaisedButton:
+                    text: "Simpan Data"
+                    pos_hint: {"center_x": 0.5}
+                    on_release: root.simpan_data_pelanggan()
+
+<EditPelanggan>:
+    name: 'edit_pelanggan'
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            canvas.after:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.x, self.y
+                    size: self.width, 1
+
+            text: 'EDIT DATA PELANGGAN'
+            font_size: 30
+            size_hint_y: None
+            height: 40
+            halign: 'center'
+            valign: 'middle'
+            color: 0, 0, 0, 1
+            text_size: self.size
+        
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 0.95, 0.95, 0.95, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            canvas.after:
+                Color:
+                    rgba: 0.7, 0.7, 0.7, 1
+                Rectangle:
+                    pos: self.x, self.y
+                    size: self.width, 1
+
+            text:'Apabila Tidak Ada Perubahan Tekan Tombol Simpan'
+            font_size: 15
+            size_hint_y: None
+            height: 30
+            halign: 'center'
+            valign: 'middle'
+            color: 0, 0, 0, 1
+            text_size: self.size
+
+        ScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: 10
+                spacing: 10
+                size_hint_y: None
+                height: self.minimum_height
+                pos_hint: {"center_x": 0.5}
+
+                MDTextField:
+                    id: id
+                    hint_text: "ID"
+                    disabled: True
+
+                MDTextField:
+                    id: nama_pelanggan
+                    hint_text: "Nama Pelanggan"
+
+                MDTextField:
+                    id: nomor_telfon
+                    hint_text: "Nomor Telfon"
+
+                MDTextField:
+                    id: alamat
+                    hint_text: "Alamat"
+
+                MDTextField:
+                    id: poin
+                    hint_text: "Poin Pelanggan"
+                    disabled: True
+
+                MDRaisedButton:
+                    text: "Simpan Data"
+                    pos_hint: {"center_x": 0.5}
+                    on_release: root.simpan_edit_pelanggan()
 
 #-----------------------------------------------------------------------------------------#
 
