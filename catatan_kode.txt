@@ -1,0 +1,75 @@
+#untuk peringatan min stok di kerajang item namun untuk checkbox untuk skip alert selamanya ketika dichecked
+
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDFlatButton
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.label import MDLabel
+from kivymd.uix.selectioncontrol import MDCheckbox
+
+def _show_min_stock_warning(self, nama, stok_obat, stok_min):
+    # Skip jika user sudah memilih "jangan peringatkan lagi"
+    if getattr(self, "_disable_min_stock_warn", False):
+        return
+
+    # Konten custom: checkbox + label
+    box = MDBoxLayout(orientation="horizontal", adaptive_height=True, padding=(0, 8), spacing=8)
+    checkbox = MDCheckbox(active=False)
+    label = MDLabel(text="Jangan peringatkan lagi selama sesi ini", halign="left")
+    box.add_widget(checkbox)
+    box.add_widget(label)
+
+    msg = (f"Stok {nama} sudah mencapai batas minimum.\n"
+           f"Stok saat ini: {stok_obat}, batas minimum: {stok_min}")
+    if stok_obat == 0:
+        msg += "\n⚠️ Stok 0 — pertimbangkan substitusi atau konfirmasi ke gudang."
+
+    dialog = MDDialog(
+        title="Peringatan Stok Minimal",
+        text=msg,
+        type="custom",
+        content_cls=box,
+        buttons=[
+            MDFlatButton(
+                text="TUTUP",
+                on_release=lambda *_: (
+                    setattr(self, "_disable_min_stock_warn", bool(checkbox.active)),
+                    dialog.dismiss()
+                )
+            ),
+        ],
+        auto_dismiss=False,
+    )
+    dialog.open()
+
+
+
+
+#cara penerapan
+
+def tambah_ke_keranjang(self, nama, satuan, harga, plu):
+    db = MDApp.get_running_app().db
+    stok_obat = db.stok_obat(plu)
+    stok_min = db.stok_min_obat(plu)
+
+    # Tampilkan peringatan (non-blocking). Transaksi tetap lanjut.
+    if stok_obat <= stok_min:
+        self._show_min_stock_warning(nama, stok_obat, stok_min)
+
+    # lanjut seperti biasa
+    try:
+        harga_int = int(harga)
+    except (TypeError, ValueError):
+        harga_int = 0
+    harga_bulat = int(round(harga_int / self.pembulatan) * self.pembulatan)
+
+    self.daftar_belanja.append({
+        'plu': plu,
+        'nama': nama,
+        'satuan': satuan,
+        'harga': harga_bulat,
+        'qty': 1,
+        'diskon': 0,
+        'total': harga_bulat,
+    })
+    self.update_totals()
+    self.refresh_keranjang()

@@ -77,8 +77,8 @@ class DatabaseObat:
                 nama_kasir TEXT,
                 status TEXT DEFAULT 'normal',
                 last_updated TEXT,
+                poin_didapat INTEGER DEFAULT 0,
                 FOREIGN KEY (id_pelanggan) REFERENCES data_pelanggan(id_pelanggan)
-                
             )
         """)
         self.kursor.execute("""
@@ -233,13 +233,33 @@ class DatabaseObat:
         else:
             kolom_harga = 'harga_umum'
 
-        query = f"SELECT nama_produk, satuan, {kolom_harga} FROM data_obat WHERE nama_produk LIKE ?"
+        query = f"SELECT nama_produk, satuan, {kolom_harga}, plu FROM data_obat WHERE nama_produk LIKE ?"
         self.kursor.execute(query, ('%' + keyword + '%',))
         return self.kursor.fetchall()
     
     def is_plu_exist(self, plu):
-        result = self.kursor.execute("SELECT 1 FROM data_obat WHERE plu = ?", (plu,)).fetchone()
-        return result is not None
+        result = self.kursor.execute("SELECT nama_produk, rak FROM data_obat WHERE plu = ?", (plu,)).fetchone()
+        return result
+
+    def stok_obat(self, plu):
+        self.kursor.execute("SELECT stok_apotek FROM data_obat WHERE plu = ?", (plu,))
+        row = self.kursor.fetchone()
+        return int(row[0] or 0) if row else 0
+
+    def stok_min_obat(self, plu):
+        self.kursor.execute("SELECT stok_min FROM data_obat WHERE plu = ?", (plu,))
+        row = self.kursor.fetchone()
+        return int(row[0] or 0) if row else 0
+
+    def stok_max_obat(self, plu):
+        self.kursor.execute("SELECT stok_max FROM data_obat WHERE plu = ?", (plu,))
+        row = self.kursor.fetchone()
+        return int(row[0] or 0) if row else 0
+    
+    def pengurangan_stok_obat(self, plu, jumlah):
+        self.kursor.execute("UPDATE data_obat SET stok_apotek = stok_apotek - ? WHERE plu = ?", (jumlah, plu))
+        self.koneksi.commit()
+        
 
 # ==================== GOLONGAN ====================
 
@@ -367,15 +387,16 @@ class DatabaseObat:
 # ==================== TRANSAKSI ====================
 
 
-    def new_transaksi(self, no_ref, tanggal, id_pelanggan, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir):
+    def new_transaksi(self, no_ref, tanggal, id_pelanggan, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir, poin_didapat):
         status = "normal"
         last_updated = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.kursor.execute("""
-            INSERT INTO transaksi (no_ref, tanggal, id_pelanggan, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir, status, last_updated)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (no_ref, tanggal, id_pelanggan, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir, status, last_updated))
+            INSERT INTO transaksi (no_ref, tanggal, id_pelanggan, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir, status, last_updated, poin_didapat)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (no_ref, tanggal, id_pelanggan, kredit, tanggal_tempo, cara_bayar, jenis_pelanggan, diskon_toko, ongkir, total_penjualan, pembayaran, nama_kasir, status, last_updated, poin_didapat))
+        self.koneksi.commit()
 
-    def edit_transaksi(self, no_ref, tanggal=None, id_pelanggan=None, kredit=None, tanggal_tempo=None, cara_bayar=None, jenis_pelanggan=None, diskon_toko=None, ongkir=None, total_penjualan=None, pembayaran=None, nama_kasir=None):
+    def edit_transaksi(self, no_ref, tanggal=None, id_pelanggan=None, kredit=None, tanggal_tempo=None, cara_bayar=None, jenis_pelanggan=None, diskon_toko=None, ongkir=None, total_penjualan=None, pembayaran=None, nama_kasir=None, poin_didapat=None):
         last_updated = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         status = "diedit"
         query = "UPDATE transaksi SET "
@@ -387,6 +408,7 @@ class DatabaseObat:
         if id_pelanggan is not None:
             query += "id_pelanggan=?, "
             params.append(id_pelanggan)
+            #kenapa ini id pelanggan tapi yang masuk nama pelanggan?, karena id_pelanggan adalah foreign key yang mengacu pada data_pelanggan sedangkan nama pelanggan dibutuhkan untuk riwayat transaksi
         if kredit is not None:
             query += "kredit=?, "
             params.append(kredit)
@@ -414,6 +436,9 @@ class DatabaseObat:
         if nama_kasir is not None:
             query += "nama_kasir=?, "
             params.append(nama_kasir)
+        if poin_didapat is not None:
+            query += "poin_didapat=?, "
+            params.append(poin_didapat)
 
         query += "status=?, "
         params.append(status)
@@ -441,6 +466,24 @@ class DatabaseObat:
         self.kursor.execute("SELECT * FROM transaksi WHERE no_ref=?", (no_ref,))
         return self.kursor.fetchone()
 
+    def pengurangan_poin_transaksi(self, no_ref):
+        self.kursor.execute(
+            "SELECT id_pelanggan, COALESCE(poin_didapat, 0) FROM transaksi WHERE no_ref = ?", 
+            (no_ref,)
+        )
+        result = self.kursor.fetchone()
+        if result:
+            id_pelanggan, poin_dikurangi = result
+            if not id_pelanggan or poin_dikurangi <= 0:
+                return False
+            
+            self.kursor.execute(
+                "UPDATE data_pelanggan SET poin = MAX(poin - ?, 0) WHERE id_pelanggan = ?", 
+                (poin_dikurangi, id_pelanggan)
+            )
+            self.koneksi.commit()
+            return True
+        return False
 
 # ==================== TRANSAKSI ITEM ====================
 
@@ -572,6 +615,14 @@ class DatabaseObat:
             return result[0]
         else:
             return 0
+
+    def tambah_poin_pelanggan(self, id_pelanggan, poin_tambahan):
+        self.kursor.execute("UPDATE data_pelanggan SET poin = poin + ? WHERE id_pelanggan = ?", (poin_tambahan, id_pelanggan))
+        self.koneksi.commit()
+
+    def pengurangan_poin_pelanggan(self, id_pelanggan, poin_tambahan):
+        self.kursor.execute("UPDATE data_pelanggan SET poin = poin - ? WHERE id_pelanggan = ?", (poin_tambahan, id_pelanggan))
+        self.koneksi.commit()
 
     def get_id_pelanggan(self, nama_pelanggan):
         self.kursor.execute("SELECT id_pelanggan FROM data_pelanggan WHERE nama_pelanggan=?", (nama_pelanggan,))

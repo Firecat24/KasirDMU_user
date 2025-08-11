@@ -27,6 +27,8 @@ WindowsManager:
     Kasir:
     RiwayatTransaksi:
 
+    SettingsDooka:
+
 #-----------------------------------------------------------------------------------------#
 
 <Dashboard>:
@@ -50,7 +52,7 @@ WindowsManager:
             Spinner:
                 id: menu_spinner
                 text: 'Menu'
-                values: ['Obat', 'Golongan', 'Pajak', 'Pelanggan']
+                values: ['Obat', 'Golongan', 'Pajak', 'Pelanggan', 'Settings']
                 size_hint_x: None
                 width: 100
                 font_size: 12
@@ -59,6 +61,7 @@ WindowsManager:
                     elif self.text == 'Golongan': app.change_screen('data_golongan_obat','left')
                     elif self.text == 'Pajak': app.change_screen('data_pajak','left')
                     elif self.text == 'Pelanggan': app.change_screen('data_pelanggan','left')
+                    elif self.text == 'Settings': app.change_screen('settings_dooka','left')
                     self.text = 'Menu'
 
             Button:
@@ -448,6 +451,7 @@ WindowsManager:
                 MDTextField:
                     id: plu
                     hint_text: "PLU"
+                    disabled: True
 
                 MDTextField:
                     id: nama_produk
@@ -997,8 +1001,8 @@ WindowsManager:
 
                 MDTextField:
                     id: persen_pajak
-                    hint_text: "Persen Pajak"
-                    input_filter: "float"
+                    hint_text: "Persen Pajak (%)"
+                    input_filter: "int"
 
                 MDRaisedButton:
                     text: "Simpan Data"
@@ -1071,7 +1075,7 @@ WindowsManager:
                 MDTextField:
                     id: persen_pajak
                     hint_text: "Persen Pajak"
-                    input_filter: "float"
+                    input_filter: "int"
 
                 MDRaisedButton:
                     text: "Simpan Data"
@@ -1422,6 +1426,20 @@ WindowsManager:
                 font_size: 12
                 on_release: app.change_screen('riwayat_transaksi', "left")
 
+            Button:
+                text: 'Pending'
+                size_hint_x: None
+                width: 150
+                font_size: 12
+                on_release: root.pending_transaksi()
+
+            Button:
+                text: 'Reload'
+                size_hint_x: None
+                width: 150
+                font_size: 12
+                on_release: root.reload_pending()
+
             Label:
                 id: time_label
                 text: '__-__-__ || --:--:--'
@@ -1705,8 +1723,6 @@ WindowsManager:
             orientation: 'horizontal'
             size_hint_y: None
             height: self.minimum_height
-            padding: 10
-            spacing: 10
             canvas.before:
                 Color:
                     rgba: 0.9, 0.9, 0.9, 1
@@ -1716,6 +1732,7 @@ WindowsManager:
 
             BoxLayout:
                 spacing: 10
+                padding: 10
                 size_hint_y: None
                 size_hint_x: 0.6
                 height: 180
@@ -1729,14 +1746,35 @@ WindowsManager:
                         text: 'Diskon Apotek (Rp)'
                         font_size: 12
                         color: 0, 0, 0, 1
-                    TextInput:
-                        id: diskon_rp
-                        multiline: False
-                        input_filter: None
-                        disabled: root.ids.diskon_persen.text != ''
-                        on_text: 
-                            root.update_totals()
-                            app.formatter.intonly_format(self)
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        size_hint_y: None
+                        height: 30
+                        spacing: 5
+
+                        TextInput:
+                            id: diskon_rp
+                            font_size: 12
+                            multiline: False
+                            input_filter: None
+                            on_focus:
+                                if self.focus: root.last_diskon_input = 'rp'
+                            on_text:
+                                root.update_totals()
+                                app.formatter.intonly_format(self)
+
+                        CheckBox:
+                            id: diskon_rp_checkbox
+                            size_hint_x: None
+                            width: 30
+                            on_active:
+                                root.on_diskon_rp_checkbox(self.active)
+                            canvas.before:
+                                Color:
+                                    rgba: (0, 0.5, 0.2, 1) if self.active else (0, 0,1, 1, 1)
+                                Rectangle:
+                                    pos: self.pos
+                                    size: self.size
 
                     Label:
                         text: 'Diskon Apotek (%)'
@@ -1744,10 +1782,13 @@ WindowsManager:
                         color: 0, 0, 0, 1
                     TextInput:
                         id: diskon_persen
+                        font_size: 12
                         multiline: False
                         input_filter: 'int'
-                        disabled: root.ids.diskon_rp.text != ''
-                        on_text: root.update_totals()
+                        on_focus:
+                            if self.focus: root.last_diskon_input = 'persen'
+                        on_text:
+                            root.update_totals()
 
                     Label:
                         text: 'Ongkir (Rp)'
@@ -1773,10 +1814,20 @@ WindowsManager:
                         font_size: 14
                         color: 0, 0, 0, 1
 
-                    Button:
+                    BoxLayout:
                         id: cara_bayar
-                        text: 'Tunai'
-                        on_release: root.open_cara_bayar_popup()
+                        orientation: 'horizontal'
+                        size_hint_y: None
+                        height: 40
+                        font_size: 12
+                        spacing: 10
+                        ToggleButton:
+                            id: toggle_non_tunai
+                            text: 'Non Tunai' if root.is_non_tunai else 'Tunai'
+                            state: 'down' if root.is_non_tunai else 'normal'
+                            on_state:
+                                root.toggle_non_tunai(self.state == 'down')
+                                self.text = 'Non Tunai' if self.state == 'down' else 'Tunai'
 
                     Label:
                         text: 'Pembayaran (Rp)'
@@ -1827,7 +1878,7 @@ WindowsManager:
                     padding: [50, 0, 0, 0]
                     canvas.before:
                         Color:
-                            rgba: 0.8, 0.9, 0.9, 1
+                            rgba: 0, 0, 0, 1
                         Rectangle:
                             pos: self.pos
                             size: self.size
@@ -1836,13 +1887,13 @@ WindowsManager:
                         text_size: self.size
                         halign: 'left'
                         valign: 'middle'
-                        color: 0, 0, 0, 1
+                        color: 1, 1, 1, 1
                         font_size: 26
                 BoxLayout:
                     padding: [50, 0, 0, 0]
                     canvas.before:
                         Color:
-                            rgba: 0.8, 0.8, 0.8, 1
+                            rgba: 0, 1, 0, 1
                         Rectangle:
                             pos: self.pos
                             size: self.size
@@ -1936,7 +1987,7 @@ WindowsManager:
     Label: 
         text: root.tempo
     Label: 
-        text: root.cara_bayar
+        text: 'Tunai' if root.cara_bayar == 'Tunai' else 'Non Tunai'
     Label: 
         text: root.harga
     Label: 
@@ -1989,7 +2040,7 @@ WindowsManager:
         text: "Ke Halaman Pelanggan"
         size_hint_y: None
         height: 40
-        # on_release: app.root.current = 'halaman_pasien'  # atau sesuai nama Screen
+        on_release: app.root.current = 'data_pelanggan'
 
 <KeranjangItem>:
     spacing: 0
@@ -2085,3 +2136,82 @@ WindowsManager:
     source: ''
     size_hint: None, None
     size: 20, 20
+
+<SettingsDooka>:
+    name: 'settings_dooka'
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+
+        BoxLayout:
+            size_hint_y: None
+            height: 40
+            spacing: 10
+
+            Button:
+                text: 'Kembali ke Dashboard'
+                on_release: app.root.current = 'dashboard'
+
+        Label:
+            text: 'Pengaturan Aplikasi'
+            font_size: 30
+            size_hint_y: None
+            height: 40
+            halign: 'center'
+            valign: 'middle'
+            color: 0, 0, 0, 1
+
+        BoxLayout:
+            orientation: 'vertical'
+            spacing: 10
+
+            Label:
+                text: 'Pembulatan Harga'
+                font_size: 20
+                color: 0, 0, 0, 1
+
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: 40
+
+                TextInput:
+                    id: pembulatan_input
+                    text: str(root.pembulatan)
+                    multiline: False
+                    input_filter: 'int'
+                    on_text_validate:
+                        root.ubah_pembulatan(int(self.text))
+
+                Button:
+                    text: 'Simpan'
+                    on_release:
+                        root.ubah_pembulatan(int(pembulatan_input.text))
+
+        BoxLayout:
+            orientation: 'vertical'
+            spacing: 10
+
+            Label:
+                text: 'POIN'
+                font_size: 20
+                color: 0, 0, 0, 1
+
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: None
+                height: 40
+
+                TextInput:
+                    id: pembagian_perpoin
+                    text: str(root.pembagian_perpoin)
+                    multiline: False
+                    input_filter: 'int'
+                    on_text_validate:
+                        root.ubah_pembagian_perpoin(int(self.text))
+
+                Button:
+                    text: 'Simpan'
+                    on_release:
+                        root.ubah_pembagian_perpoin(int(pembagian_perpoin.text))

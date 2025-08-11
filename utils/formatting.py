@@ -1,6 +1,7 @@
+from datetime import datetime
 from kivy.clock import Clock
-from kivymd.uix.dialog import MDDialog
-from kivymd.uix.button import MDFlatButton
+# from kivymd.uix.dialog import MDDialog
+# from kivymd.uix.button import MDFlatButton
 
 class FormatHelper:
     @staticmethod
@@ -20,3 +21,9 @@ class FormatHelper:
 def get_digits_only(text):
     digits = ''.join(filter(str.isdigit, text))
     return int(digits) if digits else 0
+
+def date_only(date_str):
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        return None

@@ -72,3 +72,13 @@ Q. handling error didalam plu yang sama didalam insert obat, handling error dida
 
 (solved)
 R. pembuatan data pasien dan penyesuaian beberapa kode didalam obat golongan dan pajak agar dialognya bisa sama terus juga penyesuaian di beberapa form agar bisa di disabled dan penyesuaian lainnya
+
+(solved)
+S. pembetulan dibagian tunai, pembetulan dibagian warna di kasir, pembetulan form untuk handing error di seluruh tabel dan juga didalam kasir
+    plu, poin, stock minimum maksimum, diskon apotek yang saling sinkron
+
+(solved)
+berada didalam miss di logika sinkronasi
+T. terdapat masalah ketika persen dimasukkan, maka sudha benar mengikuti, namun ketika semuanya dikosongkan, didalam diskon berubah tidak sesuai keinginan
+
+sepertinya untuk logika poin belum terlalu efektif untuk dicoba

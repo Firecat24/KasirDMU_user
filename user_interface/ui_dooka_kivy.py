@@ -1,16 +1,18 @@
 # Built-in modules
-import re
+import re, json, os
 from datetime import datetime
-from utils.formatting import FormatHelper, get_digits_only
 
 # Local modules
 from database.db import DatabaseObat
+from utils.formatting import FormatHelper, get_digits_only, date_only
+from utils.settings_manager import SettingsManager
 
 # KivyMD modules
 from kivymd.app import MDApp
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.menu import MDDropdownMenu
+from kivymd.uix.list import OneLineListItem
 from kivymd.toast import toast
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.gridlayout import GridLayout
@@ -375,31 +377,87 @@ class InsertObat(Screen):
 
     def simpan_data_obat(self):
         data = self.get_form_values()
-
         kode_golongan = self.kode_golongan_aktif
         nama_golongan = self.ids.dropdown_golongan.text
-
         kode_ppn = self.kode_pajak_aktif
-
+        data['plu'] = str(data['plu']).zfill(6)
+        # HANDLING ERRORS
+        if not data['jenis']:
+            self.tampilkan_dialog("Jenis Produk wajib diisi!")
+            return
+        if not data['plu'] or not data['plu'].isdigit():
+            self.tampilkan_dialog("PLU wajib diisi dan harus angka!")
+            return
+        duplicate = MDApp.get_running_app().db.is_plu_exist(data['plu'])
+        if duplicate:
+            self.tampilkan_dialog(f"PLU '{data['plu']}' sudah terdaftar untuk produk '{duplicate[0]}' pada rak '{duplicate[1]}'. Gunakan PLU lain.")
+            return
+        if not data['nama_produk']:
+            self.tampilkan_dialog("Nama Produk wajib diisi!")
+            return
+        if not data['satuan']:
+            self.tampilkan_dialog("Satuan wajib diisi!")
+            return
+        if not kode_golongan:
+            self.tampilkan_dialog("Golongan wajib dipilih!")
+            return
+        if not data['rak']:
+            self.tampilkan_dialog("Rak wajib diisi!")
+            return
+        if not re.fullmatch(r'[A-Za-z0-9]+', data['rak']):
+            self.tampilkan_dialog("Rak hanya boleh berisi huruf dan angka, contoh: A1, B2, C10.")
+            return
+        if not data['supplier']:
+            self.tampilkan_dialog("Supplier wajib diisi!")
+            return
+        if not data['fast_moving']or not "ya" in data['fast_moving'].lower() and not "tidak" in data['fast_moving'].lower():
+            self.tampilkan_dialog("Fast Moving wajib diisi! (wajib Ya atau Tidak)")
+            return
+        if not data['kemasan_beli']:
+            self.tampilkan_dialog("Kemasan Beli wajib diisi!")
+            return
+        if not data['isi'] or not data['isi'].isdigit():
+            self.tampilkan_dialog("Isi harus diisi dan harus berupa angka!")
+            return
+        if not data['tanggal_kadaluarsa'] or not date_only(data['tanggal_kadaluarsa']):
+            self.tampilkan_dialog("tanggal harus diisi atau Format tanggal salah! Gunakan format YYYY-MM-DD")
+            return
+        if not data['stok_apotek'] or not data['stok_apotek'].isdigit():
+            self.tampilkan_dialog("Stok Apotek harus diisi dan harus berupa angka!")
+            return
+        stok_apotek = int(data['stok_apotek'])
+        if stok_apotek < 1 or stok_apotek > 1000:
+            self.tampilkan_dialog("Stok Apotek harus antara 1 dan 1000!")
+            return
+        if not data['stok_min'] or not data['stok_min'].isdigit():
+            self.tampilkan_dialog("Stok Min harus diisi dan harus berupa angka!")
+            return
+        stok_min = int(data['stok_min'])
+        max_stok_min = stok_apotek // 2
+        if stok_min < 1 or stok_min > max_stok_min:
+            self.tampilkan_dialog(f"Stok Min harus antara 1 dan {max_stok_min} (tidak lebih dari 50% stok)!")
+            return
+        if not data['stok_max'] or not data['stok_max'].isdigit():
+            self.tampilkan_dialog("Stok Max harus diisi dan harus berupa angka!")
+            return
+        stok_max = int(data['stok_max'])
+        min_stok_max = stok_apotek // 2
+        if stok_max < min_stok_max or stok_max > 1000:
+            self.tampilkan_dialog(f"Stok Max harus antara {min_stok_max} dan 1000 (tidak boleh kurang dari 50% stok)!")
+            return
+        if not kode_ppn:
+            self.tampilkan_dialog("Pajak wajib dipilih!")
+            return
+        #_____________________________________________________________________________________#
+        # Jika semua validasi lolos, simpan data
         margin_data = MDApp.get_running_app().db.get_margin_golongan(kode_golongan)
-
         harga_beli = int(get_digits_only(data['harga_beli']))
-
         harga_resep = round(harga_beli * (1 + margin_data['margin_resep'] / 100))
         harga_umum = round(harga_beli * (1 + margin_data['margin_umum'] / 100))
         harga_cabang = round(harga_beli * (1 + margin_data['margin_cabang'] / 100))
         harga_halodoc = round(harga_beli * (1 + margin_data['margin_halodoc'] / 100))
         harga_karyawan = round(harga_beli * (1 + margin_data['margin_karyawan'] / 100))
         harga_bpjs = round(harga_beli * (1 + margin_data['margin_bpjs'] / 100))
-
-        # HANDLING ERRORS
-        if not data['plu'] or not data['nama_produk']:
-            self.tampilkan_dialog("PLU dan Nama Produk wajib diisi!")
-            return
-        if MDApp.get_running_app().db.is_plu_exist(data['plu']):
-            self.tampilkan_dialog(f"PLU '{data['plu']}' sudah terdaftar. Gunakan PLU lain.")
-            return
-        #_____________________________________________________________________________________#
         try:
             MDApp.get_running_app().db.new_produk( 
                 data['jenis'], 
@@ -421,9 +479,9 @@ class InsertObat(Screen):
                 data['kemasan_beli'], 
                 data['isi'], 
                 data['tanggal_kadaluarsa'], 
-                data['stok_apotek'], 
-                data['stok_min'], 
-                data['stok_max'], 
+                stok_apotek, 
+                stok_min, 
+                stok_max, 
                 kode_ppn)
 
             rows = MDApp.get_running_app().db.get_all_obat()
@@ -528,7 +586,6 @@ class EditObat(Screen):
 
     def isi_data_edit(self, data):
         self.editing_plu = self._safe_get(data, 'plu')
-        print(data)
         
         # Isi field teks
         self._set_text_field('jenis', data, 'jenis')
@@ -627,22 +684,72 @@ class EditObat(Screen):
     
     def simpan_edit(self):
         data = self.get_form_values()
-
+        kode_golongan = self.kode_golongan_aktif
+        nama_golongan = self.kode_golongan_nama
+        kode_ppn = self.kode_pajak_nama
         # HANDLING ERRORS
-        if not data['plu'] or not data['nama_produk']:
-            self.tampilkan_dialog("PLU dan Nama Produk wajib diisi!")
+        if not data['jenis']:
+            self.tampilkan_dialog("Jenis Produk wajib diisi!")
+            return
+        if not data['nama_produk']:
+            self.tampilkan_dialog("Nama Produk wajib diisi!")
+            return
+        if not data['satuan']:
+            self.tampilkan_dialog("Satuan wajib diisi!")
+            return
+        if not kode_golongan:
+            self.tampilkan_dialog("Golongan wajib dipilih!")
+            return
+        if not data['rak']:
+            self.tampilkan_dialog("Rak wajib diisi!")
+            return
+        if not re.fullmatch(r'[A-Za-z0-9]+', data['rak']):
+            self.tampilkan_dialog("Rak hanya boleh berisi huruf dan angka, contoh: AA, 01, A1, B2.")
+            return
+        if not data['supplier']:
+            self.tampilkan_dialog("Supplier wajib diisi!")
+            return
+        if not data['fast_moving']or not "ya" in data['fast_moving'].lower() and not "tidak" in data['fast_moving'].lower():
+            self.tampilkan_dialog("Fast Moving wajib diisi! (wajib Ya atau Tidak)")
+            return
+        if not data['kemasan_beli']:
+            self.tampilkan_dialog("Kemasan Beli wajib diisi!")
+            return
+        if not data['isi'] or not data['isi'].isdigit():
+            self.tampilkan_dialog("Isi harus diisi dan harus berupa angka!")
+            return
+        if not data['tanggal_kadaluarsa'] or not date_only(data['tanggal_kadaluarsa']):
+            self.tampilkan_dialog("tanggal harus diisi atau Format tanggal salah! Gunakan format YYYY-MM-DD")
+            return
+        stok_apotek = int(data['stok_apotek'])
+        if stok_apotek < 1 or stok_apotek > 1000:
+            self.tampilkan_dialog("Stok Apotek harus antara 1 dan 1000!")
+            return
+        if not data['stok_min'] or not data['stok_min'].isdigit():
+            self.tampilkan_dialog("Stok Min harus diisi dan harus berupa angka!")
+            return
+        stok_min = int(data['stok_min'])
+        max_stok_min = stok_apotek // 2
+        if stok_min < 1 or stok_min > max_stok_min:
+            self.tampilkan_dialog(f"Stok Min harus antara 1 dan {max_stok_min} (tidak lebih dari 50% stok)!")
+            return
+        if not data['stok_max'] or not data['stok_max'].isdigit():
+            self.tampilkan_dialog("Stok Max harus diisi dan harus berupa angka!")
+            return
+        stok_max = int(data['stok_max'])
+        min_stok_max = stok_apotek // 2
+        if stok_max < min_stok_max or stok_max > 1000:
+            self.tampilkan_dialog(f"Stok Max harus antara {min_stok_max} dan 1000 (tidak boleh kurang dari 50% stok)!")
+            return
+        if not kode_ppn:
+            self.tampilkan_dialog("Pajak wajib dipilih!")
             return
         #_____________________________________________________________________________________#
-
+        # Jika semua validasi lolos, simpan data
         try:
             db = MDApp.get_running_app().db
-
-            kode_golongan = self.kode_golongan_aktif
-            nama_golongan = self.kode_golongan_nama
-            kode_ppn = self.kode_pajak_nama
             margin_data = db.get_margin_golongan(kode_golongan)
             harga_beli = int(get_digits_only(data['harga_beli']))
-
             harga_resep = round(harga_beli * (1 + margin_data['margin_resep'] / 100))
             harga_umum = round(harga_beli * (1 + margin_data['margin_umum'] / 100))
             harga_cabang = round(harga_beli * (1 + margin_data['margin_cabang'] / 100))
@@ -655,8 +762,8 @@ class EditObat(Screen):
                 data['jenis'], data['plu'], data['nama_produk'], data['satuan'], harga_beli,
                 harga_umum, harga_resep, harga_cabang, harga_halodoc, harga_karyawan, harga_bpjs,
                 kode_golongan, nama_golongan, data['rak'], data['supplier'], data['fast_moving'],
-                data['kemasan_beli'], data['isi'], data['tanggal_kadaluarsa'], data['stok_apotek'],
-                data['stok_min'], data['stok_max'], kode_ppn
+                data['kemasan_beli'], data['isi'], data['tanggal_kadaluarsa'], stok_apotek,
+                stok_min, stok_max, kode_ppn
             )
 
             rows = MDApp.get_running_app().db.get_all_obat()
@@ -703,7 +810,7 @@ class DataGolonganObat(Screen):
     def show_table(self, rows):
         grid = self.ids.grid_golongan
         grid.clear_widgets()
-        grid.cols = 9  # 8 kolom data + 1 kolom checkbox
+        grid.cols = 9
 
         self._rows = rows
         self.selected_rows = set()
@@ -879,11 +986,12 @@ class InsertGolonganObat(Screen):
 
     def simpan_data_golongan_obat(self):
         data = self.get_form_values()
-
+        # HANDLING ERRORS
         if not data['nama_golongan']:
             self.tampilkan_dialog("Nama Golongan wajib diisi!")
             return
-
+        #______________________________________________________________________________________#
+        # Jika semua validasi lolos, simpan data
         try:
             MDApp.get_running_app().db.tambah_golongan( 
                 data['nama_golongan'], 
@@ -977,10 +1085,12 @@ class EditGolonganObat(Screen):
     
     def simpan_edit_golongan(self):
         data = self.get_form_values()
+        # HANDLING ERRORS
         if not data['nama_golongan']:
             self.tampilkan_dialog("Nama Golongan wajib diisi!")
             return
-
+        #______________________________________________________________________________________#
+        # Jika semua validasi lolos, simpan data
         try:
             MDApp.get_running_app().db.edit_golongan( 
                 data['kode_golongan'],
@@ -1172,11 +1282,15 @@ class InsertPajak(Screen):
 
     def simpan_data_pajak(self):
         data = self.get_form_values()
-
+        # HANDLING ERRORS
         if not data['jenis_pajak']:
             self.tampilkan_dialog("Jenis Pajak wajib diisi!")
             return
-
+        if not data['persen_pajak'] or not data['persen_pajak'].isdigit() or not (0 <= int(data['persen_pajak']) <= 30):
+            self.tampilkan_dialog("Persen Pajak harus diisi dan harus berupa angka!(0-30%)")
+            return
+        #______________________________________________________________________________________#
+        # Jika semua validasi lolos, simpan data
         try:
             MDApp.get_running_app().db.tambah_pajak( 
                 data['jenis_pajak'], 
@@ -1252,10 +1366,15 @@ class EditPajak(Screen):
     
     def simpan_edit_pajak(self):
         data = self.get_form_values()
+        # HANDLING ERRORS
         if not data['jenis_pajak']:
             self.tampilkan_dialog("Jenis Pajak wajib diisi!")
             return
-
+        if not data['persen_pajak'] or not data['persen_pajak'].isdigit() or not (0 <= int(data['persen_pajak']) <= 30):
+            self.tampilkan_dialog("Persen Pajak harus diisi dan harus berupa angka!(0-30%)")
+            return
+        #______________________________________________________________________________________#
+        # Jika semua validasi lolos, simpan data
         try:
             MDApp.get_running_app().db.edit_pajak( 
                 data['jenis_pajak'],
@@ -1451,11 +1570,33 @@ class InsertPelanggan(Screen):
 
     def simpan_data_pelanggan(self):
         data = self.get_form_values()
-
+        # HANDLING ERRORS
         if not data['nama_pelanggan']:
             self.tampilkan_dialog("Nama Pelanggan wajib diisi!")
             return
-
+        nomor = data['nomor_telfon']
+        if not nomor:
+            self.tampilkan_dialog("Nomor Telepon wajib diisi!")
+            return
+        nomor_bersih = re.sub(r'[^\d+]', '', nomor)
+        if nomor_bersih.startswith('+62'):
+            nomor_normal = nomor_bersih
+        elif nomor_bersih.startswith('62'):
+            nomor_normal = '+' + nomor_bersih
+        elif nomor_bersih.startswith('08'):
+            nomor_normal = '+62' + nomor_bersih[1:]
+        else:
+            self.tampilkan_dialog("Nomor Telepon harus diawali dengan 08, 62, atau +62")
+            return
+        if not re.fullmatch(r'\+62\d{8,13}', nomor_normal):
+            self.tampilkan_dialog("Format Nomor Telepon tidak valid! Contoh: 08123456789 atau +628123456789")
+            return
+        data['nomor_telfon'] = nomor_normal
+        if not data['alamat']:
+            self.tampilkan_dialog("Alamat wajib diisi!")
+            return
+        #_______________________________________________________________________________________#
+        # Jika semua validasi lolos, simpan data
         try:
             MDApp.get_running_app().db.tambah_pelanggan(
                 data['nama_pelanggan'], 
@@ -1535,10 +1676,34 @@ class EditPelanggan(Screen):
     
     def simpan_edit_pelanggan(self):
         data = self.get_form_values()
+        # HANDLING ERRORS
         if not data['nama_pelanggan']:
             self.tampilkan_dialog("Nama Pelanggan wajib diisi!")
             return
-
+        
+        nomor = data['nomor_telfon']
+        if not nomor:
+            self.tampilkan_dialog("Nomor Telepon wajib diisi!")
+            return
+        nomor_bersih = re.sub(r'[^\d+]', '', nomor)
+        if nomor_bersih.startswith('+62'):
+            nomor_normal = nomor_bersih
+        elif nomor_bersih.startswith('62'):
+            nomor_normal = '+' + nomor_bersih
+        elif nomor_bersih.startswith('08'):
+            nomor_normal = '+62' + nomor_bersih[1:]
+        else:
+            self.tampilkan_dialog("Nomor Telepon harus diawali dengan 08, 62, atau +62")
+            return
+        if not re.fullmatch(r'\+62\d{8,13}', nomor_normal):
+            self.tampilkan_dialog("Format Nomor Telepon tidak valid! Contoh: 08123456789 atau +628123456789")
+            return
+        data['nomor_telfon'] = nomor_normal
+        if not data['alamat']:
+            self.tampilkan_dialog("Alamat wajib diisi!")
+            return
+        #_______________________________________________________________________________________#
+        # Jika semua validasi lolos, simpan data
         try:
             MDApp.get_running_app().db.edit_pelanggan(
                 data['id'],
@@ -1569,7 +1734,6 @@ class EditPelanggan(Screen):
             buttons=[MDFlatButton(text="OK", on_release=tutup_dialog)],
         )
 
-        # Pastikan tetap dijalankan meskipun user tidak klik tombol
         if setelah_dialog:
             dialog.bind(on_dismiss=lambda *args: setelah_dialog())
 
@@ -1584,12 +1748,24 @@ class Kasir(Screen):
     kembalian = NumericProperty(0)
     poin_pelanggan = NumericProperty(0)
     is_kredit = BooleanProperty(False)
-
+    is_non_tunai = BooleanProperty(False)
+    terpending = None
+    nama_pelanggan_aktif = StringProperty('')
+    diskon_dari_poin = BooleanProperty(False)
+    #METHODS#
+    @property
+    def pembulatan(self):
+        return MDApp.get_running_app().settings_manager.get("pembulatan")
+    @property
+    def pembagian_perpoin(self):
+        return MDApp.get_running_app().settings_manager.get("pembagian_perpoin")
+    #INIT#
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         Clock.schedule_interval(self.update_time, 1)
         self.no_ref_sedang_diedit = None
         self.mode_edit = False
+        self.last_diskon_input = ''
 
     def on_pre_enter(self):
         if not getattr(self, 'mode_edit', False):
@@ -1599,88 +1775,97 @@ class Kasir(Screen):
             self.ids.uang_pelanggan_input.text = ''
             self.reset_form_kasir()
             self.update_totals()
-
+    #KASIR#
     def update_totals(self):
-        total_belanja = sum(item['total'] for item in self.daftar_belanja)
-        diskon_id = get_digits_only(self.ids.diskon_rp.text)
-        ongkir_id = get_digits_only(self.ids.ongkir_input.text)
-        uang_pelanggan_id = get_digits_only(self.ids.uang_pelanggan_input.text)
-        total_setelah_diskon = total_belanja
-
-        if diskon_id:
-            try:
-                total_setelah_diskon = total_belanja - int(diskon_id)
-            except ValueError:
-                total_setelah_diskon = 0
-
-        elif self.ids.diskon_persen.text:
-            try:
-                persen = int(self.ids.diskon_persen.text)
-                if persen > 100:
-                    persen = 100
-                    self.ids.diskon_persen.text = '100'
-                total_setelah_diskon = total_belanja * (1 - (persen / 100.0))
-            except ValueError:
-                total_setelah_diskon = 0
-
+        if hasattr(self, '_updating_diskon'):
+            return
+        self._updating_diskon = True
         try:
-            ongkir = int(ongkir_id) if ongkir_id else 0
-        except ValueError:
-            ongkir = 0
-            
-        total_setelah_ongkir = total_setelah_diskon + ongkir
-
+            total_belanja = sum(item['total'] for item in self.daftar_belanja)
+        except:
+            total_belanja = 0
+        diskon_rp_text = self.ids.diskon_rp.text.strip()
+        diskon_persen_text = self.ids.diskon_persen.text.strip()
+        diskon_rp = get_digits_only(diskon_rp_text)
+        diskon_persen = 0
+        if self.last_diskon_input == 'persen' and diskon_persen_text:
+            diskon_persen = int(diskon_persen_text)
+            if diskon_persen > 100:
+                diskon_persen = 100
+                self.ids.diskon_persen.text = "100"
+            diskon_rp = int(total_belanja * (diskon_persen / 100))
+            self.ids.diskon_rp.text = f"{diskon_rp:,}".replace(",", ".")
+        elif self.last_diskon_input == 'persen' and not diskon_persen_text:
+            diskon_rp = 0
+            self.ids.diskon_rp.text = ''
+        elif self.last_diskon_input == 'rp' and diskon_rp_text:
+            if not self.diskon_dari_poin:
+                diskon_persen = round((diskon_rp / total_belanja) * 100) if total_belanja else 0
+                self.ids.diskon_persen.text = str(diskon_persen)
+            else:
+                diskon_persen = 0
+        elif self.last_diskon_input == 'rp' and not diskon_rp_text:
+            diskon_persen = 0
+            self.ids.diskon_persen.text = ''
+        #LOGIKA POIN NANTI MASUK DISINI UNTUK PENGURANGAN POIN
+        total_setelah_diskon = int(round((max(total_belanja - diskon_rp, 0))/float(self.pembulatan))*self.pembulatan)
+        ongkir = get_digits_only(self.ids.ongkir_input.text)
+        total_setelah_ongkir = int(round((max(total_setelah_diskon + ongkir, 0))/float(self.pembulatan))*self.pembulatan)
         self.total_akhir = total_setelah_ongkir
-        self.ids.total_setelah_diskon.text = "Total Setelah Diskon = Rp{:,.0f}".format(total_setelah_diskon).replace(',', '.')
-        self.ids.total_setelah_ongkir.text = "Total Setelah Ongkir = Rp{:,.0f}".format(total_setelah_ongkir).replace(',', '.')
+        # Jika checkbox aktif, maka diskon ini berasal dari poin
+        if self.diskon_dari_poin and self.nama_pelanggan_aktif:
+            if diskon_rp > self.poin_pelanggan:
+                self.tampilkan_popup("Diskon poin melebihi poin pelanggan, menggunakan poin maksimum.")
+                diskon_rp = 0
+                self.ids.diskon_rp.text = ''
+            else:
+                self.ids.total_setelah_diskon.text = f"Total Setelah Diskon (Poin) = Rp{total_setelah_diskon:,.0f}".replace(",", ".")
+        else:
+            self.ids.total_setelah_diskon.text = f"Total Setelah Diskon = Rp{total_setelah_diskon:,.0f}".replace(",", ".")
+        self.ids.total_setelah_ongkir.text = f"Total Setelah Ongkir = Rp{total_setelah_ongkir:,.0f}".replace(",", ".")
+        uang_pelanggan = get_digits_only(self.ids.uang_pelanggan_input.text)
+        kembalian = uang_pelanggan - total_setelah_ongkir
+        self.kembalian = max(0, kembalian)
+        self.ids.kembalian_label.text = f"Kembalian     : Rp{self.kembalian:,.0f}".replace(",", ".")
+        if self.diskon_dari_poin:
+            # Saat diskon dari poin aktif, hanya aktifkan input RP
+            self.ids.diskon_rp.disabled = False
+            self.ids.diskon_persen.disabled = True
+        else:
+            if self.last_diskon_input == 'rp' and diskon_rp_text:
+                self.ids.diskon_persen.disabled = True
+                self.ids.diskon_rp.disabled = False
+            elif self.last_diskon_input == 'persen' and diskon_persen_text:
+                self.ids.diskon_rp.disabled = True
+                self.ids.diskon_persen.disabled = False
+            else:
+                self.ids.diskon_rp.disabled = False
+                self.ids.diskon_persen.disabled = False
+        del self._updating_diskon
 
+    def tambah_ke_keranjang(self, nama, satuan, harga, plu):
+        db = MDApp.get_running_app().db
+        stok_obat = db.stok_obat(plu)
+        stok_min = db.stok_min_obat(plu)
+        if stok_obat <= stok_min:
+            pesan = (f"Stok {nama} sudah mencapai batas minimum.\n"
+                    f"Stok saat ini: {stok_obat}, batas minimum: {stok_min}")
+            if stok_obat == 0:
+                pesan += "\n⚠️ Stok 0 — pertimbangkan substitusi atau konfirmasi ke gudang."
+            self.tampilkan_popup(pesan)
         try:
-            uang_pelanggan = int(uang_pelanggan_id) if uang_pelanggan_id else 0
-            kembalian = uang_pelanggan - total_setelah_ongkir
-            self.kembalian = max(0, kembalian)
-            self.ids.kembalian_label.text = "Kembalian     : Rp{:,.0f}".format(self.kembalian).replace(',', '.')
-        except (ValueError, AttributeError):
-            self.kembalian = 0
-            self.ids.kembalian_label.text = "Kembalian     : Rp.0"
-
-    def update_time(self, dt):
-        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
-        time_label = self.ids.get('time_label')
-        if time_label:
-            time_label.text = f'{current_time}'
-
-    def tampilkan_popup_obat(self, hasil_pencarian):
-        layout = Factory.PopupLayout()
-        tombol_layout = layout.ids.tombol_layout
-
-        for obat in hasil_pencarian:
-            nama, satuan, harga = obat
-            btn = Button(
-                text=f"{nama} ({satuan}) - Rp{harga}",
-                size_hint_y=None,
-                height=40
-            )
-
-            btn.bind(on_release=lambda btn, data=obat: (self.tambah_ke_keranjang(data[0], data[1], data[2]), popup.dismiss()))
-            tombol_layout.add_widget(btn)
-
-        popup = Popup(
-            title="Pilih Obat",
-            content=layout,
-            size_hint=(0.9, 0.8),
-            auto_dismiss=True
-        )
-        popup.open()
-
-    def tambah_ke_keranjang(self, nama, satuan, harga):
-        harga_int = int(harga)
+            harga_int = int(harga)
+        except (TypeError, ValueError):
+            harga_int = 0  # fallback aman
+        harga_bulat = int(round(harga_int / self.pembulatan) * self.pembulatan)
         self.daftar_belanja.append({
+            'plu': plu,
             'nama': nama,
             'satuan': satuan,
-            'harga': int(round(harga_int / 500.0) * 500),
+            'harga': harga_bulat,
             'qty': 1,
             'diskon': 0,
-            'total': int(round(harga_int / 500.0) * 500),
+            'total': harga_bulat,
         })
         self.update_totals()
         self.refresh_keranjang()
@@ -1688,12 +1873,24 @@ class Kasir(Screen):
     def update_item(self, index, qty_str, diskon_str):
         try:
             item = self.daftar_belanja[index]
-            harga = int(round(item['harga'] / 500.0) * 500)
+            harga = int(round(item['harga'] / self.pembulatan) * self.pembulatan)
             qty = int(qty_str.strip()) if qty_str.strip().isdigit() else 1
             diskon = int(diskon_str.strip()) if diskon_str.strip().isdigit() else 0
             qty = max(min(qty, 999), 1)
             diskon = max(min(diskon, 100), 0)
-            total = round((harga * qty) * (1 - (diskon / 100)) / 500.0) * 500
+            db = MDApp.get_running_app().db
+            stok_obat = db.stok_obat(item['plu'])
+            stok_min_obat = db.stok_min_obat(item['plu'])
+            stok_sem = stok_obat - qty
+            if qty > stok_obat:
+                self.tampilkan_popup(
+                    f"Qty yang dimasukkan ({qty}) melebihi stok ({stok_obat}). "
+                    f"Qty disesuaikan ke stok maksimum."
+                )
+                qty = stok_obat
+            if stok_sem < stok_min_obat:
+                self.tampilkan_popup(f"Stok obat ini sudah-\nmencapai batas minimum.\nstok ketika dikurangi: {stok_sem}\nstok obat ini : {stok_obat}")
+            total = round((harga * qty) * (1 - (diskon / 100)) / self.pembulatan) * self.pembulatan
             self.daftar_belanja[index]['qty'] = qty
             self.daftar_belanja[index]['diskon'] = diskon
             self.daftar_belanja[index]['total'] = int(total)
@@ -1730,70 +1927,6 @@ class Kasir(Screen):
         else:
             self.tampilkan_popup("Obat tidak ditemukan")
 
-    def open_cara_bayar_popup(self):
-        popup = Popup(
-            title='Informasi',
-            content=Label(text='Menu Cara Bayar'),
-            size_hint=(None, None),
-            size=(300, 150),
-            auto_dismiss=True
-        )
-        popup.open()
-
-    def toggle_kredit(self, value):
-        self.is_kredit = value
-        if not value:
-            self.ids.input_tanggal_tempo.text = ''
-
-    def generate_no_ref(self):
-        last = MDApp.get_running_app().db.automatis_no_ref()
-        if last and last[0].isdigit():
-            last_number = int(last[0])
-            new_number = last_number + 1
-        else:
-            new_number = 1
-
-        return f"{new_number:07d}"
-    
-    def periksa_pelanggan_kosong(self, input_widget):
-        if not input_widget.focus and input_widget.text.strip() == "":
-            self.ids.label_nama_pelanggan.text = "Umum"
-
-    def cari_pelanggan(self, keyword):
-        hasil = MDApp.get_running_app().db.search_data_pelanggan(keyword)
-        if hasil:
-            self.tampilkan_popup_pelanggan(hasil)
-        else:
-            self.tampilkan_popup("pelanggan tidak ditemukan")
-
-    def tampilkan_popup_pelanggan(self, daftar_pelanggan):
-        layout = Factory.PopupLayoutPelanggan()
-        tombol_layout = layout.ids.tombol_layout
-
-        popup = Popup(
-            title="Pilih PELANGGAN",
-            content=layout,
-            size_hint=(0.9, 0.8),
-            auto_dismiss=True
-        )
-        for pelanggan in daftar_pelanggan:
-            _, nama, no_telp, alamat, poin = pelanggan
-            self.poin_pelanggan = poin
-            btn = Button(
-                text=f"{nama} ({no_telp}) - {alamat} - Poin: {poin}",
-                size_hint_y=None,
-                height=40
-            )
-
-            btn.bind(on_release=lambda btn, data=pelanggan: (
-                setattr(self.ids.label_nama_pelanggan, 'text', data[1]),
-                setattr(self.ids.input_nama_pelanggan, 'text', ''),
-                setattr(self.ids.label_poin_pelanggan, 'text', f"Poin: {self.poin_pelanggan}"),
-                popup.dismiss()
-            ))
-            tombol_layout.add_widget(btn)
-        popup.open()
-
     def simpan_transaksi(self):
         db = MDApp.get_running_app().db
         now = datetime.now()
@@ -1804,36 +1937,67 @@ class Kasir(Screen):
         nama_pelanggan = self.ids.label_nama_pelanggan.text.strip()
         pelanggan = db.get_id_pelanggan(nama_pelanggan) if nama_pelanggan != "Umum" else None
         kredit = 1 if self.is_kredit else 0
-        tanggal_tempo = self.ids.input_tanggal_tempo.text if kredit else None
-        cara_bayar = self.ids.cara_bayar.text
+        tanggal_input = self.ids.input_tanggal_tempo.text
+        tanggal_tempo = date_only(tanggal_input)
+        if kredit and not tanggal_tempo:
+            self.tampilkan_popup("Format tanggal salah!\nGunakan format YYYY-MM-DD")
+            return
+        if self.is_non_tunai == 0:
+            cara_bayar = "Tunai"
+        else:
+            cara_bayar = "Non Tunai"
         jenis_pelanggan = self.ids.jenis_pelanggan_spinner.text
         nama_kasir = "User_percobaan"
         tanggal = now.strftime("%Y-%m-%d")
 
         try:
-            diskon = int(self.ids.diskon_rp.text)
-        except ValueError:
+            if self.diskon_dari_poin == True and self.nama_pelanggan_aktif:
+                diskon = int(get_digits_only(self.ids.diskon_rp.text))
+                db.pengurangan_poin_pelanggan(pelanggan, diskon)
+            else:
+                diskon = int(get_digits_only(self.ids.diskon_rp.text))
+        except ValueError as e:
+            print(f"Error parsing diskon: {e}")
             diskon = 0
         try:
-            ongkir = int(self.ids.ongkir_input.text)
-        except ValueError:
+            ongkir = int(get_digits_only(self.ids.ongkir_input.text))
+        except ValueError as e:
+            print(f"Error parsing ongkir: {e}")
             ongkir = 0
         try:
             pembayaran = int(get_digits_only(self.ids.uang_pelanggan_input.text))
-        except ValueError:
+        except ValueError as e:
+            print(f"Error parsing pembayaran: {e}")
             pembayaran = 0
         total = self.total_akhir
         if self.mode_edit:
-            db.edit_transaksi(no_ref, tanggal=tanggal, id_pelanggan=pelanggan, kredit=kredit, tanggal_tempo=tanggal_tempo, cara_bayar=cara_bayar, jenis_pelanggan=jenis_pelanggan, diskon_toko=diskon, ongkir=ongkir, total_penjualan=total, pembayaran=pembayaran, nama_kasir=nama_kasir)
+            db.pengurangan_poin_transaksi(no_ref)
+            eligible_new = pelanggan is not None
+            poin_baru = (total // self.pembagian_perpoin) if eligible_new else 0
+            if eligible_new and poin_baru > 0:
+                db.tambah_poin_pelanggan(pelanggan, poin_baru)
+            db.edit_transaksi(no_ref, tanggal=tanggal, id_pelanggan=pelanggan, kredit=kredit, tanggal_tempo=tanggal_tempo, cara_bayar=cara_bayar, jenis_pelanggan=jenis_pelanggan, diskon_toko=diskon, ongkir=ongkir, total_penjualan=total, pembayaran=pembayaran, nama_kasir=nama_kasir, poin_didapat=poin_baru)
             db.hapus_data_transaksi_item(no_ref)
         else:
+            eligible = pelanggan is not None
+            poin_baru = (total // self.pembagian_perpoin) if eligible else 0
+            if eligible and poin_baru > 0:
+                db.tambah_poin_pelanggan(pelanggan, poin_baru)
             db.new_transaksi(no_ref, tanggal, pelanggan, kredit, tanggal_tempo, cara_bayar,
-                            jenis_pelanggan, diskon, ongkir, total, pembayaran, nama_kasir)
+                            jenis_pelanggan, diskon, ongkir, total, pembayaran, nama_kasir, poin_baru)
 
         for item in self.daftar_belanja:
+            db.stok_pengurangan_obat(item['plu'], item['qty'])
             db.new_transaksi_item(no_ref, item['nama'], item['satuan'], item['harga'],
                                 item['qty'], item['diskon'], item['total'])
             
+        stok_obat = db.stok_obat(item['plu'])
+        stok_min_obat = db.stok_min_obat(item['plu'])
+        if stok_obat <= stok_min_obat:
+            self.tampilkan_popup(
+                f"Stok {item['nama']} sudah mencapai batas minimum.\n"
+                f"Stok saat ini: {stok_obat}, batas minimum: {stok_min_obat}"
+            )
         self.daftar_belanja.clear()
         self.refresh_keranjang()
         self.update_totals()
@@ -1842,15 +2006,6 @@ class Kasir(Screen):
         self.reset_form_kasir()
 
         self.tampilkan_popup("Transaksi berhasil disimpan!")
-        
-    def tampilkan_popup(self, pesan):
-        popup = Popup(
-            title="Info",
-            content=Label(text=pesan),
-            size_hint=(None, None),
-            size=(300, 150)
-        )
-        popup.open()
 
     def load_transaksi(self, no_ref):
         self.no_ref_sedang_diedit = no_ref
@@ -1872,7 +2027,7 @@ class Kasir(Screen):
         self.is_kredit = transaksi[3] == 1
         self.ids.toggle_kredit.state = 'down' if self.is_kredit else 'normal'
         self.ids.input_tanggal_tempo.text = transaksi[4] or ''
-        self.ids.cara_bayar.text = transaksi[5]
+        self.is_non_tunai = transaksi[5]
         self.ids.diskon_rp.text = str(int(transaksi[7]))
         self.ids.diskon_persen.text = ''
         self.ids.ongkir_input.text = str(int(transaksi[8]))
@@ -1907,8 +2062,10 @@ class Kasir(Screen):
         self.ids.kembalian_label.text = "Kembalian     : Rp.0"
         self.ids.total_setelah_diskon.text = "Total Setelah Diskon = Rp.0"
         self.ids.total_setelah_ongkir.text = "Total Setelah Ongkir = Rp.0"
-        self.ids.cara_bayar.text = "Tunai"
+        self.last_diskon_input = ''
+        self.is_non_tunai = False
         self.is_kredit = False
+        self.nama_pelanggan_aktif = ''
         self.ids.input_tanggal_tempo.disabled = True
         self.daftar_belanja.clear()
         self.refresh_keranjang()
@@ -1919,6 +2076,7 @@ class Kasir(Screen):
 
     def hapus_transaksi(self, no_ref):
         db = MDApp.get_running_app().db
+        db.pengurangan_poin_transaksi(no_ref)
         db.hapus_transaksi(no_ref)
         toast(f"Transaksi {no_ref} telah dihapus.")
         Clock.schedule_once(lambda dt: self.manager.get_screen('riwayat_transaksi').muat_riwayat_transaksi(), 0.2)
@@ -1941,7 +2099,193 @@ class Kasir(Screen):
         btn_tidak.bind(on_release=popup.dismiss)
 
         popup.open()
-        
+
+    def pending_transaksi(self):
+        if self.terpending:
+            self.tampilkan_popup("Masih ada transaksi yang terpending")
+            return
+        if not self.daftar_belanja:
+            self.tampilkan_popup("Keranjang belanja masih kosong")
+            return
+        now = datetime.now()
+        try:
+            data_transaksi = {
+                "tanggal": now.strftime("%Y-%m-%d"),
+                "pelanggan": self.ids.label_nama_pelanggan.text.strip(),
+                "kredit": self.is_kredit,
+                "tanggal_tempo": self.ids.input_tanggal_tempo.text.strip(),
+                "cara_bayar": "Non Tunai" if self.is_non_tunai else "Tunai",
+                "jenis_pelanggan": self.ids.jenis_pelanggan_spinner.text,
+                "diskon": self.ids.diskon_rp.text,
+                "ongkir": self.ids.ongkir_input.text,
+                "bayar": self.ids.uang_pelanggan_input.text,
+            }
+
+            # Simpan ke memori
+            self.terpending = {
+                'transaksi': data_transaksi,
+                'items': self.daftar_belanja.copy()
+            }
+
+            self.tampilkan_popup("Transaksi dipending!")
+            self.daftar_belanja.clear()
+            self.refresh_keranjang()
+            self.reset_form_kasir()
+
+        except Exception as e:
+            self.tampilkan_popup(f"Error saat pending: {str(e)}")
+
+    def reload_pending(self):
+        if not self.terpending:
+            self.tampilkan_popup("Tidak ada transaksi pending untuk dimuat.")
+            return
+
+        data = self.terpending
+        transaksi = data['transaksi']
+
+        self.ids.label_nama_pelanggan.text = transaksi['pelanggan']
+        self.is_kredit = transaksi['kredit']
+        self.ids.input_tanggal_tempo.text = transaksi['tanggal_tempo']
+        self.ids.jenis_pelanggan_spinner.text = transaksi['jenis_pelanggan']
+        self.ids.diskon_rp.text = transaksi['diskon']
+        self.ids.ongkir_input.text = transaksi['ongkir']
+        self.ids.uang_pelanggan_input.text = transaksi['bayar']
+
+        self.daftar_belanja.clear()
+        self.daftar_belanja.extend(data['items'])
+
+        self.refresh_keranjang()
+        self.update_totals()
+        self.tampilkan_popup("Transaksi pending berhasil dimuat!")
+        self.terpending = None
+    #UTILS#
+    def on_diskon_rp_checkbox(self, active):
+        if getattr(self, '_updating_checkbox', False):
+            return
+
+        if active:
+            if self.nama_pelanggan_aktif:
+                self.diskon_dari_poin = True
+                self.update_totals()
+            else:
+                self.diskon_dari_poin = False
+                self._updating_checkbox = True
+                self.ids.diskon_rp_checkbox.active = False
+                self._updating_checkbox = False
+                self.update_totals()
+                self.tampilkan_popup("Diskon dari poin hanya berlaku\nuntuk pelanggan terdaftar")
+        else:
+            self.diskon_dari_poin = False
+            self.update_totals()
+
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
+
+    def generate_no_ref(self):
+        last = MDApp.get_running_app().db.automatis_no_ref()
+        if last and last[0].isdigit():
+            last_number = int(last[0])
+            new_number = last_number + 1
+        else:
+            new_number = 1
+
+        return f"{new_number:07d}"
+
+    def toggle_kredit(self, value):
+        self.is_kredit = value
+        if not value:
+            self.ids.input_tanggal_tempo.text = ''
+
+    def toggle_non_tunai(self, value):
+        self.is_non_tunai = value
+
+    def periksa_pelanggan_kosong(self, input_widget):
+        if not input_widget.focus and input_widget.text.strip() == "":
+            self.ids.label_nama_pelanggan.text = "Umum"
+            self.nama_pelanggan_aktif = "Umum"
+
+    def cari_pelanggan(self, keyword):
+        hasil = MDApp.get_running_app().db.search_data_pelanggan(keyword)
+        if hasil:
+            self.tampilkan_popup_pelanggan(hasil)
+        else:
+            self.tampilkan_popup("pelanggan tidak ditemukan")
+
+    def pilih_pelanggan(self, btn, data, popup):
+        self.ids.label_nama_pelanggan.text = data[1]
+        self.ids.input_nama_pelanggan.text = ''
+        self.ids.label_poin_pelanggan.text = f"Poin: {self.poin_pelanggan}"
+        self.nama_pelanggan_aktif = data[1]
+        popup.dismiss()
+    #POPUPS#
+    def tampilkan_popup_obat(self, hasil_pencarian):
+        layout = Factory.PopupLayout()
+        tombol_layout = layout.ids.tombol_layout
+
+        for obat in hasil_pencarian:
+            nama, satuan, harga, plu = obat
+            btn = Button(
+                text=f"{nama} ({satuan}) - Rp{harga}",
+                size_hint_y=None,
+                height=40
+            )
+
+            btn.bind(on_release=lambda btn, data=obat: (self.tambah_ke_keranjang(data[0], data[1], data[2], data[3]), popup.dismiss()))
+            tombol_layout.add_widget(btn)
+
+        popup = Popup(
+            title="Pilih Obat",
+            content=layout,
+            size_hint=(0.9, 0.8),
+            auto_dismiss=True
+        )
+        popup.open()
+
+    def tampilkan_popup_pelanggan(self, daftar_pelanggan):
+        layout = Factory.PopupLayoutPelanggan()
+        tombol_layout = layout.ids.tombol_layout
+
+        popup = Popup(
+            title="Pilih PELANGGAN",
+            content=layout,
+            size_hint=(0.9, 0.8),
+            auto_dismiss=True
+        )
+
+        for pelanggan in daftar_pelanggan:
+            _, nama, no_telp, alamat, poin = pelanggan
+            self.poin_pelanggan = poin
+            btn = Button(
+                text=f"{nama} ({no_telp}) - {alamat} - Poin: {poin}",
+                size_hint_y=None,
+                height=40
+            )
+            btn.bind(on_release=lambda btn: self.pilih_pelanggan(btn, pelanggan, popup))
+            tombol_layout.add_widget(btn)
+        popup.open()
+
+    def tampilkan_popup(self, pesan):
+        popup = Popup(
+            title="Info",
+            content=Label(text=pesan),
+            size_hint=(None, None),
+            size=(300, 150)
+        )
+        popup.open()
+
+    def open_cara_bayar_popup(self):
+        popup = Popup(
+            title='Informasi',
+            content=Label(text='Menu Cara Bayar'),
+            size_hint=(None, None),
+            size=(300, 150),
+            auto_dismiss=True
+        )
+        popup.open()
+
 class KeranjangItem(BoxLayout):
     index = NumericProperty()
     nama = StringProperty()
@@ -2022,6 +2366,25 @@ class RiwayatTransaksi(Screen):
 
 #---------------------------------------------------------------------------------------------#
 
+class SettingsDooka(Screen):
+    #METHODS#
+    @property
+    def pembulatan(self):
+        return MDApp.get_running_app().settings_manager.get("pembulatan")
+    @property
+    def pembagian_perpoin(self):
+        return MDApp.get_running_app().settings_manager.get("pembagian_perpoin")
+    #INIT#
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    #UTILS#
+    def ubah_pembulatan(self, nilai_baru):
+        MDApp.get_running_app().settings_manager.set("pembulatan", nilai_baru)
+    def ubah_pembagian_perpoin(self, nilai_baru):
+        MDApp.get_running_app().settings_manager.set("pembagian_perpoin", nilai_baru)
+
+#---------------------------------------------------------------------------------------------#
+
 class WindowsManager(ScreenManager):
     pass
 
@@ -2031,27 +2394,29 @@ class DookaApp(MDApp):
     def build(self):
         Window.size = (1200, 800)
         Window.set_icon("assets\image\DOOKA_Logo_besar.png")
+        self.formatter = FormatHelper() #digunakan didalam file kv
+        # Inisialisasi database
         self.db = DatabaseObat("database/dooka_user.db")
-        self.formatter = FormatHelper()
-
+        # Inisialisasi json settings manager
+        settings_path = os.path.join("assets", "json", "setting.json")
+        self.settings_manager = SettingsManager(settings_path)
+        # Inisialisasi session cache
         if not SessionCache.get_data_obat():
             SessionCache.set_data_obat(self.db.get_all_obat())
-
         if not SessionCache.get_data_golongan():
             SessionCache.set_data_golongan(self.db.get_all_golongan())
-
         if not SessionCache.get_data_pajak():
             SessionCache.set_data_pajak(self.db.get_all_pajak())
-
         if not SessionCache.get_data_pelanggan():
             SessionCache.set_data_pelanggan(self.db.get_all_pelanggan())
 
         return Builder.load_file('user_interface/gui.kv')
-    
+
     def on_stop(self):
         if hasattr(self, "db"):
             self.db.close_connection()
-    
+        self.settings_manager.save()
+
     def change_screen(self, screen_name, direction):
         self.root.transition.direction = direction
         self.root.current = screen_name
