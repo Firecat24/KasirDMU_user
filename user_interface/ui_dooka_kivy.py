@@ -1,6 +1,6 @@
 # Built-in modules
 import re, json, os
-from datetime import datetime
+from datetime import datetime, date
 
 # Local modules
 from database.db import DatabaseObat
@@ -17,6 +17,7 @@ from kivymd.toast import toast
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
+from kivymd.uix.pickers import MDDatePicker
 
 # Kivy modules
 from kivy.core.window import Window
@@ -94,15 +95,29 @@ class SessionCache:
 #---------------------------------------------------------------------------------------------#
 
 class Dashboard(Screen):
+    total_obat = NumericProperty(0)
+    total_golongan = NumericProperty(0)
+    total_pajak = NumericProperty(0)
+    total_pelanggan = NumericProperty(0)
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         Clock.schedule_interval(self.update_time, 1)
 
     def update_time(self, dt):
-        current_time = datetime.now().strftime('%H:%M:%S')
+        current_time = datetime.now().strftime('%Y-%m-%d\n%H:%M:%S')
         time_label = self.ids.get('time_label')
         if time_label:
             time_label.text = f'{current_time}'
+    
+    def on_enter(self):
+        data_obat = SessionCache.get_data_obat()
+        self.total_obat = len(data_obat)
+        data_golongan = SessionCache.get_data_golongan()
+        self.total_golongan = len(data_golongan)
+        data_pajak = SessionCache.get_data_pajak()
+        self.total_pajak = len(data_pajak)
+        data_pelanggan = SessionCache.get_data_pelanggan()
+        self.total_pelanggan = len(data_pelanggan)
 
 #---------------------------------------------------------------------------------------------#
 
@@ -112,6 +127,13 @@ class DataObat(Screen):
         self.selected_rows = set()
         self.load_data_table()
         self.prepare_table(self.loaded_rows)
+        Clock.schedule_interval(self.update_time, 1)
+
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
 
     def load_data_table(self):
         self.loaded_rows = SessionCache.get_data_obat()
@@ -126,23 +148,55 @@ class DataObat(Screen):
         self.checkbox_refs = {}
 
         header = [
-            "Jenis", "PLU", "Nama", "Satuan", "Harga Beli", "Harga Umum",
-            "Harga Resep", "Harga Cabang", "Harga Halodoc", "Harga Karyawan",
-            "Harga BPJS", "Kode Gol", "Nama Gol", "Rak", "Supplier",
-            "Fast_Moving", "Kemasan", "Isi", "Tgl Kadaluarsa", "Stok Apotek",
-            "Stok Min", "Stok Max", "PPN", "Pilih"
+            "Jenis","PLU","Nama","Satuan","Harga Beli","Harga Umum",
+            "Harga Resep","Harga Cabang","Harga Halodoc","Harga Karyawan",
+            "Harga BPJS","Kode Gol","Nama Gol","Rak","Supplier",
+            "Fast_Moving","Kemasan","Isi","Tgl Kadaluarsa","Stok Apotek",
+            "Stok Min","Stok Max","PPN","Pilih"
         ]
         grid.cols = len(header)
-
-        # Header
-        for judul in header:
-            label = Factory.TabelLabel(text=judul, bold=True)
-            grid.add_widget(label)
-
-        # Data + Checkbox
+        grid.size_hint_x = None
+        grid.size_hint_y = None
+        grid.row_force_default = True
+        grid.row_default_height = dp(30)
+        grid.col_force_default = False
+        grid.col_default_width = dp(100)
+        grid.bind(minimum_width=grid.setter('width'),
+                minimum_height=grid.setter('height'))
+        col_widths = [
+            dp(120),  # 0 Jenis
+            dp(90),   # 1 PLU
+            dp(180),  # 2 Nama
+            dp(80),   # 3 Satuan
+            dp(110),  # 4 Harga Beli
+            dp(110),  # 5 Harga Umum
+            dp(110),  # 6 Harga Resep
+            dp(110),  # 7 Harga Cabang
+            dp(120),  # 8 Harga Halodoc
+            dp(120),  # 9 Harga Karyawan
+            dp(100),  # 10 Harga BPJS
+            dp(80),   # 11 Kode Gol
+            dp(130),  # 12 Nama Gol
+            dp(60),   # 13 Rak
+            dp(140),  # 14 Supplier
+            dp(100),  # 15 Fast_Moving
+            dp(100),  # 16 Kemasan
+            dp(70),   # 17 Isi
+            dp(130),  # 18 Tgl Kadaluarsa
+            dp(100),  # 19 Stok Apotek
+            dp(90),   # 20 Stok Min
+            dp(90),   # 21 Stok Max
+            dp(80),   # 22 PPN
+            dp(50),   # 23 Pilih (checkbox)
+        ]
+        grid.cols_minimum = {i: w for i, w in enumerate(col_widths)}
+        for i, judul in enumerate(header):
+            lbl = Factory.TabelHeader(text=judul)
+            grid.add_widget(lbl)
         for row in rows:
-            for item in row:
-                grid.add_widget(Factory.TabelLabel(text=str(item)))
+            for col_idx, item in enumerate(row):
+                text = str(item)
+                grid.add_widget(Factory.TabelCell(text=text))
             cb_box = Factory.TabelCheckBox()
             cb = cb_box.ids.checkbox
             plu_value = str(row[1])
@@ -288,6 +342,25 @@ class InsertObat(Screen):
         self.data_pajak = MDApp.get_running_app().db.get_all_pajak()
         self.pajak_nama_list = [jenis for jenis, _ in self.data_pajak]
         Clock.schedule_once(self.build_dropdowns, 0.1)
+        Clock.schedule_interval(self.update_time, 1)
+
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
+
+    def handle_date_touch(self, textfield, touch):
+        if textfield.collide_point(*touch.pos):
+            picker = MDDatePicker(year=date.today().year,
+                                  month=date.today().month,
+                                  day=date.today().day)
+            picker.bind(on_save=lambda inst, value, _: self._set_date_to_field(textfield, value))
+            picker.open()
+
+    def _set_date_to_field(self, textfield, value):
+        # format YYYY-MM-DD
+        textfield.text = value.strftime("%Y-%m-%d")
         
     def build_dropdowns(self, dt):
         menu_items_golongan = [
@@ -380,7 +453,7 @@ class InsertObat(Screen):
         kode_golongan = self.kode_golongan_aktif
         nama_golongan = self.ids.dropdown_golongan.text
         kode_ppn = self.kode_pajak_aktif
-        data['plu'] = str(data['plu']).zfill(6)
+        data['plu'] = str(int(data['plu'])).zfill(6)
         # HANDLING ERRORS
         if not data['jenis']:
             self.tampilkan_dialog("Jenis Produk wajib diisi!")
@@ -527,12 +600,13 @@ class EditObat(Screen):
         self.data_pajak = MDApp.get_running_app().db.get_all_pajak()
         self.pajak_nama_list = [jenis for jenis, _ in self.data_pajak]
         Clock.schedule_once(self.build_dropdowns, 0.1)
+        Clock.schedule_interval(self.update_time, 1)
 
-    def on_pre_enter(self, *args):
-        Clock.schedule_once(self.reset_scroll, 0.1)
-
-    def reset_scroll(self, dt):
-        self.ids.scroll_edit.scroll_y = 1
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
 
     def build_dropdowns(self, dt):
         menu_items_golongan = [
@@ -795,6 +869,16 @@ class EditObat(Screen):
 #---------------------------------------------------------------------------------------------#
 
 class DataGolonganObat(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_interval(self.update_time, 1)
+
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
+
     def on_enter(self):
         self.selected_rows = set()
         self.load_table_data()
@@ -810,35 +894,49 @@ class DataGolonganObat(Screen):
     def show_table(self, rows):
         grid = self.ids.grid_golongan
         grid.clear_widgets()
-        grid.cols = 9
-
-        self._rows = rows
-        self.selected_rows = set()
+        self.rows_data_asli = rows
         self.checkbox_refs = {}
-        self.kode_to_nama = {}
 
-        headers = [
+        header = [
             "Kode", "Nama Golongan", "Margin Umum", "Margin Resep",
             "Margin Cabang", "Margin Halodoc", "Margin Karyawan", "Margin BPJS", "Pilih"
         ]
-
-        for header in headers:
-            grid.add_widget(Factory.TabelLabel(text=header, bold=True))
-
+        grid.cols = len(header)
+        grid.size_hint_x = None
+        grid.size_hint_y = None
+        grid.row_force_default = True
+        grid.row_default_height = dp(30)
+        grid.col_force_default = False
+        grid.col_default_width = dp(100)
+        grid.bind(minimum_width=grid.setter('width'),
+                minimum_height=grid.setter('height'))
+        col_widths = [
+            dp(50),  # 0 Kode Golongan
+            dp(180),   # 1 Nama Golongan
+            dp(180),  # 2 Margin umum
+            dp(180),  # 3 Margin Resep
+            dp(180),  # 4 Margin Cabang
+            dp(180),  # 5 Margin Halodoc
+            dp(180),  # 6 Margin Karyawan
+            dp(180),  # 7 Margin BPJS
+            dp(50),   # 8 Pilih Checkbox
+        ]
+        grid.cols_minimum = {i: w for i, w in enumerate(col_widths)}
+        for i, judul in enumerate(header):
+            lbl = Factory.TabelHeader(text=judul)
+            grid.add_widget(lbl)
         for row in rows:
-            kode = int(row[0])
-            nama = row[1]
-            self.kode_to_nama[kode] = nama
-            for value in row:
-                grid.add_widget(Factory.TabelLabel(text=str(value)))
+            for col_idx, item in enumerate(row):
+                text = str(item)
+                grid.add_widget(Factory.TabelCell(text=text))
             cb_box = Factory.TabelCheckBox()
             cb = cb_box.ids.checkbox
-            kode_value = int(row[0])
-            self.checkbox_refs[kode] = cb
-            cb.bind(active=lambda checkbox, value, kode=kode_value: self.toggle_checkbox(kode, value))
+            plu_value = int(row[0])
+            self.checkbox_refs[plu_value] = cb
+            cb.bind(active=lambda checkbox, value, plu=plu_value: self.on_checkbox_toggle(plu, value))
             grid.add_widget(cb_box)
 
-    def toggle_checkbox(self, kode, value):
+    def on_checkbox_toggle(self, kode, value):
         if value:
             self.selected_rows.add(kode)
         else:
@@ -894,14 +992,14 @@ class DataGolonganObat(Screen):
                 toast("Data tidak ditemukan.")
                 return
             data = {
-                "kode_golongan": str(data_row[0]),
+                "kode_golongan": int(data_row[0]),
                 "nama_golongan": str(data_row[1]),
-                "margin_umum": str(data_row[2]),
-                "margin_resep": str(data_row[3]),
-                "margin_cabang": str(data_row[4]),
-                "margin_halodoc": str(data_row[5]),
-                "margin_karyawan": str(data_row[6]),
-                "margin_bpjs": str(data_row[7]),
+                "margin_umum": int(data_row[2]),
+                "margin_resep": int(data_row[3]),
+                "margin_cabang": int(data_row[4]),
+                "margin_halodoc": int(data_row[5]),
+                "margin_karyawan": int(data_row[6]),
+                "margin_bpjs": int(data_row[7]),
             }
             screen_edit = self.manager.get_screen('edit_golongan_obat')
             screen_edit.isi_data_edit_golongan(data)
@@ -962,6 +1060,16 @@ class DataGolonganObat(Screen):
         self.clear_table()
 
 class InsertGolonganObat(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_interval(self.update_time, 1)
+
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
+
     def bersihkan_field_add_golongan(self):
         fields = [
             'nama_golongan', 'margin_umum', 'margin_resep',
@@ -1030,11 +1138,15 @@ class InsertGolonganObat(Screen):
         dialog.open()
 
 class EditGolonganObat(Screen):
-    def on_pre_enter(self, *args):
-        Clock.schedule_once(self.reset_scroll, 0.1)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_interval(self.update_time, 1)
 
-    def reset_scroll(self, dt):
-        self.ids.scroll_edit_golongan.scroll_y = 1
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
 
     def bersihkan_field_edit_golongan(self):
         fields = [
@@ -1132,6 +1244,16 @@ class EditGolonganObat(Screen):
 #---------------------------------------------------------------------------------------------#
 
 class DataPajak(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_interval(self.update_time, 1)
+
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
+
     def on_enter(self):
         self.selected_rows = set()
         self.checkbox_refs = {}
@@ -1144,24 +1266,37 @@ class DataPajak(Screen):
     def show_table(self, rows):
         grid = self.ids.grid_pajak
         grid.clear_widgets()
-        grid.cols = 3
+        self.rows_data_asli = rows
+        self.checkbox_refs = {}
 
-        self.selected_rows.clear()
-        self.checkbox_refs.clear()
-
-        headers = ["Jenis Pajak", "Persen Pajak", "Pilih"]
-        for header in headers:
-            grid.add_widget(Factory.TabelLabel(text=header, bold=True))
-
+        header = ["Jenis Pajak", "Persen Pajak", "Pilih"]
+        grid.cols = len(header)
+        grid.size_hint_x = None
+        grid.size_hint_y = None
+        grid.row_force_default = True
+        grid.row_default_height = dp(30)
+        grid.col_force_default = False
+        grid.col_default_width = dp(100)
+        grid.bind(minimum_width=grid.setter('width'),
+                minimum_height=grid.setter('height'))
+        col_widths = [
+            dp(100),  # 0 Jenis Pajak
+            dp(100),   # 1 Persen Pajak
+            dp(50),   # 2 Pilih Checkbox
+        ]
+        grid.cols_minimum = {i: w for i, w in enumerate(col_widths)}
+        for i, judul in enumerate(header):
+            lbl = Factory.TabelHeader(text=judul)
+            grid.add_widget(lbl)
         for row in rows:
-            kode = str(row[0])
-            for value in row:
-                grid.add_widget(Factory.TabelLabel(text=str(value)))
-
+            for col_idx, item in enumerate(row):
+                text = str(item)
+                grid.add_widget(Factory.TabelCell(text=text))
             cb_box = Factory.TabelCheckBox()
             cb = cb_box.ids.checkbox
-            self.checkbox_refs[kode] = cb
-            cb.bind(active=lambda cb_obj, value, kode=kode: self.on_checkbox_toggle(kode, value))
+            plu_value = str(row[0])
+            self.checkbox_refs[plu_value] = cb
+            cb.bind(active=lambda checkbox, value, plu=plu_value: self.on_checkbox_toggle(plu, value))
             grid.add_widget(cb_box)
 
     def on_checkbox_toggle(self, kode, value):
@@ -1260,6 +1395,16 @@ class DataPajak(Screen):
         self.clear_table()
 
 class InsertPajak(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_interval(self.update_time, 1)
+
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
+
     def bersihkan_field_add_pajak(self):
         fields = [
             'jenis_pajak', 'persen_pajak'
@@ -1324,6 +1469,16 @@ class InsertPajak(Screen):
         dialog.open()
 
 class EditPajak(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_interval(self.update_time, 1)
+
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
+
     def bersihkan_field_edit_pajak(self):
         fields = [
             'jenis_pajak', 'persen_pajak'
@@ -1411,6 +1566,16 @@ class EditPajak(Screen):
 #---------------------------------------------------------------------------------------------#
 
 class DataPelanggan(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_interval(self.update_time, 1)
+
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
+
     def on_enter(self):
         self.selected_rows = set()
         self.checkbox_refs = {}
@@ -1423,24 +1588,40 @@ class DataPelanggan(Screen):
     def show_table(self, rows):
         grid = self.ids.grid_pelanggan
         grid.clear_widgets()
-        grid.cols = 6
+        self.rows_data_asli = rows
+        self.checkbox_refs = {}
 
-        self.selected_rows.clear()
-        self.checkbox_refs.clear()
-
-        headers = ["ID", "Nama", "Nomer Telefon", "Alamat", "Poin", "Pilih"]
-        for header in headers:
-            grid.add_widget(Factory.TabelLabel(text=header, bold=True))
-
+        header = ["ID", "Nama", "Nomer Telefon", "Alamat", "Poin", "Pilih"]
+        grid.cols = len(header)
+        grid.size_hint_x = None
+        grid.size_hint_y = None
+        grid.row_force_default = True
+        grid.row_default_height = dp(30)
+        grid.col_force_default = False
+        grid.col_default_width = dp(100)
+        grid.bind(minimum_width=grid.setter('width'),
+                minimum_height=grid.setter('height'))
+        col_widths = [
+            dp(50),  # 0 ID
+            dp(150),   # 1 Nama
+            dp(120),   # 2 Nomer Telefon
+            dp(700),  # 3 Alamat
+            dp(50),   # 4 Poin
+            dp(50),   # 5 Pilih Checkbox
+        ]
+        grid.cols_minimum = {i: w for i, w in enumerate(col_widths)}
+        for i, judul in enumerate(header):
+            lbl = Factory.TabelHeader(text=judul)
+            grid.add_widget(lbl)
         for row in rows:
-            kode = str(row[0])
-            for value in row:
-                grid.add_widget(Factory.TabelLabel(text=str(value)))
-
+            for col_idx, item in enumerate(row):
+                text = str(item)
+                grid.add_widget(Factory.TabelCell(text=text))
             cb_box = Factory.TabelCheckBox()
             cb = cb_box.ids.checkbox
-            self.checkbox_refs[kode] = cb
-            cb.bind(active=lambda cb_obj, value, kode=kode: self.on_checkbox_toggle(kode, value))
+            plu_value = str(row[0])
+            self.checkbox_refs[plu_value] = cb
+            cb.bind(active=lambda checkbox, value, plu=plu_value: self.on_checkbox_toggle(plu, value))
             grid.add_widget(cb_box)
 
     def on_checkbox_toggle(self, kode, value):
@@ -1548,6 +1729,16 @@ class DataPelanggan(Screen):
         self.clear_table()
 
 class InsertPelanggan(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_interval(self.update_time, 1)
+
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
+
     def bersihkan_field_add_pelanggan(self):
         fields = [
             'nama_pelanggan', 'nomor_telfon', 'alamat'
@@ -1631,6 +1822,16 @@ class InsertPelanggan(Screen):
         dialog.open()
 
 class EditPelanggan(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_interval(self.update_time, 1)
+
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
+
     def bersihkan_field_edit_pelanggan(self):
         fields = [
             'nama_pelanggan', 'nomor_telfon', 'alamat'
@@ -1759,6 +1960,9 @@ class Kasir(Screen):
     @property
     def pembagian_perpoin(self):
         return MDApp.get_running_app().settings_manager.get("pembagian_perpoin")
+    @property
+    def penjaga_kasir(self):
+        return MDApp.get_running_app().settings_manager.get("penjaga_kasir")
     #INIT#
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -2269,7 +2473,7 @@ class Kasir(Screen):
 
     def tampilkan_popup(self, pesan):
         popup = Popup(
-            title="Info",
+            title="Informasi",
             content=Label(text=pesan),
             size_hint=(None, None),
             size=(300, 150)
@@ -2319,50 +2523,93 @@ class KeranjangItem(BoxLayout):
             Clock.schedule_once(self._do_update, 0)
             self._update_scheduled = True
 
-class RowRiwayat(GridLayout):
-    tanggal = StringProperty()
-    no_ref = StringProperty()
-    pelanggan = StringProperty()
-    kredit = StringProperty()
-    tempo = StringProperty()
-    cara_bayar = StringProperty()
-    harga = StringProperty()
-    total = StringProperty()
-    kasir = StringProperty()
-    status = StringProperty()
-
 class RiwayatTransaksi(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_interval(self.update_time, 1)
+
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
+
+    def on_enter(self, *args):
+        self.muat_riwayat_transaksi()
+            
     def muat_riwayat_transaksi(self):
         db = MDApp.get_running_app().db
         semua = db.get_all_transaksi()
-        rv_data = []
 
+        grid = self.ids.grid_riwayat_transaksi
+        grid.clear_widgets()
+
+        # Pastikan properti grid siap untuk horizontal scroll + lebar kolom tetap
+        grid.size_hint_x = None
+        grid.size_hint_y = None
+        grid.bind(minimum_width=grid.setter('width'), minimum_height=grid.setter('height'))
+        grid.row_force_default = True
+        grid.row_default_height = dp(30)
+        grid.cols = 12
+        cols_minimum = {
+            0: dp(120),  # Tanggal
+            1: dp(140),  # No Ref
+            2: dp(160),  # Pelanggan
+            3: dp(70),   # Kredit
+            4: dp(110),  # Tempo
+            5: dp(110),  # Cara Bayar
+            6: dp(100),  # Harga
+            7: dp(110),  # Total
+            8: dp(120),  # Kasir
+            9: dp(100),  # Status
+            10: dp(70), # Detail
+            11: dp(70), # Hapus
+        }
+        grid.cols_minimum = cols_minimum
+        header = ['Tanggal','No Ref','Pelanggan','Kredit','Tempo','Cara Bayar','Harga','Total','Kasir','Status','Detail', 'Hapus']
+        for h in header:
+            grid.add_widget(Factory.THead(text=h))
         for tr in semua:
             tanggal = tr[1]
             no_ref = tr[0]
             pelanggan = db.get_nama_pelanggan_by_id(tr[2]) or "Umum"
-            kredit = str(tr[3])
+            kredit_flag = str(tr[3]).lower() in ("1", "true", "ya", "y", "yes")
+            kredit_txt = "Ya" if kredit_flag else "Tidak"
             tempo = tr[4] or '-'
             cara_bayar = tr[5]
+            cara_bayar_txt = "Tunai" if str(cara_bayar).lower() == "tunai" else "Non Tunai"
             harga = f"Rp{int(tr[9]):,}".replace(",", ".")
             total = f"Rp{int(tr[10]):,}".replace(",", ".")
             kasir = tr[11]
             status = tr[12] if len(tr) > 12 else 'normal'
+            is_deleted = (str(status).lower() == 'dihapus')
+            grid.add_widget(Factory.TCell(text=str(tanggal)))
+            grid.add_widget(Factory.TCell(text=str(no_ref)))
+            grid.add_widget(Factory.TCell(text=str(pelanggan)))
+            grid.add_widget(Factory.TCell(text=kredit_txt))
+            grid.add_widget(Factory.TCell(text=str(tempo)))
+            grid.add_widget(Factory.TCell(text=cara_bayar_txt))
+            grid.add_widget(Factory.TCell(text=str(harga)))
+            grid.add_widget(Factory.TCell(text=str(total)))
+            grid.add_widget(Factory.TCell(text=str(kasir)))
+            grid.add_widget(Factory.TCell(text=str(status)))
+            btn_detail = Factory.TCellButton(text='Detail', size_hint_x=None, width=dp(70))
+            btn_detail.disabled = is_deleted
+            btn_detail.bind(on_release=lambda _b, nr=no_ref: self.buka_detail_transaksi(nr))
+            grid.add_widget(btn_detail)
+            btn_hapus = Factory.TCellButton(text='Hapus', size_hint_x=None, width=dp(70))
+            btn_hapus.disabled = is_deleted
+            btn_hapus.bind(on_release=lambda _b, nr=no_ref: self._hapus_transaksi(nr))
+            grid.add_widget(btn_hapus)
 
-            rv_data.append({
-                'tanggal': tanggal,
-                'no_ref': no_ref,
-                'pelanggan': pelanggan,
-                'kredit': kredit,
-                'tempo': tempo,
-                'cara_bayar': cara_bayar,
-                'harga': harga,
-                'total': total,
-                'kasir': kasir,
-                'status': status
-            })
+    def _hapus_transaksi(self, no_ref):
+        app = MDApp.get_running_app()
+        app.root.get_screen('Kasir').konfirmasi_hapus_transaksi(no_ref)
 
-        self.ids.rv_riwayat.data = rv_data
+    def buka_detail_transaksi(self, no_ref):
+        app = MDApp.get_running_app()
+        app.root.get_screen('Kasir').load_transaksi(no_ref)
+        app.root.current = 'Kasir'
 
 #---------------------------------------------------------------------------------------------#
 
@@ -2374,15 +2621,38 @@ class SettingsDooka(Screen):
     @property
     def pembagian_perpoin(self):
         return MDApp.get_running_app().settings_manager.get("pembagian_perpoin")
+    @property
+    def penjaga_kasir(self):
+        return MDApp.get_running_app().settings_manager.get("penjaga_kasir")
     #INIT#
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        Clock.schedule_interval(self.update_time, 1)
     #UTILS#
+    def update_time(self, dt):
+        current_time = datetime.now().strftime('%Y-%m-%d || %H:%M:%S')
+        time_label = self.ids.get('time_label')
+        if time_label:
+            time_label.text = f'{current_time}'
+
     def ubah_pembulatan(self, nilai_baru):
         MDApp.get_running_app().settings_manager.set("pembulatan", nilai_baru)
+        self.tampilkan_popup(f"Setting pembulatan telah diperbarui menjadi {nilai_baru}")
     def ubah_pembagian_perpoin(self, nilai_baru):
         MDApp.get_running_app().settings_manager.set("pembagian_perpoin", nilai_baru)
+        self.tampilkan_popup(f"Setting pembagian poin telah diperbarui menjadi {nilai_baru}")
+    def ubah_penjaga_kasir(self, nilai_baru):
+        MDApp.get_running_app().settings_manager.set("penjaga_kasir", nilai_baru)
+        self.tampilkan_popup(f"Setting penjaga kasir telah diperbarui menjadi {nilai_baru}")
 
+    def tampilkan_popup(self, pesan):
+        popup = Popup(
+            title="Informasi",
+            content=Label(text=pesan),
+            size_hint=(None, None),
+            size=(500, 150)
+        )
+        popup.open()
 #---------------------------------------------------------------------------------------------#
 
 class WindowsManager(ScreenManager):
@@ -2392,7 +2662,7 @@ class WindowsManager(ScreenManager):
 
 class DookaApp(MDApp):
     def build(self):
-        Window.size = (1200, 800)
+        Window.size = (1300, 800)
         Window.set_icon("assets\image\DOOKA_Logo_besar.png")
         self.formatter = FormatHelper() #digunakan didalam file kv
         # Inisialisasi database

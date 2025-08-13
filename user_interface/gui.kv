@@ -32,105 +32,315 @@ WindowsManager:
 #-----------------------------------------------------------------------------------------#
 
 <Dashboard>:
-    name: 'dashboard'
-    BoxLayout:
-        orientation: 'vertical'
+    name: "dashboard"
+    MDNavigationLayout:
+        ScreenManager:
+            Screen:
+                name: "dashboard_content"
 
-        BoxLayout:
-            orientation: 'horizontal'
-            size_hint_y: None
-            height: 40
-            padding: 5
-            spacing: 10
-            canvas.before:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+                MDBoxLayout:
+                    orientation: "vertical"
 
-            Spinner:
-                id: menu_spinner
-                text: 'Menu'
-                values: ['Obat', 'Golongan', 'Pajak', 'Pelanggan', 'Settings']
-                size_hint_x: None
-                width: 100
-                font_size: 12
-                on_text:
-                    if self.text == 'Obat': app.change_screen('data_obat','left')
-                    elif self.text == 'Golongan': app.change_screen('data_golongan_obat','left')
-                    elif self.text == 'Pajak': app.change_screen('data_pajak','left')
-                    elif self.text == 'Pelanggan': app.change_screen('data_pelanggan','left')
-                    elif self.text == 'Settings': app.change_screen('settings_dooka','left')
-                    self.text = 'Menu'
+                    # --- TOP BAR ---
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(56)
+                        padding: dp(8)
+                        spacing: dp(8)
+                        canvas.before:
+                            Color:
+                                rgba: 0.980, 0.729, 0.004, 1  # warna top bar
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
 
-            Button:
-                id: kasir
-                text: 'Kasir'
-                size_hint_x: None
-                width: 100
-                font_size: 12
-                on_release: app.change_screen('Kasir','left')
+                        MDIconButton:
+                            icon: "menu"
+                            theme_text_color: "Custom"
+                            text_color: 0.149, 0.333, 0.729, 1
+                            on_release: nav_drawer.set_state("toggle")
 
-            Label:
-                id: time_label
-                text: '--:--:--'
-                font_size: 14
-                halign: 'right'
-                valign: 'middle'
-                size_hint_x: 1
-                color: 0, 0, 0, 1
-                text_size: self.size
-        
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
+                        Label:
+                            text: "DASHBOARD"
+                            color: 0.149, 0.333, 0.729, 1
+                            bold: True
+                            font_size: 24
+                            halign: "center"
+                            valign: "middle"
+                            text_size: self.size
 
-            text: 'DASHBOARD'
-            font_size: 30
-            size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
+                        Label:
+                            id: time_label
+                            text: '__-__-__ || --:--:--'
+                            font_size: 14
+                            color: 0.149, 0.333, 0.729, 1
+                            bold: True
+                            size_hint_x: None
+                            width: dp(100)
+                            halign: "right"
+                            valign: "middle"
+                            text_size: self.size
 
-        # Main content
-        GridLayout:
-            size: root.width, root.height
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            cols: 2
-            rows: 2
-            padding: 5
-            spacing: 5
+                    # --- MAIN CONTENT ---
+                    GridLayout:
+                        cols: 2
+                        rows: 2
+                        spacing: dp(5)
+                        padding: 0
+                        canvas.before:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                        canvas.after:
+                            Color:
+                                rgba: 0, 0, 0, 0.5
+                            # Garis vertikal tengah (1dp, full height)
+                            Rectangle:
+                                pos: self.center_x - dp(0.5), self.y
+                                size: dp(1), self.height
+                            # Garis horizontal tengah (1dp, full width)
+                            Rectangle:
+                                pos: self.x, self.center_y - dp(0.5)
+                                size: self.width, dp(1)
+                        AnchorLayout:
+                            anchor_x: 'center'
+                            anchor_y: 'center'
+                            BoxLayout:
+                                orientation: 'vertical'
+                                size_hint: None, None
+                                width: dp(300)
+                                height: self.minimum_height
+                                spacing: dp(5)
+                                Label:
+                                    text: 'Total Obat = '+ str(root.total_obat)
+                                    font_size: 30
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+                                    halign: 'center'
+                                    valign: 'middle'
+                                    text_size: self.size
+                                    color: 0, 0, 0, 1
+                                Label:
+                                    text: 'Total Golongan = '+ str(root.total_golongan)
+                                    font_size: 30
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+                                    halign: 'center'
+                                    valign: 'middle'
+                                    text_size: self.size
+                                    color: 0, 0, 0, 1
+                                Label:
+                                    text: 'Total Pajak = '+ str(root.total_pajak)
+                                    font_size: 30
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+                                    halign: 'center'
+                                    valign: 'middle'
+                                    text_size: self.size
+                                    color: 0, 0, 0, 1
+                                Label:
+                                    text: 'Total Pelanggan = '+ str(root.total_pelanggan)
+                                    font_size: 30
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+                                    halign: 'center'
+                                    valign: 'middle'
+                                    text_size: self.size
+                                    color: 0, 0, 0, 1
 
-            Button:
-                text: 'Insert PPN'
+                        AnchorLayout:
+                            anchor_x: 'center'
+                            anchor_y: 'center'
+                            BoxLayout:
+                                orientation: 'vertical'
+                                size_hint: None, None
+                                width: dp(180)
+                                height: self.minimum_height
+                                spacing: dp(2)
+                                Label:
+                                    text: ''
+                                    font_size: 20
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+                                    halign: 'center'
+                                    valign: 'middle'
+                                    text_size: self.size
+                                    color: 0, 0, 0, 1
+                                Label:
+                                    text: ""
+                                    font_size: 30
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+                                    halign: 'center'
+                                    valign: 'middle'
+                                    text_size: self.size
+                                    color: 0, 0, 0, 1
 
-            Button:
-                text: 'Insert Golongan Obat'
+                        AnchorLayout:
+                            anchor_x: 'center'
+                            anchor_y: 'center'
+                            BoxLayout:
+                                orientation: 'vertical'
+                                size_hint: None, None
+                                width: dp(180)
+                                height: self.minimum_height
+                                spacing: dp(2)
+                                Label:
+                                    text: ''
+                                    font_size: 20
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+                                    halign: 'center'
+                                    valign: 'middle'
+                                    text_size: self.size
+                                    color: 0, 0, 0, 1
+                                Label:
+                                    text: ""
+                                    font_size: 30
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+                                    halign: 'center'
+                                    valign: 'middle'
+                                    text_size: self.size
+                                    color: 0, 0, 0, 1
 
-            Button:
-                text: 'Insert PPN'
+                        AnchorLayout:
+                            anchor_x: 'center'
+                            anchor_y: 'center'
+                            BoxLayout:
+                                orientation: 'vertical'
+                                size_hint: None, None
+                                width: dp(180)
+                                height: self.minimum_height
+                                spacing: dp(2)
+                                Label:
+                                    text: ''
+                                    font_size: 20
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+                                    halign: 'center'
+                                    valign: 'middle'
+                                    text_size: self.size
+                                    color: 0, 0, 0, 1
+                                Label:
+                                    text: ""
+                                    font_size: 30
+                                    size_hint_y: None
+                                    height: self.texture_size[1]
+                                    halign: 'center'
+                                    valign: 'middle'
+                                    text_size: self.size
+                                    color: 0, 0, 0, 1
 
-            Button:
-                text: 'Insert Golongan Obat'
+        MDNavigationDrawer:
+            id: nav_drawer
+            radius: (0, dp(5), dp(5), 0)
+            AnchorLayout:
+                anchor_y: "top"
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: dp(8)
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(56)
+                        canvas.before:
+                            Color:
+                                rgba: 0.933, 0.412, 0.259, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                        canvas.after:
+                            Color:
+                                rgba: 0, 0, 0, 0.5
+                            Line:
+                                width: 1
+                                rectangle: self.x, self.y, self.width, self.height
+                        MDLabel:
+                            text: "MENU"
+                            bold: True
+                            halign: "center"
+                            valign: "middle"
+                            theme_text_color: "Custom"
+                            text_color: 1, 1, 1, 1
+                            font_style: "H6"
+                    BoxLayout:
+                        orientation: "vertical"
+                        size_hint_y: None
+                        height: self.minimum_height
+                        MenuItem:
+                            bg_rgba: 0.980, 0.729, 0.004, 0.5
+                            text: "Kasir"
+                            on_release:
+                                app.change_screen('Kasir', 'left')
+                                nav_drawer.set_state("close")
 
+                        MenuItem:
+                            bg_rgba: 0.149, 0.333, 0.729, 0.5
+                            text: "Obat"
+                            on_release:
+                                app.change_screen('data_obat', 'left')
+                                nav_drawer.set_state("close")
+
+                        MenuItem:
+                            bg_rgba: 0.980, 0.729, 0.004, 0.5
+                            text: "Golongan"
+                            on_release:
+                                app.change_screen('data_golongan_obat', 'left')
+                                nav_drawer.set_state("close")
+
+                        MenuItem:
+                            bg_rgba: 0.149, 0.333, 0.729, 0.5
+                            text: "Pajak"
+                            on_release:
+                                app.change_screen('data_pajak', 'left')
+                                nav_drawer.set_state("close")
+
+                        MenuItem:
+                            bg_rgba: 0.980, 0.729, 0.004, 0.5
+                            text: "Pelanggan"
+                            on_release:
+                                app.change_screen('data_pelanggan', 'left')
+                                nav_drawer.set_state("close")
+
+                        MenuItem:
+                            size_hint_x: 1
+                            bg_rgba: 0.149, 0.333, 0.729, 0.5
+                            text: "Settings"
+                            on_release:
+                                app.change_screen('settings_dooka', 'left')
+                                nav_drawer.set_state("close")
+
+#-----------------------------------------------------------------------------------------#
+
+<MenuItem@ButtonBehavior+BoxLayout>:
+    text: ""
+    size_hint_y: None
+    height: dp(44)
+    bg_rgba: 1, 1, 1, 0
+    canvas.before:
+        Color:
+            rgba: root.bg_rgba
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    canvas.after:
+        Color:
+            rgba: 0, 0, 0, 0.5
+        Line:
+            width: 1
+            rectangle: self.x, self.y, self.width, self.height
+    MDLabel:
+        id: lbl
+        text: root.text if hasattr(root, "text") else ""
+        theme_text_color: "Custom"
+        text_color: 0, 0, 0, 1
+        halign: "center"
+        valign: "middle"
+        text_size: self.size
 
 #-----------------------------------------------------------------------------------------#
 
@@ -138,82 +348,94 @@ WindowsManager:
     name: 'data_obat'
     BoxLayout:
         orientation: 'vertical'
-        
-        BoxLayout:
-            orientation: 'horizontal'
+        canvas.before:
+            Color: 
+                rgba: 1, 1, 1, 1
+            Rectangle: 
+                pos: self.pos
+                size: self.size
+        RelativeLayout:
             size_hint_y: None
-            height: 40
-            padding: 5
-            spacing: 10
-            canvas.before:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
 
-            Button:
-                id: tombol_dashboard
-                text: 'Dashboard'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('dashboard',"right")
-            Button:
-                id: tombol_add_obat
-                text: 'Add Obat'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('insert_obat',"left")
-            Button:
-                id: tombol_edit_obat
-                text: 'Edit Obat'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: root.edit_data_obat()
-            Button:
-                id: tombol_hapus_obat
-                text: "Hapus Obat"
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: root.hapus_terpilih()
+                NavButton:
+                    id: tombol_add_obat
+                    text: 'Add'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 60
+                    on_release: app.change_screen('insert_obat',"left")
 
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
+                NavButton:
+                    id: tombol_edit_obat
+                    text: 'Edit'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 60
+                    on_release: root.edit_data_obat()
 
-            text: 'DATA OBAT'
-            font_size: 30
-            size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
+                NavButton:
+                    id: tombol_hapus_obat
+                    text: "Hapus"
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 60
+                    on_release: root.hapus_terpilih()
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
+
+            Label:
+                text: 'DATA OBAT'
+                font_size: 25
+                size_hint_y: None
+                height: 40
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+                color: 0.149, 0.333, 0.729, 1
+                text_size: self.size
 
         BoxLayout:
             id: table_container_obat
             orientation: "vertical"
             size_hint: 1, 1
-
             ScrollView:
                 id: scroll_obat
                 do_scroll_x: True
                 do_scroll_y: True
-
+                scroll_type: ['bars']
+                effect_cls: 'ScrollEffect'
+                bar_width: dp(10)
+                bar_color: 0.5, 0.5, 0.5, 5
+                bar_inactive_color: 0.3, 0.3, 0.3, 1
+                bar_pos_x: 'bottom'
+                bar_pos_y: 'right'
                 GridLayout:
                     id: grid_obat
                     cols: 23  # Jumlah kolom
@@ -222,316 +444,951 @@ WindowsManager:
                     color: 0, 0, 0, 1
                     row_default_height: dp(30)
                     row_force_default: True
+                    cell_font_size: dp(10)
 
 <InsertObat>:
     name: 'insert_obat'
     BoxLayout:
         orientation: 'vertical'
-        
-        BoxLayout:
-            orientation: 'horizontal'
+        canvas.before:
+            Color: 
+                rgba: 1, 1, 1, 1
+            Rectangle: 
+                pos: self.pos
+                size: self.size
+        RelativeLayout:
             size_hint_y: None
-            height: 40
-            padding: 5
-            spacing: 10
-            canvas.before:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
 
-            Button:
-                text: 'Dashboard'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('dashboard',"down")
-            Button:
-                text: 'Data Obat'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('data_obat',"right")
+                NavButton:
+                    text: 'Data Obat'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 100
+                    on_release: app.change_screen('data_obat',"right")
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
 
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
-
-            text: 'ISI DATA OBAT'
-            font_size: 30
-            size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
-
+            Label:
+                text: 'ISI DATA OBAT'
+                font_size: 25
+                size_hint_y: None
+                height: 40
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+                color: 0.149, 0.333, 0.729, 1
+                text_size: self.size
+                
         ScrollView:
+            bar_width: dp(8)
+            do_scroll_x: True
+            do_scroll_y: True
+            scroll_type: ['bars']
+            effect_cls: 'ScrollEffect'
+            bar_width: dp(10)
+            bar_color: 0.5, 0.5, 0.5, 5
+            bar_inactive_color: 0.3, 0.3, 0.3, 1
+            bar_pos_x: 'bottom'
+            bar_pos_y: 'right'
             MDBoxLayout:
                 orientation: "vertical"
-                padding: 10
-                spacing: 10
+                padding: dp(16)
+                spacing: dp(16)
                 size_hint_y: None
                 height: self.minimum_height
-                pos_hint: {"center_x": 0.5}
+                canvas.before:
+                    Color: 
+                        rgba: 1, 1, 1, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    padding: dp(16)
+                    spacing: dp(14)
+                    height: self.minimum_height
+                    canvas.before:
+                        Color: 
+                            rgba: 0.980, 0.729, 0.004, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(10)]*4
 
-                MDTextField:
-                    hint_text: "ID (Biarkan Kosong)"
-                    disabled: True
+                    GridLayout:
+                        cols: 4
+                        spacing: dp(10), 0
+                        size_hint_y: None
+                        height: self.minimum_height
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel:
+                                text: "Golongan"
+                            FormInput:
+                                id: dropdown_golongan
+                                hint_text: "Pilih Golongan"
+                                text: root.kode_golongan_aktif
+                                readonly: True
+                                icon_right: "menu-down"
+                                on_focus: 
+                                    if self.focus: root.menu_golongan.open()
 
-                MDTextField:
-                    id: jenis
-                    hint_text: "Jenis"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Pajak"
+                            FormInput:
+                                id: dropdown_pajak
+                                hint_text: "Pilih Pajak"
+                                text: root.kode_pajak_aktif
+                                readonly: True
+                                icon_right: "menu-down"
+                                on_focus: 
+                                    if self.focus: root.menu_pajak.open()
 
-                MDTextField:
-                    id: plu
-                    hint_text: "PLU"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel:
+                                text: "Tanggal"
+                            FormInput:
+                                id: tanggal_kadaluarsa
+                                hint_text: "YYYY-MM-DD"
+                                icon_right: "calendar"
+                                readonly: True
+                                on_touch_down:
+                                    root.handle_date_touch(self, args[1])
 
-                MDTextField:
-                    id: nama_produk
-                    hint_text: "Nama Produk"
+                    GridLayout:
+                        cols: 2
+                        spacing: dp(10), dp(8)
+                        size_hint_y: None
+                        height: self.minimum_height
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "ID"
+                            FormInput:
+                                hint_text: "Biarkan Kosong"
+                                disabled: True
 
-                MDTextField:
-                    id: satuan
-                    hint_text: "Satuan"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Jenis"
+                            FormInput:
+                                id: jenis
+                                hint_text: "Jenis"
 
-                MDTextField:
-                    id: harga_beli
-                    hint_text: "Harga Beli"
-                    on_text: app.formatter.intonly_format(self)
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "PLU"
+                            FormInput:
+                                id: plu
+                                hint_text: "PLU"
 
-                MDTextField:
-                    id: dropdown_golongan
-                    hint_text: "Pilih Golongan"
-                    text: root.kode_golongan_aktif
-                    readonly: True
-                    icon_right: "menu-down"
-                    mode: "rectangle"
-                    on_focus: if self.focus: root.menu_golongan.open()
-                    size_hint_x: 0.8
-                    pos_hint: {"center_x": 0.5}
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Nama Produk"
+                            FormInput:
+                                id: nama_produk
+                                hint_text: "Nama Produk"
 
-                MDTextField:
-                    id: rak
-                    hint_text: "Rak"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Satuan"
+                            FormInput:
+                                id: satuan
+                                hint_text: "Satuan"
 
-                MDTextField:
-                    id: supplier
-                    hint_text: "Supplier"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Harga Beli"
+                            FormInput:
+                                id: harga_beli
+                                hint_text: "Harga Beli"
+                                on_text: 
+                                    app.formatter.intonly_format(self)
 
-                MDTextField:
-                    id: fast_moving
-                    hint_text: "Fast Moving (Ya/Tidak)"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Rak"
+                            FormInput:
+                                id: rak
+                                hint_text: "Rak"
 
-                MDTextField:
-                    id: kemasan_beli
-                    hint_text: "Kemasan Beli"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Supplier"
+                            FormInput:
+                                id: supplier
+                                hint_text: "Supplier"
 
-                MDTextField:
-                    id: isi
-                    hint_text: "Isi"
-                    input_filter: "int"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Fast Moving"
+                            FormInput:
+                                id: fast_moving
+                                hint_text: "Ya / Tidak"
 
-                MDTextField:
-                    id: tanggal_kadaluarsa
-                    hint_text: "Tanggal Kadaluarsa (YYYY-MM-DD)"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Kemasan Beli"
+                            FormInput:
+                                id: kemasan_beli
+                                hint_text: "Kemasan Beli"
 
-                MDTextField:
-                    id: stok_apotek
-                    hint_text: "Stok Apotek"
-                    input_filter: "int"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Isi"
+                            FormInput:
+                                id: isi
+                                hint_text: "Isi"
+                                input_filter: "int"
 
-                MDTextField:
-                    id: stok_min
-                    hint_text: "Stok Minimum"
-                    input_filter: "int"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Stok Apotek"
+                            FormInput:
+                                id: stok_apotek
+                                hint_text: "Stok Apotek"
+                                input_filter: "int"
 
-                MDTextField:
-                    id: stok_max
-                    hint_text: "Stok Maksimum"
-                    input_filter: "int"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Stok Minimum"
+                            FormInput:
+                                id: stok_min
+                                hint_text: "Stok Minimum"
+                                input_filter: "int"
 
-                MDTextField:
-                    id: dropdown_pajak
-                    hint_text: "Pilih Pajak"
-                    text: root.kode_pajak_aktif
-                    readonly: True
-                    icon_right: "menu-down"
-                    mode: "rectangle"
-                    on_focus: if self.focus: root.menu_pajak.open()
-                    size_hint_x: 0.8
-                    pos_hint: {"center_x": 0.5}
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Stok Maksimum"
+                            FormInput:
+                                id: stok_max
+                                hint_text: "Stok Maksimum"
+                                input_filter: "int"
 
-                MDRaisedButton:
-                    text: "Simpan Data"
-                    pos_hint: {"center_x": 0.5}
-                    on_release: root.simpan_data_obat()
+                    PrimaryButton:
+                        text: "Simpan Data"
+                        size_hint_x: 1
+                        on_release: 
+                            root.simpan_data_obat()
 
 <EditObat>
     name: 'edit_obat'
     BoxLayout:
         orientation: 'vertical'
     
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
-
-            text: 'EDIT DATA OBAT'
-            font_size: 30
+    BoxLayout:
+        orientation: 'vertical'
+        canvas.before:
+            Color: 
+                rgba: 1, 1, 1, 1
+            Rectangle: 
+                pos: self.pos
+                size: self.size
+        RelativeLayout:
             size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
 
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
+                NavButton:
+                    text: 'Data Obat'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 100
+                    on_release: app.change_screen('data_obat',"right")
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
 
-            text:'Apabila Tidak Ada Perubahan Tekan Tombol Simpan'
-            font_size: 15
-            size_hint_y: None
-            height: 30
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
+            Label:
+                text: 'EDIT DATA OBAT'
+                font_size: 25
+                size_hint_y: None
+                height: 40
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+                color: 0.149, 0.333, 0.729, 1
+                text_size: self.size
 
         ScrollView:
-            id: scroll_edit
+            bar_width: dp(8)
+            do_scroll_x: True
+            do_scroll_y: True
+            scroll_type: ['bars']
+            effect_cls: 'ScrollEffect'
+            bar_width: dp(10)
+            bar_color: 0.5, 0.5, 0.5, 5
+            bar_inactive_color: 0.3, 0.3, 0.3, 1
+            bar_pos_x: 'bottom'
+            bar_pos_y: 'right'
             MDBoxLayout:
-                id: form_edit_obat
                 orientation: "vertical"
-                padding: 10
-                spacing: 10
+                padding: dp(16)
+                spacing: dp(16)
                 size_hint_y: None
                 height: self.minimum_height
-                pos_hint: {"center_x": 0.5}
+                canvas.before:
+                    Color: 
+                        rgba: 1, 1, 1, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    padding: dp(16)
+                    spacing: dp(14)
+                    height: self.minimum_height
+                    canvas.before:
+                        Color: 
+                            rgba: 0.980, 0.729, 0.004, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(10)]*4
 
-                MDTextField:
-                    hint_text: "ID"
-                    disabled: True
+                    GridLayout:
+                        cols: 4
+                        spacing: dp(10), 0
+                        size_hint_y: None
+                        height: self.minimum_height
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel:
+                                text: "Golongan"
+                            FormInput:
+                                id: dropdown_golongan_edit
+                                hint_text: "Pilih Golongan"
+                                text: root.kode_golongan_nama
+                                readonly: True
+                                icon_right: "menu-down"
+                                on_focus: 
+                                    if self.focus: root.menu_golongan.open()
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Pajak"
+                            FormInput:
+                                id: dropdown_pajak_edit
+                                hint_text: "Pilih Pajak"
+                                text: root.kode_pajak_nama
+                                readonly: True
+                                icon_right: "menu-down"
+                                on_focus: 
+                                    if self.focus: root.menu_pajak.open()
 
-                MDTextField:
-                    id: jenis
-                    hint_text: "Jenis"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel:
+                                text: "Tanggal"
+                            FormInput:
+                                id: tanggal_kadaluarsa
+                                hint_text: "YYYY-MM-DD"
+                                icon_right: "calendar"
+                                readonly: True
+                                on_touch_down:
+                                    root.handle_date_touch(self, args[1])
 
-                MDTextField:
-                    id: plu
-                    hint_text: "PLU"
-                    disabled: True
+                    GridLayout:
+                        cols: 2
+                        spacing: dp(10), dp(8)
+                        size_hint_y: None
+                        height: self.minimum_height
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "ID"
+                            FormInput:
+                                hint_text: "Biarkan Kosong"
+                                disabled: True
 
-                MDTextField:
-                    id: nama_produk
-                    hint_text: "Nama Produk"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Jenis"
+                            FormInput:
+                                id: jenis
+                                hint_text: "Jenis"
 
-                MDTextField:
-                    id: satuan
-                    hint_text: "Satuan"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "PLU"
+                            FormInput:
+                                id: plu
+                                hint_text: "PLU"
 
-                MDTextField:
-                    id: harga_beli
-                    hint_text: "Harga Beli"
-                    on_text: app.formatter.intonly_format(self)
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Nama Produk"
+                            FormInput:
+                                id: nama_produk
+                                hint_text: "Nama Produk"
 
-                MDTextField:
-                    id: dropdown_golongan_edit
-                    hint_text: "Pilih Golongan"
-                    text: root.kode_golongan_nama
-                    readonly: True
-                    icon_right: "menu-down"
-                    mode: "rectangle"
-                    on_focus: if self.focus: root.menu_golongan.open()
-                    size_hint_x: 0.8
-                    pos_hint: {"center_x": 0.5}
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Satuan"
+                            FormInput:
+                                id: satuan
+                                hint_text: "Satuan"
 
-                MDTextField:
-                    id: rak
-                    hint_text: "Rak"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Harga Beli"
+                            FormInput:
+                                id: harga_beli
+                                hint_text: "Harga Beli"
+                                on_text: 
+                                    app.formatter.intonly_format(self)
 
-                MDTextField:
-                    id: supplier
-                    hint_text: "Supplier"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Rak"
+                            FormInput:
+                                id: rak
+                                hint_text: "Rak"
 
-                MDTextField:
-                    id: fast_moving
-                    hint_text: "Fast Moving (Ya/Tidak)"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Supplier"
+                            FormInput:
+                                id: supplier
+                                hint_text: "Supplier"
 
-                MDTextField:
-                    id: kemasan_beli
-                    hint_text: "Kemasan Beli"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Fast Moving"
+                            FormInput:
+                                id: fast_moving
+                                hint_text: "Ya / Tidak"
 
-                MDTextField:
-                    id: isi
-                    hint_text: "Isi"
-                    input_filter: "int"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Kemasan Beli"
+                            FormInput:
+                                id: kemasan_beli
+                                hint_text: "Kemasan Beli"
 
-                MDTextField:
-                    id: tanggal_kadaluarsa
-                    hint_text: "Tanggal Kadaluarsa (YYYY-MM-DD)"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Isi"
+                            FormInput:
+                                id: isi
+                                hint_text: "Isi"
+                                input_filter: "int"
 
-                MDTextField:
-                    id: stok_apotek
-                    hint_text: "Stok Apotek"
-                    input_filter: "int"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Stok Apotek"
+                            FormInput:
+                                id: stok_apotek
+                                hint_text: "Stok Apotek"
+                                input_filter: "int"
 
-                MDTextField:
-                    id: stok_min
-                    hint_text: "Stok Minimum"
-                    input_filter: "int"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Stok Minimum"
+                            FormInput:
+                                id: stok_min
+                                hint_text: "Stok Minimum"
+                                input_filter: "int"
 
-                MDTextField:
-                    id: stok_max
-                    hint_text: "Stok Maksimum"
-                    input_filter: "int"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Stok Maksimum"
+                            FormInput:
+                                id: stok_max
+                                hint_text: "Stok Maksimum"
+                                input_filter: "int"
 
-                MDTextField:
-                    id: dropdown_pajak_edit
-                    hint_text: "Pilih Pajak"
-                    text: root.kode_pajak_nama
-                    readonly: True
-                    icon_right: "menu-down"
-                    mode: "rectangle"
-                    on_focus: if self.focus: root.menu_pajak.open()
-                    size_hint_x: 0.8
-                    pos_hint: {"center_x": 0.5}
-
-                MDRaisedButton:
-                    text: "Simpan Data"
-                    pos_hint: {"center_x": 0.5}
-                    on_release: root.simpan_edit()
+                    PrimaryButton:
+                        text: "Simpan Data"
+                        size_hint_x: 1
+                        on_release: 
+                            root.simpan_edit()
 
 #-----------------------------------------------------------------------------------------#
 
@@ -539,85 +1396,94 @@ WindowsManager:
     name: 'data_golongan_obat'
     BoxLayout:
         orientation: 'vertical'
-        
-        BoxLayout:
-            orientation: 'horizontal'
+        canvas.before:
+            Color: 
+                rgba: 1, 1, 1, 1
+            Rectangle: 
+                pos: self.pos
+                size: self.size
+        RelativeLayout:
             size_hint_y: None
-            height: 40
-            padding: 5
-            spacing: 10
-            canvas.before:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
 
-            Button:
-                id: tombol_dashboard
-                text: 'Dashboard'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('dashboard',"right")
+                NavButton:
+                    id: tombol_add_golongan
+                    text: 'Insert'
+                    font_size: 12
+                    size_hint_x: None
+                    width: 60
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('insert_golongan_obat',"left")
 
-            Button:
-                id: tombol_add_golongan
-                text: 'Insert Golongan Obat'
-                font_size: 12
-                size_hint_x: None
-                width: 150
-                on_release: app.change_screen('insert_golongan_obat',"left")
+                NavButton:
+                    id: tombol_edit_golongan
+                    text: 'Edit'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 60
+                    on_release: root.edit_data_golongan_obat()
 
-            Button:
-                id: tombol_edit_golongan
-                text: 'Edit Golongan Obat'
-                font_size: 12
-                size_hint_x: None
-                width: 150
-                on_release: root.edit_data_golongan_obat()
+                NavButton:
+                    id: tombol_hapus_golongan
+                    text: 'Hapus'
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    font_size: 12
+                    size_hint_x: None
+                    width: 60
+                    on_release: root.hapus_terpilih()
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
 
-            Button:
-                id: tombol_hapus_golongan
-                text: 'Hapus Golongan Obat'
-                font_size: 12
-                size_hint_x: None
-                width: 150
-                on_release: root.hapus_terpilih()
-
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
-
-            text: 'DATA GOLONGAN OBAT'
-            font_size: 30
-            size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
+            Label:
+                text: 'DATA GOLONGAN OBAT'
+                font_size: 25
+                size_hint_y: None
+                height: 40
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+                color: 0.149, 0.333, 0.729, 1
+                text_size: self.size
 
         BoxLayout:
             id: table_container_golongan
             orientation: "vertical"
             size_hint: 1, 1
-
             ScrollView:
                 id: scroll_golongan
                 do_scroll_x: True
                 do_scroll_y: True
-
+                scroll_type: ['bars']
+                effect_cls: 'ScrollEffect'
+                bar_width: dp(10)
+                bar_color: 0.5, 0.5, 0.5, 5
+                bar_inactive_color: 0.3, 0.3, 0.3, 1
+                bar_pos_x: 'bottom'
+                bar_pos_y: 'right'
                 GridLayout:
                     id: grid_golongan
                     cols: 9
@@ -626,217 +1492,548 @@ WindowsManager:
                     color: 0, 0, 0, 1
                     row_default_height: dp(30)
                     row_force_default: True
+                    cell_font_size: dp(15)
 
 <InsertGolonganObat>:
     name: 'insert_golongan_obat'
     BoxLayout:
         orientation: 'vertical'
-        
-        BoxLayout:
-            orientation: 'horizontal'
+        canvas.before:
+            Color: 
+                rgba: 1, 1, 1, 1
+            Rectangle: 
+                pos: self.pos
+                size: self.size
+        RelativeLayout:
             size_hint_y: None
-            height: 40
-            padding: 5
-            spacing: 10
-            canvas.before:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
 
-            Button:
-                text: 'Dashboard'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('dashboard',"down")
-            Button:
-                text: 'Data Golongan Obat'
-                font_size: 12
-                size_hint_x: None
-                width: 150
-                on_release: app.change_screen('data_golongan_obat',"right")
+                NavButton:
+                    text: 'Data Golongan'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 100
+                    on_release: app.change_screen('data_golongan_obat',"right")
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
 
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
-
-            text: 'ISI DATA GOLONGAN OBAT'
-            font_size: 30
-            size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
+            Label:
+                text: 'ISI DATA GOLONGAN'
+                font_size: 25
+                size_hint_y: None
+                height: 40
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+                color: 0.149, 0.333, 0.729, 1
+                text_size: self.size
 
         ScrollView:
+            bar_width: dp(8)
+            do_scroll_x: True
+            do_scroll_y: True
+            scroll_type: ['bars']
+            effect_cls: 'ScrollEffect'
+            bar_width: dp(10)
+            bar_color: 0.5, 0.5, 0.5, 5
+            bar_inactive_color: 0.3, 0.3, 0.3, 1
+            bar_pos_x: 'bottom'
+            bar_pos_y: 'right'
             MDBoxLayout:
                 orientation: "vertical"
-                padding: 10
-                spacing: 10
+                padding: dp(16)
+                spacing: dp(16)
                 size_hint_y: None
                 height: self.minimum_height
-                pos_hint: {"center_x": 0.5}
+                canvas.before:
+                    Color: 
+                        rgba: 1, 1, 1, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    padding: dp(16)
+                    spacing: dp(14)
+                    height: self.minimum_height
+                    canvas.before:
+                        Color: 
+                            rgba: 0.980, 0.729, 0.004, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(10)]*4
+                    GridLayout:
+                        cols: 2
+                        spacing: dp(10), dp(8)
+                        size_hint_y: None
+                        height: self.minimum_height
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Kode Golongan"
+                            FormInput:
+                                hint_text: "Kode Golongan (Biarkan Kosong)"
+                                disabled: True
 
-                MDTextField:
-                    hint_text: "Kode Golongan (Biarkan Kosong)"
-                    disabled: True
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Nama Golongan"
+                            FormInput:
+                                id: nama_golongan
+                                hint_text: "Nama Golongan"
 
-                MDTextField:
-                    id: nama_golongan
-                    hint_text: "Nama Golongan"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Margin Umum"
+                            FormInput:
+                                id: margin_umum
+                                hint_text: "Margin Umum"
+                                input_filter: "float"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Margin Resep"
+                            FormInput:
+                                id: margin_resep
+                                hint_text: "Margin Resep"
+                                input_filter: "float"
 
-                MDTextField:
-                    id: margin_umum
-                    hint_text: "Margin Umum"
-                    input_filter: "float"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Margin Cabang"
+                            FormInput:
+                                id: margin_cabang
+                                hint_text: "Margin Cabang"
+                                input_filter: "float"
 
-                MDTextField:
-                    id: margin_resep
-                    hint_text: "Margin Resep"
-                    input_filter: "float"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Margin Halodoc"
+                            FormInput:
+                                id: margin_halodoc
+                                hint_text: "Margin Halodoc"
+                                input_filter: "float"
 
-                MDTextField:
-                    id: margin_cabang
-                    hint_text: "Margin Cabang"
-                    input_filter: "float"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Margin Karyawan"
+                            FormInput:
+                                id: margin_karyawan
+                                hint_text: "Margin Karyawan"
+                                input_filter: "float"
 
-                MDTextField:
-                    id: margin_halodoc
-                    hint_text: "Margin Halodoc"
-                    input_filter: "float"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Margin BPJS"
+                            FormInput:
+                                id: margin_bpjs
+                                hint_text: "Margin BPJS"
+                                input_filter: "float"
 
-                MDTextField:
-                    id: margin_karyawan
-                    hint_text: "Margin Karyawan"
-                    input_filter: "float"
-
-                MDTextField:
-                    id: margin_bpjs
-                    hint_text: "Margin BPJS"
-                    input_filter: "float"
-
-                MDRaisedButton:
-                    text: "Simpan Data"
-                    pos_hint: {"center_x": 0.5}
-                    on_release: root.simpan_data_golongan_obat()
-
+                    PrimaryButton:
+                        text: "Simpan Data"
+                        size_hint_x: 1
+                        on_release: 
+                            root.simpan_data_golongan_obat()
 
 <EditGolonganObat>:
     name: 'edit_golongan_obat'
     BoxLayout:
         orientation: 'vertical'
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
-
-            text: 'EDIT DATA GOLONGAN OBAT'
-            font_size: 30
+        canvas.before:
+            Color: 
+                rgba: 1, 1, 1, 1
+            Rectangle: 
+                pos: self.pos
+                size: self.size
+        RelativeLayout:
             size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
-        
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
 
-            text:'Apabila Tidak Ada Perubahan Tekan Tombol Simpan'
-            font_size: 15
-            size_hint_y: None
-            height: 30
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
+                NavButton:
+                    text: 'Data Obat'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 100
+                    on_release: app.change_screen('data_golongan_obat',"right")
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
+
+            Label:
+                text: 'EDIT DATA GOLONGAN OBAT'
+                font_size: 25
+                size_hint_y: None
+                height: 40
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+                color: 0.149, 0.333, 0.729, 1
+                text_size: self.size
 
         ScrollView:
-            id: scroll_edit_golongan
+            bar_width: dp(8)
+            do_scroll_x: True
+            do_scroll_y: True
+            scroll_type: ['bars']
+            effect_cls: 'ScrollEffect'
+            bar_width: dp(10)
+            bar_color: 0.5, 0.5, 0.5, 5
+            bar_inactive_color: 0.3, 0.3, 0.3, 1
+            bar_pos_x: 'bottom'
+            bar_pos_y: 'right'
             MDBoxLayout:
                 orientation: "vertical"
-                padding: 10
-                spacing: 10
+                padding: dp(16)
+                spacing: dp(16)
                 size_hint_y: None
                 height: self.minimum_height
-                pos_hint: {"center_x": 0.5}
+                canvas.before:
+                    Color: 
+                        rgba: 1, 1, 1, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    padding: dp(16)
+                    spacing: dp(14)
+                    height: self.minimum_height
+                    canvas.before:
+                        Color: 
+                            rgba: 0.980, 0.729, 0.004, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(10)]*4
+                    GridLayout:
+                        cols: 2
+                        spacing: dp(10), dp(8)
+                        size_hint_y: None
+                        height: self.minimum_height
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Kode Golongan"
+                            FormInput:
+                                id: kode_golongan
+                                hint_text: "Kode Golongan (Biarkan Kosong)"
+                                disabled: True
 
-                MDTextField:
-                    id: kode_golongan
-                    hint_text: "Kode Golongan"
-                    disabled: True
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Nama Golongan"
+                            FormInput:
+                                id: nama_golongan
+                                hint_text: "Nama Golongan"
 
-                MDTextField:
-                    id: nama_golongan
-                    hint_text: "Nama Golongan"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Margin Umum"
+                            FormInput:
+                                id: margin_umum
+                                hint_text: "Margin Umum"
+                                input_filter: "float"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Margin Resep"
+                            FormInput:
+                                id: margin_resep
+                                hint_text: "Margin Resep"
+                                input_filter: "float"
 
-                MDTextField:
-                    id: margin_umum
-                    hint_text: "Margin Umum"
-                    input_filter: "float"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Margin Cabang"
+                            FormInput:
+                                id: margin_cabang
+                                hint_text: "Margin Cabang"
+                                input_filter: "float"
 
-                MDTextField:
-                    id: margin_resep
-                    hint_text: "Margin Resep"
-                    input_filter: "float"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Margin Halodoc"
+                            FormInput:
+                                id: margin_halodoc
+                                hint_text: "Margin Halodoc"
+                                input_filter: "float"
 
-                MDTextField:
-                    id: margin_cabang
-                    hint_text: "Margin Cabang"
-                    input_filter: "float"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Margin Karyawan"
+                            FormInput:
+                                id: margin_karyawan
+                                hint_text: "Margin Karyawan"
+                                input_filter: "float"
 
-                MDTextField:
-                    id: margin_halodoc
-                    hint_text: "Margin Halodoc"
-                    input_filter: "float"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Margin BPJS"
+                            FormInput:
+                                id: margin_bpjs
+                                hint_text: "Margin BPJS"
+                                input_filter: "float"
 
-                MDTextField:
-                    id: margin_karyawan
-                    hint_text: "Margin Karyawan"
-                    input_filter: "float"
-
-                MDTextField:
-                    id: margin_bpjs
-                    hint_text: "Margin BPJS"
-                    input_filter: "float"
-
-                MDRaisedButton:
-                    text: "Simpan Data"
-                    pos_hint: {"center_x": 0.5}
-                    on_release: root.simpan_edit_golongan()
+                    PrimaryButton:
+                        text: "Simpan Data"
+                        size_hint_x: 1
+                        on_release: 
+                            root.simpan_edit_golongan()
 
 #-----------------------------------------------------------------------------------------#
 
@@ -844,243 +2041,394 @@ WindowsManager:
     name: 'data_pajak'
     BoxLayout:
         orientation: 'vertical'
-        
-        BoxLayout:
-            orientation: 'horizontal'
+        canvas.before:
+            Color: 
+                rgba: 1, 1, 1, 1
+            Rectangle: 
+                pos: self.pos
+                size: self.size
+        RelativeLayout:
             size_hint_y: None
-            height: 40
-            padding: 5
-            spacing: 10
-            canvas.before:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
 
-            Button:
-                id: tombol_dashboard
-                text: 'Dashboard'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('dashboard',"right")
+                NavButton:
+                    id: tombol_add_pajak
+                    text: 'Insert'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 60
+                    on_release: app.change_screen('insert_pajak',"left")
 
-            Button:
-                id: tombol_add_pajak
-                text: 'Insert Pajak'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('insert_pajak',"left")
+                NavButton:
+                    id: tombol_edit_pajak
+                    text: 'Edit'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 60
+                    on_release: root.edit_data_pajak()
 
-            Button:
-                id: tombol_edit_pajak
-                text: 'Edit Pajak'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: root.edit_data_pajak()
+                NavButton:
+                    id: tombol_hapus_pajak
+                    text: 'Hapus'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 60
+                    on_release: root.hapus_terpilih()
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
 
-            Button:
-                id: tombol_hapus_pajak
-                text: 'Hapus Pajak'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: root.hapus_terpilih()
-
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
-
-            text: 'DATA PAJAK'
-            font_size: 30
-            size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
+            Label:
+                text: 'DATA PAJAK'
+                font_size: 25
+                size_hint_y: None
+                height: 40
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+                color: 0.149, 0.333, 0.729, 1
+                text_size: self.size
 
         BoxLayout:
             id: table_container_pajak
             orientation: "vertical"
             size_hint: 1, 1
-
             ScrollView:
                 id: scroll_pajak
                 do_scroll_x: True
                 do_scroll_y: True
-
+                scroll_type: ['bars']
+                effect_cls: 'ScrollEffect'
+                bar_width: dp(10)
+                bar_color: 0.5, 0.5, 0.5, 5
+                bar_inactive_color: 0.3, 0.3, 0.3, 1
+                bar_pos_x: 'bottom'
+                bar_pos_y: 'right'
                 GridLayout:
                     id: grid_pajak
-                    cols: 9
+                    cols: 3
                     size_hint_y: None
                     height: self.minimum_height
                     color: 0, 0, 0, 1
                     row_default_height: dp(30)
                     row_force_default: True
+                    cell_font_size: dp(15)
 
 <InsertPajak>:
     name: 'insert_pajak'
     BoxLayout:
         orientation: 'vertical'
-        
-        BoxLayout:
-            orientation: 'horizontal'
+        canvas.before:
+            Color: 
+                rgba: 1, 1, 1, 1
+            Rectangle: 
+                pos: self.pos
+                size: self.size
+        RelativeLayout:
             size_hint_y: None
-            height: 40
-            padding: 5
-            spacing: 10
-            canvas.before:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
 
-            Button:
-                text: 'Dashboard'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('dashboard',"down")
-            Button:
-                text: 'Data Pajak'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('data_pajak',"right")
+                NavButton:
+                    text: 'Data Pajak'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 100
+                    on_release: app.change_screen('data_pajak',"right")
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
 
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
-
-            text: 'ISI DATA PAJAK'
-            font_size: 30
-            size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
+            Label:
+                text: 'ISI DATA PAJAK'
+                font_size: 25
+                size_hint_y: None
+                height: 40
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+                color: 0.149, 0.333, 0.729, 1
+                text_size: self.size
 
         ScrollView:
+            bar_width: dp(8)
+            do_scroll_x: True
+            do_scroll_y: True
+            scroll_type: ['bars']
+            effect_cls: 'ScrollEffect'
+            bar_width: dp(10)
+            bar_color: 0.5, 0.5, 0.5, 5
+            bar_inactive_color: 0.3, 0.3, 0.3, 1
+            bar_pos_x: 'bottom'
+            bar_pos_y: 'right'
             MDBoxLayout:
                 orientation: "vertical"
-                padding: 10
-                spacing: 10
+                padding: dp(16)
+                spacing: dp(16)
                 size_hint_y: None
                 height: self.minimum_height
-                pos_hint: {"center_x": 0.5}
+                canvas.before:
+                    Color: 
+                        rgba: 1, 1, 1, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    padding: dp(16)
+                    spacing: dp(14)
+                    height: self.minimum_height
+                    canvas.before:
+                        Color: 
+                            rgba: 0.980, 0.729, 0.004, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(10)]*4
+                    GridLayout:
+                        cols: 2
+                        spacing: dp(10), dp(8)
+                        size_hint_y: None
+                        height: self.minimum_height
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Jenis Pajak"
+                            FormInput:
+                                id: jenis_pajak
+                                hint_text: "Jenis Pajak"
 
-                MDTextField:
-                    id: jenis_pajak
-                    hint_text: "Jenis Pajak"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Persen Pajak (%)"
+                            FormInput:
+                                id: persen_pajak
+                                hint_text: "Persen Pajak (%)"
+                                input_filter: "int"
 
-                MDTextField:
-                    id: persen_pajak
-                    hint_text: "Persen Pajak (%)"
-                    input_filter: "int"
-
-                MDRaisedButton:
-                    text: "Simpan Data"
-                    pos_hint: {"center_x": 0.5}
-                    on_release: root.simpan_data_pajak()
+                    PrimaryButton:
+                        text: "Simpan Data"
+                        size_hint_x: 1
+                        on_release: root.simpan_data_pajak()
 
 <EditPajak>:
     name: 'edit_pajak'
     BoxLayout:
         orientation: 'vertical'
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
-
-            text: 'EDIT DATA PAJAK'
-            font_size: 30
+        canvas.before:
+            Color: 
+                rgba: 1, 1, 1, 1
+            Rectangle: 
+                pos: self.pos
+                size: self.size
+        RelativeLayout:
             size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
-        
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
 
-            text:'Apabila Tidak Ada Perubahan Tekan Tombol Simpan'
-            font_size: 15
-            size_hint_y: None
-            height: 30
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
+                NavButton:
+                    text: 'Data Obat'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 100
+                    on_release: app.change_screen('data_golongan_obat',"right")
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
+
+            Label:
+                text: 'EDIT DATA PAJAK'
+                font_size: 25
+                size_hint_y: None
+                height: 40
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+                color: 0.149, 0.333, 0.729, 1
+                text_size: self.size
 
         ScrollView:
+            bar_width: dp(8)
+            do_scroll_x: True
+            do_scroll_y: True
+            scroll_type: ['bars']
+            effect_cls: 'ScrollEffect'
+            bar_width: dp(10)
+            bar_color: 0.5, 0.5, 0.5, 5
+            bar_inactive_color: 0.3, 0.3, 0.3, 1
+            bar_pos_x: 'bottom'
+            bar_pos_y: 'right'
             MDBoxLayout:
                 orientation: "vertical"
-                padding: 10
-                spacing: 10
+                padding: dp(16)
+                spacing: dp(16)
                 size_hint_y: None
                 height: self.minimum_height
-                pos_hint: {"center_x": 0.5}
+                canvas.before:
+                    Color: 
+                        rgba: 1, 1, 1, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    padding: dp(16)
+                    spacing: dp(14)
+                    height: self.minimum_height
+                    canvas.before:
+                        Color: 
+                            rgba: 0.980, 0.729, 0.004, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(10)]*4
+                    GridLayout:
+                        cols: 2
+                        spacing: dp(10), dp(8)
+                        size_hint_y: None
+                        height: self.minimum_height
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Jenis Pajak"
+                            FormInput:
+                                id: jenis_pajak
+                                hint_text: "Jenis Pajak"
 
-                MDTextField:
-                    id: jenis_pajak
-                    hint_text: "Jenis Pajak"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Persen Pajak"
+                            FormInput:
+                                id: persen_pajak
+                                hint_text: "Persen Pajak"
+                                input_filter: "int"
 
-                MDTextField:
-                    id: persen_pajak
-                    hint_text: "Persen Pajak"
-                    input_filter: "int"
-
-                MDRaisedButton:
-                    text: "Simpan Data"
-                    pos_hint: {"center_x": 0.5}
-                    on_release: root.simpan_edit_pajak()
+                    PrimaryButton:
+                        text: "Simpan Data"
+                        size_hint_x: 1
+                        on_release: 
+                            root.simpan_edit_pajak()
 
 #-----------------------------------------------------------------------------------------#
 
@@ -1088,285 +2436,555 @@ WindowsManager:
     name: 'data_pelanggan'
     BoxLayout:
         orientation: 'vertical'
-        
-        BoxLayout:
-            orientation: 'horizontal'
+        canvas.before:
+            Color: 
+                rgba: 1, 1, 1, 1
+            Rectangle: 
+                pos: self.pos
+                size: self.size
+        RelativeLayout:
             size_hint_y: None
-            height: 40
-            padding: 5
-            spacing: 10
-            canvas.before:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
 
-            Button:
-                id: tombol_dashboard
-                text: 'Dashboard'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('dashboard',"right")
+                NavButton:
+                    id: tombol_add_pelanggan
+                    text: 'Insert'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 60
+                    on_release: app.change_screen('insert_pelanggan',"left")
 
-            Button:
-                id: tombol_add_pelanggan
-                text: 'Insert Pelanggan'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('insert_pelanggan',"left")
+                NavButton:
+                    id: tombol_edit_pelanggan
+                    text: 'Edit'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 60
+                    on_release: root.edit_data_pelanggan()
 
-            Button:
-                id: tombol_edit_pelanggan
-                text: 'Edit Pelanggan'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: root.edit_data_pelanggan()
+                NavButton:
+                    id: tombol_hapus_pelanggan
+                    text: 'Hapus'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 60
+                    on_release: root.hapus_terpilih()
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
 
-            Button:
-                id: tombol_hapus_pelanggan
-                text: 'Hapus Pelanggan'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: root.hapus_terpilih()
-
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
-
-            text: 'DATA PELANGGAN'
-            font_size: 30
-            size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
+            Label:
+                text: 'DATA PELANGGAN'
+                font_size: 25
+                size_hint_y: None
+                height: 40
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+                color: 0.149, 0.333, 0.729, 1
+                text_size: self.size
 
         BoxLayout:
             id: table_container_pelanggan
             orientation: "vertical"
             size_hint: 1, 1
-
             ScrollView:
                 id: scroll_pelanggan
                 do_scroll_x: True
                 do_scroll_y: True
-
+                scroll_type: ['bars']
+                effect_cls: 'ScrollEffect'
+                bar_width: dp(10)
+                bar_color: 0.5, 0.5, 0.5, 5
+                bar_inactive_color: 0.3, 0.3, 0.3, 1
+                bar_pos_x: 'bottom'
+                bar_pos_y: 'right'
                 GridLayout:
                     id: grid_pelanggan
-                    cols: 9
+                    cols: 3
                     size_hint_y: None
                     height: self.minimum_height
                     color: 0, 0, 0, 1
                     row_default_height: dp(30)
                     row_force_default: True
+                    cell_font_size: dp(15)
 
 <InsertPelanggan>:
     name: 'insert_pelanggan'
     BoxLayout:
         orientation: 'vertical'
-        
-        BoxLayout:
-            orientation: 'horizontal'
+        canvas.before:
+            Color: 
+                rgba: 1, 1, 1, 1
+            Rectangle: 
+                pos: self.pos
+                size: self.size
+        RelativeLayout:
             size_hint_y: None
-            height: 40
-            padding: 5
-            spacing: 10
-            canvas.before:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
 
-            Button:
-                text: 'Dashboard'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('dashboard',"down")
-            Button:
-                text: 'Data Pelanggan'
-                font_size: 12
-                size_hint_x: None
-                width: 100
-                on_release: app.change_screen('data_pelanggan',"right")
+                NavButton:
+                    text: 'Data Pelanggan'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 100
+                    on_release: app.change_screen('data_pelanggan',"right")
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
 
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
-
-            text: 'ISI DATA PELANGGAN'
-            font_size: 30
-            size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
+            Label:
+                text: 'ISI DATA PELANGGAN'
+                font_size: 25
+                size_hint_y: None
+                height: 40
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+                color: 0.149, 0.333, 0.729, 1
+                text_size: self.size
 
         ScrollView:
+            bar_width: dp(8)
+            do_scroll_x: True
+            do_scroll_y: True
+            scroll_type: ['bars']
+            effect_cls: 'ScrollEffect'
+            bar_width: dp(10)
+            bar_color: 0.5, 0.5, 0.5, 5
+            bar_inactive_color: 0.3, 0.3, 0.3, 1
+            bar_pos_x: 'bottom'
+            bar_pos_y: 'right'
             MDBoxLayout:
                 orientation: "vertical"
-                padding: 10
-                spacing: 10
+                padding: dp(16)
+                spacing: dp(16)
                 size_hint_y: None
                 height: self.minimum_height
-                pos_hint: {"center_x": 0.5}
+                canvas.before:
+                    Color: 
+                        rgba: 1, 1, 1, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    padding: dp(16)
+                    spacing: dp(14)
+                    height: self.minimum_height
+                    canvas.before:
+                        Color: 
+                            rgba: 0.980, 0.729, 0.004, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(10)]*4
+                    GridLayout:
+                        cols: 2
+                        spacing: dp(10), dp(8)
+                        size_hint_y: None
+                        height: self.minimum_height
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "ID"
+                            FormInput:
+                                hint_text: "ID (Biarkan Kosong)"
+                                disabled: True
 
-                MDTextField:
-                    hint_text: "ID (Biarkan Kosong)"
-                    disabled: True
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Nama Pelanggan"
+                            FormInput:
+                                id: nama_pelanggan
+                                hint_text: "Nama Pelanggan"
 
-                MDTextField:
-                    id: nama_pelanggan
-                    hint_text: "Nama Pelanggan"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Nomer Telfon"
+                            FormInput:
+                                id: nomor_telfon
+                                hint_text: "Nomer Telfon"
 
-                MDTextField:
-                    id: nomor_telfon
-                    hint_text: "Nomer Telfon"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Alamat"
+                            FormInput:
+                                id: alamat
+                                hint_text: "Alamat"
 
-                MDTextField:
-                    id: alamat
-                    hint_text: "Alamat"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Poin Pelanggan"
+                            FormInput:
+                                id: poin
+                                hint_text: "Poin Pelanggan"
+                                disabled: True
 
-                MDTextField:
-                    id: poin
-                    hint_text: "Poin Pelanggan"
-                    disabled: True
-
-                MDRaisedButton:
-                    text: "Simpan Data"
-                    pos_hint: {"center_x": 0.5}
-                    on_release: root.simpan_data_pelanggan()
+                    PrimaryButton:
+                        text: "Simpan Data"
+                        size_hint_x: 1
+                        on_release: root.simpan_data_pelanggan()
 
 <EditPelanggan>:
     name: 'edit_pelanggan'
     BoxLayout:
         orientation: 'vertical'
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
-
-            text: 'EDIT DATA PELANGGAN'
-            font_size: 30
+        canvas.before:
+            Color: 
+                rgba: 1, 1, 1, 1
+            Rectangle: 
+                pos: self.pos
+                size: self.size
+        RelativeLayout:
             size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
-        
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
 
-            text:'Apabila Tidak Ada Perubahan Tekan Tombol Simpan'
-            font_size: 15
-            size_hint_y: None
-            height: 30
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
+                NavButton:
+                    text: 'Data Obat'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 100
+                    on_release: app.change_screen('data_golongan_obat',"right")
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
+
+            Label:
+                text: 'EDIT DATA PAJAK'
+                font_size: 25
+                size_hint_y: None
+                height: 40
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+                color: 0.149, 0.333, 0.729, 1
+                text_size: self.size
 
         ScrollView:
+            bar_width: dp(8)
+            do_scroll_x: True
+            do_scroll_y: True
+            scroll_type: ['bars']
+            effect_cls: 'ScrollEffect'
+            bar_width: dp(10)
+            bar_color: 0.5, 0.5, 0.5, 5
+            bar_inactive_color: 0.3, 0.3, 0.3, 1
+            bar_pos_x: 'bottom'
+            bar_pos_y: 'right'
             MDBoxLayout:
                 orientation: "vertical"
-                padding: 10
-                spacing: 10
+                padding: dp(16)
+                spacing: dp(16)
                 size_hint_y: None
                 height: self.minimum_height
-                pos_hint: {"center_x": 0.5}
+                canvas.before:
+                    Color: 
+                        rgba: 1, 1, 1, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    padding: dp(16)
+                    spacing: dp(14)
+                    height: self.minimum_height
+                    canvas.before:
+                        Color: 
+                            rgba: 0.980, 0.729, 0.004, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(10)]*4
+                    GridLayout:
+                        cols: 2
+                        spacing: dp(10), dp(8)
+                        size_hint_y: None
+                        height: self.minimum_height
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "ID"
+                            FormInput:
+                                id: id
+                                hint_text: "ID"
+                                disabled: True
+                                
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Nama Pelanggan"
+                            FormInput:
+                                id: nama_pelanggan
+                                hint_text: "Nama Pelanggan"
 
-                MDTextField:
-                    id: id
-                    hint_text: "ID"
-                    disabled: True
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Nomor Telfon"
+                            FormInput:
+                                id: nomor_telfon
+                                hint_text: "Nomor Telfon"
 
-                MDTextField:
-                    id: nama_pelanggan
-                    hint_text: "Nama Pelanggan"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Alamat"
+                            FormInput:
+                                id: alamat
+                                hint_text: "Alamat"
 
-                MDTextField:
-                    id: nomor_telfon
-                    hint_text: "Nomor Telfon"
+                        GridLayout:
+                            cols: 2
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel: 
+                                text: "Poin Pelanggan"
+                            FormInput:
+                                id: poin
+                                hint_text: "Poin Pelanggan"
+                                disabled: True
 
-                MDTextField:
-                    id: alamat
-                    hint_text: "Alamat"
-
-                MDTextField:
-                    id: poin
-                    hint_text: "Poin Pelanggan"
-                    disabled: True
-
-                MDRaisedButton:
-                    text: "Simpan Data"
-                    pos_hint: {"center_x": 0.5}
-                    on_release: root.simpan_edit_pelanggan()
+                    PrimaryButton:
+                        text: "Simpan Data"
+                        size_hint_x: 1
+                        on_release: 
+                            root.simpan_edit_pelanggan()
 
 #-----------------------------------------------------------------------------------------#
 
-<TabelLabel@Label>:
-    font_size: '10sp'
+<TabelHeader@Label>:
     size_hint_y: None
-    color: 0, 0, 0, 1
     height: dp(30)
+    bold: True
+    text_size: self.size
+    halign: 'center'
+    valign: 'middle'
+    color: 0, 0, 0, 1
     canvas.before:
-        Color:
-            rgba: 0.95, 0.95, 0.95, 1  # latar belakang sel
-        Rectangle:
+        Color: 
+            rgba: 0.98, 0.73, 0.00, 1
+        Rectangle: 
             pos: self.pos
             size: self.size
-        Color:
-            rgba: 0.85, 0.85, 0.85, 1  # garis border
-        Line:
+        Color: 
+            rgba: 0, 0, 0, 1
+        Line: 
+            rectangle: (*self.pos, *self.size)
+            width: 1
+
+<TabelCell@Label>:
+    size_hint_y: None
+    height: dp(30)
+    font_size: getattr(self.parent, 'cell_font_size', dp(10))
+    text_size: self.size
+    halign: 'center'
+    valign: 'middle'
+    color: 0, 0, 0, 1
+    canvas.before:
+        Color: 
+            rgba: 1, 1, 1, 1
+        Rectangle: 
+            pos: self.pos
+            size: self.size
+        Color: 
+            rgba: 0, 0, 0, 1
+        Line: 
             rectangle: (*self.pos, *self.size)
             width: 1
 
@@ -1376,12 +2994,12 @@ WindowsManager:
     color: 0, 0, 0, 1
     canvas.before:
         Color:
-            rgba: 0.95, 0.95, 0.95, 1
+            rgba: 1, 1, 1, 1
         Rectangle:
             pos: self.pos
             size: self.size
         Color:
-            rgba: 0.85, 0.85, 0.85, 1
+            rgba: 0, 0, 0, 1
         Line:
             rectangle: (*self.pos, *self.size)
             width: 1
@@ -1400,78 +3018,69 @@ WindowsManager:
     BoxLayout:
         orientation: 'vertical'
         # Top Header
-        BoxLayout:
+        canvas.before:
+            Color:
+                rgba: 1, 1, 1, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        RelativeLayout:
             size_hint_y: None
-            height: 40
-            padding: 5
-            spacing: 10
-            canvas.before:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
 
-            Button:
-                text: 'Dashboard'
-                size_hint_x: None
-                width: 100
-                font_size: 12
-                on_release: app.change_screen('dashboard', "right")
+                NavButton:
+                    text: 'Riwayat Transaksi'
+                    width: 130
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('riwayat_transaksi', "left")
 
-            Button:
-                text: 'Riwayat Transaksi'
-                size_hint_x: None
-                width: 150
-                font_size: 12
-                on_release: app.change_screen('riwayat_transaksi', "left")
+                NavButton:
+                    text: 'Pending'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: root.pending_transaksi()
 
-            Button:
-                text: 'Pending'
-                size_hint_x: None
-                width: 150
-                font_size: 12
-                on_release: root.pending_transaksi()
-
-            Button:
-                text: 'Reload'
-                size_hint_x: None
-                width: 150
-                font_size: 12
-                on_release: root.reload_pending()
+                NavButton:
+                    text: 'Reload'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: root.reload_pending()
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
 
             Label:
-                id: time_label
-                text: '__-__-__ || --:--:--'
-                font_size: 14
-                halign: 'right'
+                text: 'KASIR'
+                font_size: 25
+                size_hint_y: None
+                height: 40
+                bold: True
+                halign: 'center'
                 valign: 'middle'
-                size_hint_x: 1
-                color: 0, 0, 0, 1
+                color: 0.149, 0.333, 0.729, 1
                 text_size: self.size
-
-        Label:
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            canvas.after:
-                Color:
-                    rgba: 0.7, 0.7, 0.7, 1
-                Rectangle:
-                    pos: self.x, self.y
-                    size: self.width, 1
-
-            text: 'KASIR'
-            font_size: 25
-            size_hint_y: None
-            height: 30
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-            text_size: self.size
 
         BoxLayout:
             orientation: 'horizontal'
@@ -1603,13 +3212,32 @@ WindowsManager:
                             rectangle: (*self.pos, *self.size)
                             width: 1
 
+                Label:
+                    id: label_penjaga_kasir
+                    text: root.penjaga_kasir
+                    size_hint_x: None
+                    width: 100
+                    font_size: 12
+                    color: 0.2, 0.2, 0.2, 1
+                    canvas.before:
+                        Color:
+                            rgba: 0.95, 0.95, 0.95, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                        Color:
+                            rgba: 0, 0, 0, 1
+                        Line:
+                            rectangle: (*self.pos, *self.size)
+                            width: 1
+
         BoxLayout:
             size_hint_y: None
             height: 40
             spacing: 0
             canvas.before:
                 Color:
-                    rgba: .9, .9, .9, 1
+                    rgba: 0.980, 0.729, 0.004, 1
                 Rectangle:
                     pos: self.pos
                     size: self.size
@@ -1630,7 +3258,7 @@ WindowsManager:
                         width: 1
                 Label:
                     text: "Nama"
-                    color: 0, 0, 0, 1
+                    color: 0.149, 0.333, 0.729, 1
 
             # Header Satuan
             BoxLayout:
@@ -1643,7 +3271,7 @@ WindowsManager:
                         width: 1
                 Label:
                     text: "Satuan"
-                    color: 0, 0, 0, 1
+                    color: 0.149, 0.333, 0.729, 1
 
             # Header Harga
             BoxLayout:
@@ -1656,7 +3284,7 @@ WindowsManager:
                         width: 1
                 Label:
                     text: "Harga"
-                    color: 0, 0, 0, 1
+                    color: 0.149, 0.333, 0.729, 1
 
             # Header Qty
             BoxLayout:
@@ -1669,7 +3297,7 @@ WindowsManager:
                         width: 1
                 Label:
                     text: "Qty"
-                    color: 0, 0, 0, 1
+                    color: 0.149, 0.333, 0.729, 1
 
             # Header Diskon
             BoxLayout:
@@ -1682,7 +3310,7 @@ WindowsManager:
                         width: 1
                 Label:
                     text: "Diskon (%)"
-                    color: 0, 0, 0, 1
+                    color: 0.149, 0.333, 0.729, 1
 
             # Header Total
             BoxLayout:
@@ -1695,14 +3323,14 @@ WindowsManager:
                         width: 1
                 Label:
                     text: "Total"
-                    color: 0, 0, 0, 1
+                    color: 0.149, 0.333, 0.729, 1
 
             # Header Aksi
             BoxLayout:
                 size_hint_x: 0.15
                 Label:
                     text: "Aksi"
-                    color: 0, 0, 0, 1
+                    color: 0.149, 0.333, 0.729, 1
 
 
         RecycleView:
@@ -1725,7 +3353,7 @@ WindowsManager:
             height: self.minimum_height
             canvas.before:
                 Color:
-                    rgba: 0.9, 0.9, 0.9, 1
+                    rgba: 0.980, 0.729, 0.004, 1
                 Rectangle:
                     pos: self.pos
                     size: self.size
@@ -1745,7 +3373,7 @@ WindowsManager:
                     Label:
                         text: 'Diskon Apotek (Rp)'
                         font_size: 12
-                        color: 0, 0, 0, 1
+                        color: 0.149, 0.333, 0.729, 1
                     BoxLayout:
                         orientation: 'horizontal'
                         size_hint_y: None
@@ -1767,19 +3395,26 @@ WindowsManager:
                             id: diskon_rp_checkbox
                             size_hint_x: None
                             width: 30
-                            on_active:
-                                root.on_diskon_rp_checkbox(self.active)
+                            on_active: root.on_diskon_rp_checkbox(self.active)
+
                             canvas.before:
                                 Color:
-                                    rgba: (0, 0.5, 0.2, 1) if self.active else (0, 0,1, 1, 1)
+                                    rgba: (0, 0.5, 0.2, 1) if self.active else (0.341, 0.682, 0.686, 1)
                                 Rectangle:
                                     pos: self.pos
                                     size: self.size
 
+                            canvas.after:
+                                Color:
+                                    rgba: (1, 1, 1, 1) if self.active else (1, 1, 1, 1)
+                                Line:
+                                    width: 2
+                                    rectangle: (*self.pos, *self.size)
+
                     Label:
                         text: 'Diskon Apotek (%)'
                         font_size: 12
-                        color: 0, 0, 0, 1
+                        color: 0.149, 0.333, 0.729, 1
                     TextInput:
                         id: diskon_persen
                         font_size: 12
@@ -1793,7 +3428,7 @@ WindowsManager:
                     Label:
                         text: 'Ongkir (Rp)'
                         font_size: 12
-                        color: 0, 0, 0, 1
+                        color: 0.149, 0.333, 0.729, 1
                     TextInput:
                         id: ongkir_input
                         multiline: False
@@ -1812,7 +3447,7 @@ WindowsManager:
                     Label:
                         text: 'Cara Bayar'
                         font_size: 14
-                        color: 0, 0, 0, 1
+                        color: 0.149, 0.333, 0.729, 1
 
                     BoxLayout:
                         id: cara_bayar
@@ -1832,7 +3467,7 @@ WindowsManager:
                     Label:
                         text: 'Pembayaran (Rp)'
                         font_size: 14
-                        color: 0, 0, 0, 1
+                        color: 0.149, 0.333, 0.729, 1
 
                     TextInput:
                         id: uang_pelanggan_input
@@ -1858,7 +3493,7 @@ WindowsManager:
                             text_size: self.size
                             halign: 'left'
                             valign: 'middle'
-                            color: 0, 0, 0, 1
+                            color: 0.149, 0.333, 0.729, 1
                     BoxLayout:
                         padding: [30, 0, 0, 0]
                         Label:
@@ -1867,7 +3502,7 @@ WindowsManager:
                             halign: 'left'
                             valign: 'middle'
                             text: 'Rp0'
-                            color: 0, 0, 0, 1
+                            color: 0.149, 0.333, 0.729, 1
 
             BoxLayout:
                 orientation: 'vertical'
@@ -1910,109 +3545,158 @@ WindowsManager:
     name: 'riwayat_transaksi'
     BoxLayout:
         orientation: 'vertical'
-        padding: 10
-        spacing: 10
+        canvas.before:
+            Color: 
+                rgba: 1, 1, 1, 1
+            Rectangle: 
+                pos: self.pos
+                size: self.size
+        RelativeLayout:
+            size_hint_y: None
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
+
+                NavButton:
+                    text: 'Kembali ke Kasir'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 120
+                    on_release: app.root.current = 'Kasir'
+
+                NavButton:
+                    text: 'Muat Ulang'
+                    font_size: 12
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    size_hint_x: None
+                    width: 90
+                    on_release: root.muat_riwayat_transaksi()
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
+
+            Label:
+                text: 'RIWAYAT TRANSAKSI'
+                font_size: 25
+                size_hint_y: None
+                height: 40
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+                color: 0.149, 0.333, 0.729, 1
+                text_size: self.size
 
         BoxLayout:
-            size_hint_y: None
-            height: 40
-            spacing: 10
+            id: table_container_riwayat_transaksi
+            orientation: "vertical"
+            size_hint: 1, 1
+            ScrollView:
+                id: scroll_riwayat_transaksi
+                do_scroll_x: True
+                do_scroll_y: True
+                scroll_type: ['bars']
+                effect_cls: 'ScrollEffect'
+                bar_width: dp(10)
+                bar_color: 0.5, 0.5, 0.5, 1
+                bar_inactive_color: 0.3, 0.3, 0.3, 1
+                bar_pos_x: 'bottom'
+                bar_pos_y: 'right'
 
-            Button:
-                text: '← Kembali ke Kasir'
-                on_release: app.root.current = 'Kasir'
+                GridLayout:
+                    id: grid_riwayat_transaksi
+                    cols: 12
+                    size_hint_x: None
+                    size_hint_y: None
+                    width: self.minimum_width
+                    height: self.minimum_height
+                    row_force_default: True
+                    row_default_height: dp(30)
+                    cell_font_size: dp(15)
 
-            Button:
-                text: '🔄 Muat Ulang'
-                on_release: root.muat_riwayat_transaksi()
-
-        GridLayout:
-            cols: 12
-            size_hint_y: None
-            height: 30
-            spacing: 5
-
-            Label: 
-                text: 'Tanggal'
-            Label: 
-                text: 'No Ref'
-            Label: 
-                text: 'pelanggan'
-            Label: 
-                text: 'Kredit'
-            Label: 
-                text: 'Tempo'
-            Label: 
-                text: 'Cara Bayar'
-            Label: 
-                text: 'Harga'
-            Label: 
-                text: 'Total'
-            Label: 
-                text: 'Kasir'
-            Label: 
-                text: 'Status'
-            Label: 
-                text: 'Aksi'
-
-        RecycleView:
-            id: rv_riwayat
-            viewclass: 'RowRiwayat'
-            scroll_type: ['bars', 'content']
-            bar_width: 10
-
-            RecycleBoxLayout:
-                default_size: None, 30
-                default_size_hint: 1, None
-                size_hint_y: None
-                height: self.minimum_height
-                orientation: 'vertical'
-                spacing: 2
-
-
-<RowRiwayat>:
-    cols: 12
+<THead@Label>:
     size_hint_y: None
-    height: 30
-    spacing: 5
+    height: dp(30)
+    bold: True
+    color: 0,0,0,1
+    text_size: self.size
+    halign: 'center'
+    valign: 'middle'
+    canvas.before:
+        Color: 
+            rgba: 0.98, 0.73, 0.0, 1
+        Rectangle: 
+            pos: self.pos
+            size: self.size
+        Color: 
+            rgba: 0,0,0,1
+        Line: 
+            rectangle: (*self.pos, *self.size)
+            width: 1
 
-    Label: 
-        text: root.tanggal
-    Label: 
-        text: root.no_ref
-    Label: 
-        text: root.pelanggan
-    Label: 
-        text: 'Ya' if root.kredit == '1' else 'Tidak'
-    Label: 
-        text: root.tempo
-    Label: 
-        text: 'Tunai' if root.cara_bayar == 'Tunai' else 'Non Tunai'
-    Label: 
-        text: root.harga
-    Label: 
-        text: root.total
-    Label: 
-        text: root.kasir
-    Label: 
-        text: root.status
-    Button:
-        text: 'Lihat'
-        size_hint_x: None
-        width: 50
-        disabled: root.status == 'dihapus'
-        opacity: 0 if root.status == 'dihapus' else 1
-        on_release:
-            app.root.get_screen('Kasir').load_transaksi(root.no_ref)
-            app.root.current = 'Kasir'
-    Button:
-        text: 'Hapus'
-        size_hint_x: None
-        width: 40
-        disabled: root.status == 'dihapus'
-        opacity: 0 if root.status == 'dihapus' else 1
-        on_release:
-            app.root.get_screen('Kasir').konfirmasi_hapus_transaksi(root.no_ref)
+<TCell@Label>:
+    size_hint_y: None
+    height: dp(30)
+    color: 0,0,0,1
+    font_size: getattr(self.parent, 'cell_font_size', dp(14))
+    text_size: self.size
+    halign: 'center'
+    valign: 'middle'
+    canvas.before:
+        Color:
+            rgba: 1,1,1,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        Color:
+            rgba: 0,0,0,1
+        Line: 
+            rectangle: (*self.pos, *self.size)
+            width: 1
+
+<TCellButton@Button>:
+    size_hint_y: None
+    height: dp(30)
+    background_normal: ''
+    background_down: ''
+    background_disabled_normal: ''
+    background_disabled_down: ''
+    background_color: 0.149, 0.333, 0.729, 1
+    color: 1, 1, 1, 1
+
+    # Gambar sendiri
+    canvas.before:
+        Color:
+            rgba: (0.7, 0.7, 0.7, 1) if self.disabled else self.background_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    canvas.after:
+        Color: 
+            rgba: 0, 0, 0, 1
+        Line:
+            rectangle: (*self.pos, *self.size)
+            width: 1
 
 <PopupLayout@BoxLayout>:
     orientation: 'vertical'
@@ -2064,6 +3748,7 @@ WindowsManager:
                 width: 1
         Label:
             text: root.nama
+            color: 0, 0, 0, 1
 
     BoxLayout:
         size_hint_x: 0.1
@@ -2075,6 +3760,7 @@ WindowsManager:
                 width: 1
         Label:
             text: root.satuan
+            color: 0, 0, 0, 1
 
     BoxLayout:
         size_hint_x: 0.15
@@ -2086,6 +3772,7 @@ WindowsManager:
                 width: 1
         Label:
             text: str("Rp{:,.0f}".format(root.harga).replace(',', '.'))
+            color: 0, 0, 0, 1
 
     BoxLayout:
         size_hint_x: 0.1
@@ -2125,11 +3812,26 @@ WindowsManager:
                 width: 1
         Label:
             text: str("Rp{:,.0f}".format(root.total).replace(',', '.'))
+            color: 0, 0, 0, 1
 
     BoxLayout:
         size_hint_x: 0.15
+        padding: 0
+        canvas.before:
+            Color:
+                rgba: 0, 0, 0, 1
+            Line:
+                points: [self.right, self.y, self.right, self.top]
+                width: 1
+
         Button:
             text: "Hapus"
+            size_hint: 1, 1
+            background_normal: ''
+            background_down: ''
+            background_color: 0.35, 0.35, 0.35, 1
+            border: 0, 0, 0, 0
+            padding: 0, 0
             on_release: app.root.get_screen('Kasir').hapus_item(root.index)
 
 <IconButton@ButtonBehavior+Image>:
@@ -2137,81 +3839,232 @@ WindowsManager:
     size_hint: None, None
     size: 20, 20
 
+<NavButton@Button>:
+    background_normal: ''
+    background_down: ''
+    background_color: 0, 0, 0, 0
+    color: 1, 1, 1, 1
+    font_size: 12
+    size_hint_x: None
+    size_hint_y: None
+    height: 24
+    width: 150
+    halign: 'left'
+    valign: 'middle'
+    padding: dp(10), dp(8)
+    bg_normal: 0.12, 0.48, 0.93, 1
+    bg_down:   0.09, 0.38, 0.75, 1
+
+    canvas.before:
+        Color:
+            rgba: self.bg_down if self.state == 'down' else self.bg_normal
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(5), dp(5), dp(5), dp(5)]
+
+#-----------------------------------------------------------------------------------------#
+# ==== Komponen bersama (sekali definisi) ====
+<FormLabel@Label>:
+    font_size: dp(16)
+    color: 0.149, 0.333, 0.729, 1
+    text_size: self.size
+    halign: 'center'
+    valign: 'middle'
+
+<FormInput@TextInput>:
+    size_hint_y: None
+    height: dp(36)
+    padding: dp(10), dp(8)
+    multiline: False
+    write_tab: False  # tab pindah field, bukan insert tab
+
+<PrimaryButton@Button>:
+    size_hint: None, None
+    height: dp(36)
+    width: dp(120)
+    font_size: dp(14)
+    color: 1, 1, 1, 1
+    background_normal: ''
+    background_down: ''
+    background_color: 0.149, 0.333, 0.729, 1
+    border: 0, 0, 0, 0
+    canvas.before:
+        Color: 
+            rgba: self.background_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(6), dp(6), dp(6), dp(6)]
+
+
 <SettingsDooka>:
     name: 'settings_dooka'
     BoxLayout:
         orientation: 'vertical'
-        padding: 10
-        spacing: 10
-
-        BoxLayout:
+        RelativeLayout:
             size_hint_y: None
-            height: 40
-            spacing: 10
-
-            Button:
-                text: 'Kembali ke Dashboard'
-                on_release: app.root.current = 'dashboard'
-
-        Label:
-            text: 'Pengaturan Aplikasi'
-            font_size: 30
-            size_hint_y: None
-            height: 40
-            halign: 'center'
-            valign: 'middle'
-            color: 0, 0, 0, 1
-
-        BoxLayout:
-            orientation: 'vertical'
-            spacing: 10
+            height: dp(40)
+            BoxLayout:
+                size_hint: 1, 1
+                padding: dp(8)
+                spacing: dp(10)
+                canvas.before:
+                    Color: 
+                        rgba: 0.980, 0.729, 0.004, 1
+                    Rectangle: 
+                        pos: self.pos
+                        size: self.size
+                NavButton:
+                    text: 'Dashboard'
+                    width: 100
+                    bg_normal: 0.149, 0.333, 0.729, 1
+                    on_release: app.change_screen('dashboard', "right")
+                Widget:
+                Label:
+                    id: time_label
+                    text: '__-__-__ || --:--:--'
+                    font_size: 14
+                    halign: 'right'
+                    valign: 'middle'
+                    size_hint_x: 1
+                    color: 0.149, 0.333, 0.729, 1
+                    text_size: self.size
 
             Label:
-                text: 'Pembulatan Harga'
-                font_size: 20
-                color: 0, 0, 0, 1
-
-            BoxLayout:
-                orientation: 'horizontal'
+                text: 'PENGATURAN DOOKA'
+                font_size: 25
                 size_hint_y: None
                 height: 40
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+                color: 0.149, 0.333, 0.729, 1
+                text_size: self.size
 
-                TextInput:
-                    id: pembulatan_input
-                    text: str(root.pembulatan)
-                    multiline: False
-                    input_filter: 'int'
-                    on_text_validate:
-                        root.ubah_pembulatan(int(self.text))
-
-                Button:
-                    text: 'Simpan'
-                    on_release:
-                        root.ubah_pembulatan(int(pembulatan_input.text))
-
-        BoxLayout:
-            orientation: 'vertical'
-            spacing: 10
-
-            Label:
-                text: 'POIN'
-                font_size: 20
-                color: 0, 0, 0, 1
+        AnchorLayout:
+            anchor_y: 'top'
+            padding: dp(16)
 
             BoxLayout:
-                orientation: 'horizontal'
+                orientation: 'vertical'
                 size_hint_y: None
-                height: 40
+                height: self.minimum_height
+                BoxLayout:
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: dp(16)
+                    canvas.before:
+                        Color: 
+                            rgba: 1, 1, 1, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(8)]*4
+                        Color: 
+                            rgba: 0, 0, 0, .10
+                        Line:
+                            rectangle: (*self.pos, *self.size)
+                            width: 1
+                    GridLayout:
+                        cols: 2
+                        rows: 2
+                        spacing: dp(5), dp(5)
+                        size_hint_y: None
+                        height: self.minimum_height
 
-                TextInput:
-                    id: pembagian_perpoin
-                    text: str(root.pembagian_perpoin)
-                    multiline: False
-                    input_filter: 'int'
-                    on_text_validate:
-                        root.ubah_pembagian_perpoin(int(self.text))
+                        # Kolom kiri
+                        GridLayout:
+                            cols: 3
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 0.980, 0.729, 0.004, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel:
+                                text: 'Pembulatan Harga'
+                                size_hint_y: None
+                                height: dp(36)
+                            FormInput:
+                                id: pembulatan_input
+                                size_hint_y: None
+                                height: dp(36)
+                                text: str(root.pembulatan)
+                                input_filter: 'int'
+                                on_text_validate: root.ubah_pembulatan(int(self.text))
+                            PrimaryButton:
+                                text: 'Simpan'
+                                size_hint_y: None
+                                height: dp(36)
+                                on_release: root.ubah_pembulatan(int(pembulatan_input.text))
 
-                Button:
-                    text: 'Simpan'
-                    on_release:
-                        root.ubah_pembagian_perpoin(int(pembagian_perpoin.text))
+                        # Kolom kanan
+                        GridLayout:
+                            cols: 3
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 0.980, 0.729, 0.004, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel:
+                                text: 'POIN'
+                                size_hint_y: None
+                                height: dp(36)
+                            FormInput:
+                                id: pembagian_perpoin
+                                size_hint_y: None
+                                height: dp(36)
+                                text: str(root.pembagian_perpoin)
+                                input_filter: 'int'
+                                on_text_validate: root.ubah_pembagian_perpoin(int(self.text))
+                            PrimaryButton:
+                                text: 'Simpan'
+                                size_hint_y: None
+                                height: dp(36)
+                                on_release: root.ubah_pembagian_perpoin(int(pembagian_perpoin.text))
+
+                        # Kolom kiri
+                        GridLayout:
+                            cols: 3
+                            spacing: dp(8), 0
+                            padding: dp(10), dp(8), dp(10), dp(8)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            row_force_default: False
+                            canvas.before:
+                                Color:
+                                    rgba: 0.980, 0.729, 0.004, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(8)]*4
+                            FormLabel:
+                                text: 'Penjaga Kasir'
+                                size_hint_y: None
+                                height: dp(36)
+                            FormInput:
+                                id: penjaga_kasir
+                                size_hint_y: None
+                                height: dp(36)
+                                text: str(root.penjaga_kasir)
+                                on_text_validate: root.ubah_penjaga_kasir(self.text)
+
+                            PrimaryButton:
+                                text: 'Simpan'
+                                size_hint_y: None
+                                height: dp(36)
+                                on_release: root.ubah_penjaga_kasir(penjaga_kasir.text)

@@ -2,7 +2,9 @@ import os
 import json
 
 DEFAULT_SETTINGS = {
-    "pembulatan": 500
+    "pembulatan": 500,
+    "pembagian_perpoin": 200,
+    "penjaga_kasir" : "User Uji Coba"
 }
 
 class SettingsManager:
