@@ -81,4 +81,7 @@ S. pembetulan dibagian tunai, pembetulan dibagian warna di kasir, pembetulan for
 berada didalam miss di logika sinkronasi
 T. terdapat masalah ketika persen dimasukkan, maka sudha benar mengikuti, namun ketika semuanya dikosongkan, didalam diskon berubah tidak sesuai keinginan
 
-sepertinya untuk logika poin belum terlalu efektif untuk dicoba
+(solved)
+U. check ulang mengenai stock apotek(insyaallah setelah ini selesai) #check terakhir tentang alert obat kadaluarsa
+
+pyinstaller Dooka.py --name DOOKA --windowed --icon assets\image\DOOKA_logo.ico --hidden-import kivy_deps.sdl2 --hidden-import kivy_deps.glew --hidden-import kivy_deps.angle

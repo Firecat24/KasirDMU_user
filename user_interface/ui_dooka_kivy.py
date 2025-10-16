@@ -14,6 +14,8 @@ from kivymd.uix.button import MDFlatButton
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.list import OneLineListItem
 from kivymd.toast import toast
+from kivymd.uix.navigationdrawer import MDNavigationLayout
+from kivymd.uix.navigationdrawer import MDNavigationDrawer
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
@@ -99,25 +101,111 @@ class Dashboard(Screen):
     total_golongan = NumericProperty(0)
     total_pajak = NumericProperty(0)
     total_pelanggan = NumericProperty(0)
+    low_stock_items = ListProperty()
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         Clock.schedule_interval(self.update_time, 1)
+        self.data_obat = SessionCache.get_data_obat()
+        self.data_golongan = SessionCache.get_data_golongan()
+        self.data_pelanggan = SessionCache.get_data_pelanggan()
+        self.data_pajak = SessionCache.get_data_pajak()
 
     def update_time(self, dt):
         current_time = datetime.now().strftime('%Y-%m-%d\n%H:%M:%S')
         time_label = self.ids.get('time_label')
         if time_label:
             time_label.text = f'{current_time}'
-    
-    def on_enter(self):
-        data_obat = SessionCache.get_data_obat()
-        self.total_obat = len(data_obat)
-        data_golongan = SessionCache.get_data_golongan()
-        self.total_golongan = len(data_golongan)
-        data_pajak = SessionCache.get_data_pajak()
-        self.total_pajak = len(data_pajak)
-        data_pelanggan = SessionCache.get_data_pelanggan()
-        self.total_pelanggan = len(data_pelanggan)
+
+    def _status_color(self, stok: int, smin: int):
+        """Merah kalau stok <= 50% dari min, oranye kalau <= min, hijau kalau di atas (jika kelak menampilkan semua)."""
+        if smin <= 0:
+            return (0.6, 0.6, 0.6, 1)  # abu jika data aneh
+        ratio = stok / float(smin)
+        if ratio <= 0.5:
+            return (0.90, 0.23, 0.22, 1)   # merah
+        elif ratio <= 1.0:
+            return (1.00, 0.62, 0.16, 1)   # oranye
+        else:
+            return (0.16, 0.67, 0.36, 1)   # hijau (mungkin tidak dipakai sekarang)
+        
+    def _status_color_kadaluarsa(self, tanggal_str: str):
+        try:
+            exp = datetime.strptime(tanggal_str, "%Y-%m-%d").date()
+        except Exception:
+            return (0.6, 0.6, 0.6, 1)  # abu kalau format salah
+
+        sisa = (exp - date.today()).days
+        if sisa <= 0:
+            return (0.90, 0.23, 0.22, 1)  # merah
+        elif sisa <= 30:
+            return (1.00, 0.62, 0.16, 1)  # oranye
+        elif sisa <= 60:
+            return (0.98, 0.82, 0.25, 1)  # kuning
+        else:
+            return (0.16, 0.67, 0.36, 1)  # hijau
+        
+    def _refresh(self, *_):
+        db = MDApp.get_running_app().db
+        data = self.data_obat or []
+        rows_all, rows_2bulan, rows_1bulan = db.tanggal_kadaluarsa()
+        kadaluarsa_src = rows_1bulan + rows_2bulan
+        kadaluarsa = []
+        for plu, nama, tanggal in kadaluarsa_src:
+            kadaluarsa.append({
+                'plu': plu,
+                'nama': nama,
+                'tanggal': tanggal
+            })
+        rv = self.ids.get('rv_kadaluarsa')
+        if rv:
+            if kadaluarsa:
+                rv.data = [{
+                    'nama_plu': f"{it['nama']} ({it['plu']})",
+                    'tanggal_text': f"{it['tanggal']}",
+                    'status_color': self._status_color_kadaluarsa(it['tanggal'])
+                } for it in kadaluarsa]
+            else:
+                rv.data = [{
+                    'nama_plu': "Semua kadaluarsa aman (>60 hari)",
+                    'tanggal_text': "✓",
+                    'status_color': (0.16, 0.67, 0.36, 1)
+                }]
+        if self.ids.get('lbl_kadaluarsa_count'):
+            self.ids.lbl_kadaluarsa_count.text = f"{len(kadaluarsa)} item kadaluarsa ≤ 2 bulan"
+
+        low_stock = []
+        for row in data:
+            plu  = row[1]
+            nama = row[2]
+            stok = db.stok_obat(plu)
+            smin = db.stok_min_obat(plu)
+            if stok <= smin:
+                low_stock.append({'plu': plu, 'nama': nama, 'stok': stok, 'stok_min': smin})
+        rv = self.ids.get('rv_lowstock')
+        if rv:
+            if low_stock:
+                rv.data = [{
+                    'nama_plu': f"{it['nama']} ({it['plu']})",
+                    'stok_text': f"{it['stok']} / {it['stok_min']}",
+                    'status_color': self._status_color(it['stok'], it['stok_min'])
+                } for it in low_stock]
+            else:
+                rv.data = [{
+                    'nama_plu': "Semua stok aman",
+                    'stok_text': "✓",
+                    'status_color': (0.16, 0.67, 0.36, 1)
+                }]
+        if self.ids.get('lbl_lowstock_count'):
+            self.ids.lbl_lowstock_count.text = f"{len(low_stock)} item menyentuh stok minimum"
+
+        # statistik lain
+        self.total_obat = len(self.data_obat or [])
+        self.total_golongan = len(self.data_golongan or [])
+        self.total_pajak = len(self.data_pajak or [])
+        self.total_pelanggan = len(self.data_pelanggan or [])
+
+    def on_pre_enter(self, *_):
+        Clock.schedule_once(self._refresh, 0)
 
 #---------------------------------------------------------------------------------------------#
 
@@ -496,27 +584,23 @@ class InsertObat(Screen):
             self.tampilkan_dialog("tanggal harus diisi atau Format tanggal salah! Gunakan format YYYY-MM-DD")
             return
         if not data['stok_apotek'] or not data['stok_apotek'].isdigit():
-            self.tampilkan_dialog("Stok Apotek harus diisi dan harus berupa angka!")
+            self.tampilkan_dialog("Stok Apotek harus diisi dan berupa angka!")
             return
         stok_apotek = int(data['stok_apotek'])
         if stok_apotek < 1 or stok_apotek > 1000:
             self.tampilkan_dialog("Stok Apotek harus antara 1 dan 1000!")
             return
         if not data['stok_min'] or not data['stok_min'].isdigit():
-            self.tampilkan_dialog("Stok Min harus diisi dan harus berupa angka!")
+            self.tampilkan_dialog("Stok Min harus diisi dan berupa angka!")
             return
         stok_min = int(data['stok_min'])
-        max_stok_min = stok_apotek // 2
-        if stok_min < 1 or stok_min > max_stok_min:
-            self.tampilkan_dialog(f"Stok Min harus antara 1 dan {max_stok_min} (tidak lebih dari 50% stok)!")
-            return
+
         if not data['stok_max'] or not data['stok_max'].isdigit():
-            self.tampilkan_dialog("Stok Max harus diisi dan harus berupa angka!")
+            self.tampilkan_dialog("Stok Max harus diisi dan berupa angka!")
             return
         stok_max = int(data['stok_max'])
-        min_stok_max = stok_apotek // 2
-        if stok_max < min_stok_max or stok_max > 1000:
-            self.tampilkan_dialog(f"Stok Max harus antara {min_stok_max} dan 1000 (tidak boleh kurang dari 50% stok)!")
+        if stok_min > stok_max:
+            self.tampilkan_dialog("Stok Min tidak boleh lebih besar dari Stok Max!")
             return
         if not kode_ppn:
             self.tampilkan_dialog("Pajak wajib dipilih!")
@@ -525,6 +609,7 @@ class InsertObat(Screen):
         # Jika semua validasi lolos, simpan data
         margin_data = MDApp.get_running_app().db.get_margin_golongan(kode_golongan)
         harga_beli = int(get_digits_only(data['harga_beli']))
+        print(harga_beli)
         harga_resep = round(harga_beli * (1 + margin_data['margin_resep'] / 100))
         harga_umum = round(harga_beli * (1 + margin_data['margin_umum'] / 100))
         harga_cabang = round(harga_beli * (1 + margin_data['margin_cabang'] / 100))
@@ -537,7 +622,7 @@ class InsertObat(Screen):
                 data['plu'], 
                 data['nama_produk'], 
                 data['satuan'], 
-                data['harga_beli'], 
+                harga_beli, 
                 harga_umum, 
                 harga_resep, 
                 harga_cabang, 
@@ -795,25 +880,24 @@ class EditObat(Screen):
         if not data['tanggal_kadaluarsa'] or not date_only(data['tanggal_kadaluarsa']):
             self.tampilkan_dialog("tanggal harus diisi atau Format tanggal salah! Gunakan format YYYY-MM-DD")
             return
+        if not data['stok_apotek'] or not data['stok_apotek'].isdigit():
+            self.tampilkan_dialog("Stok Apotek harus diisi dan berupa angka!")
+            return
         stok_apotek = int(data['stok_apotek'])
         if stok_apotek < 1 or stok_apotek > 1000:
             self.tampilkan_dialog("Stok Apotek harus antara 1 dan 1000!")
             return
         if not data['stok_min'] or not data['stok_min'].isdigit():
-            self.tampilkan_dialog("Stok Min harus diisi dan harus berupa angka!")
+            self.tampilkan_dialog("Stok Min harus diisi dan berupa angka!")
             return
         stok_min = int(data['stok_min'])
-        max_stok_min = stok_apotek // 2
-        if stok_min < 1 or stok_min > max_stok_min:
-            self.tampilkan_dialog(f"Stok Min harus antara 1 dan {max_stok_min} (tidak lebih dari 50% stok)!")
-            return
+
         if not data['stok_max'] or not data['stok_max'].isdigit():
-            self.tampilkan_dialog("Stok Max harus diisi dan harus berupa angka!")
+            self.tampilkan_dialog("Stok Max harus diisi dan berupa angka!")
             return
         stok_max = int(data['stok_max'])
-        min_stok_max = stok_apotek // 2
-        if stok_max < min_stok_max or stok_max > 1000:
-            self.tampilkan_dialog(f"Stok Max harus antara {min_stok_max} dan 1000 (tidak boleh kurang dari 50% stok)!")
+        if stok_min > stok_max:
+            self.tampilkan_dialog("Stok Min tidak boleh lebih besar dari Stok Max!")
             return
         if not kode_ppn:
             self.tampilkan_dialog("Pajak wajib dipilih!")
@@ -881,12 +965,14 @@ class DataGolonganObat(Screen):
 
     def on_enter(self):
         self.selected_rows = set()
-        self.load_table_data()
         self.checkbox_refs = {}
-        self.show_table(self._rows)
+        # Memanggil pemuatan data dengan jeda singkat
+        Clock.schedule_once(lambda dt: self.load_table_data())
 
     def load_table_data(self):
+        # Logika ini dipindahkan dari on_enter yang lama
         self._rows = SessionCache.get_data_golongan()
+        self.show_table(self._rows)
 
     def check_thread_done(self, dt):
         self.show_table(self._rows)
@@ -895,8 +981,8 @@ class DataGolonganObat(Screen):
         grid = self.ids.grid_golongan
         grid.clear_widgets()
         self.rows_data_asli = rows
+        self.kode_to_nama = {int(row[0]): str(row[1]) for row in rows}
         self.checkbox_refs = {}
-
         header = [
             "Kode", "Nama Golongan", "Margin Umum", "Margin Resep",
             "Margin Cabang", "Margin Halodoc", "Margin Karyawan", "Margin BPJS", "Pilih"
@@ -967,6 +1053,8 @@ class DataGolonganObat(Screen):
                 toast(f"{deleted} data berhasil dihapus")
                 rows = db.get_all_golongan()
                 SessionCache.set_data_golongan(rows)
+                obat_rows = db.get_all_obat()
+                SessionCache.set_data_obat(obat_rows)
                 data_golongan_screen = self.manager.get_screen('data_golongan_obat')
                 data_golongan_screen.reload_table(rows)
                 self.manager.current = 'data_golongan_obat'
@@ -2133,6 +2221,19 @@ class Kasir(Screen):
 
     def simpan_transaksi(self):
         db = MDApp.get_running_app().db
+        #pengecheckan stok sebelum disimpan
+        shortages = []
+        for item in self.daftar_belanja:
+            plu = item['plu']
+            nama = item['nama']
+            qty  = int(item['qty'])
+            stok_skrg = db.stok_obat(plu)
+            if qty > stok_skrg:
+                shortages.append(f"Stok {nama} kurang (sisa {stok_skrg}, butuh {qty}).")
+        if shortages:
+            self.tampilkan_popup("Transaksi dibatalkan karena stok tidak cukup:\n" + "\n".join(shortages))
+            return
+        #logika biasanya
         now = datetime.now()
         if not self.mode_edit:
             no_ref = self.generate_no_ref()
@@ -2190,18 +2291,25 @@ class Kasir(Screen):
             db.new_transaksi(no_ref, tanggal, pelanggan, kredit, tanggal_tempo, cara_bayar,
                             jenis_pelanggan, diskon, ongkir, total, pembayaran, nama_kasir, poin_baru)
 
+        warnings = []
         for item in self.daftar_belanja:
-            db.stok_pengurangan_obat(item['plu'], item['qty'])
-            db.new_transaksi_item(no_ref, item['nama'], item['satuan'], item['harga'],
-                                item['qty'], item['diskon'], item['total'])
-            
-        stok_obat = db.stok_obat(item['plu'])
-        stok_min_obat = db.stok_min_obat(item['plu'])
-        if stok_obat <= stok_min_obat:
-            self.tampilkan_popup(
-                f"Stok {item['nama']} sudah mencapai batas minimum.\n"
-                f"Stok saat ini: {stok_obat}, batas minimum: {stok_min_obat}"
+            plu = item['plu']
+            qty = int(item['qty'])
+            nama = item['nama']
+            stok_skrg = db.stok_obat(plu)
+            if qty > stok_skrg:
+                warnings.append(f"Stok {nama} kurang (sisa {stok_skrg}, butuh {qty}).")
+            db.pengurangan_stok_obat(plu, qty)
+            db.new_transaksi_item(
+                no_ref, item['nama'], item['satuan'], item['harga'],
+                qty, item['diskon'], item['total']
             )
+            sisa = db.stok_obat(plu)
+            batas_min = db.stok_min_obat(plu)
+            if sisa <= batas_min:
+                warnings.append(
+                    f"Stok {nama} mencapai batas minimum. Sisa {sisa} (batas {batas_min})."
+                )
         self.daftar_belanja.clear()
         self.refresh_keranjang()
         self.update_totals()
