@@ -671,3 +671,30 @@ class DatabaseObat:
         self.kursor.execute("SELECT no_ref FROM transaksi ORDER BY no_ref DESC LIMIT 1")
         last = self.kursor.fetchone()
         return last
+    
+    def get_harga_obat_by_jenis(self, plu, jenis_pelanggan):
+        jenis = (jenis_pelanggan or "").lower()
+
+        # mapping jenis → nama kolom di tabel data_obat
+        if jenis == "umum":
+            kolom = "harga_umum"
+        elif jenis == "resep":
+            kolom = "harga_resep"
+        elif jenis == "cabang":
+            kolom = "harga_cabang"
+        elif jenis == "halodoc":
+            kolom = "harga_halodoc"
+        elif jenis == "karyawan":
+            kolom = "harga_karyawan"
+        elif jenis == "bpjs":
+            kolom = "harga_bpjs"
+        else:
+            kolom = "harga_umum"  # fallback
+
+        self.kursor.execute(f"""
+            SELECT {kolom}
+            FROM data_obat
+            WHERE plu = ?
+        """, (plu,))
+        row = self.kursor.fetchone()
+        return int(row[0]) if row and row[0] is not None else 0

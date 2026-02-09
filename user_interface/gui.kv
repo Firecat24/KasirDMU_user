@@ -1,401 +1,455 @@
-WindowsManager:
+#:import ButtonBehavior kivy.uix.behaviors.ButtonBehavior
+<CloseIcon@ButtonBehavior+MDIcon>:
+    theme_text_color: "Custom"
+    size_hint: None, None
+    size: dp(18), dp(18)
+    
+<TabItem@ButtonBehavior+MDBoxLayout>:
+    tab_key: ""
+    text: ""
+    active: False
+    orientation: "horizontal"
+    size_hint_y: None
+    height: dp(32)
+    padding: [dp(12), 0, dp(4), dp(0)]
+    spacing: 0
+    size_hint_x: None
+    width: dp(140)
+
     canvas.before:
         Color:
-            rgba: 0.7, 0.7, 0.7, 1
-        Rectangle:
+            rgba: (0.149, 0.333, 0.729, 1) if root.active else (0.93, 0.93, 0.93, 1)
+        RoundedRectangle:
+            radius: [10, 10, 0, 0]
             pos: self.pos
             size: self.size
+    on_release:
+        app.activate_tab_from_widget(root)
 
-    Dashboard:
+    MDLabel:
+        text: root.text
+        theme_text_color: "Custom"
+        text_color: (1, 1, 1, 1) if root.active else (0.149, 0.333, 0.729, 1)
+        font_size: "12sp"
+        shorten: True
+        shorten_from: "right"
+        size_hint_x: 1
 
-    DataObat:
-    InsertObat:
-    EditObat:
+    CloseIcon:
+        icon: "close"
+        text_color: (1, 1, 1, 1) if root.active else (0.4, 0.4, 0.4, 1)
+        pos_hint: {"center_y": 0.5}
+        on_release:
+            app.close_tab(root.tab_key)
 
-    DataGolonganObat:
-    InsertGolonganObat:
-    EditGolonganObat:
+MDBoxLayout:
+    orientation: "vertical"
 
-    DataPajak:
-    InsertPajak:
-    EditPajak:
+    ScrollView:
+        size_hint_y: None
+        height: dp(36)
+        do_scroll_y: False
+        bar_width: 0
 
-    DataPelanggan:
-    InsertPelanggan:
-    EditPelanggan:
+        MDBoxLayout:
+            id: tabs_container
+            adaptive_width: True
+            height: dp(36)
+            spacing: dp(4)
+            padding: dp(8), 0
 
-    Kasir:
-    RiwayatTransaksi:
+    RelativeLayout:
+        size_hint_y: None
+        height: dp(50)
 
-    SettingsDooka:
+        MDTopAppBar:
+            id: top_bar
+            title: app.title
+            title_font_size: "28sp"
+            left_action_items: [["menu", lambda x: nav_drawer.set_state("open")]]
+            right_action_items: [["blank", lambda x: None]]
+            md_bg_color: 0.980, 0.729, 0.004, 1
+            specific_text_color: 0.149, 0.333, 0.729, 1
+            pos_hint: {"top": 1}
+            elevation: 0
+            padding: [0, -dp(18), 0, 0]
 
+        Label:
+            id: time_label
+            text: "__-__-__ || --:--:--"
+            font_size: "14sp"
+            color: 0.149, 0.333, 0.729, 1
+            size_hint: None, None
+            size: self.texture_size
+            pos_hint: {"center_y": 0.5, "right": 0.99}
+
+    MDNavigationLayout:
+        x: top_bar.height
+
+        ScreenManager:
+            id: screen_manager
+
+            Dashboard:
+            DataObat:
+            InsertObat:
+            EditObat:
+            DataGolonganObat:
+            InsertGolonganObat:
+            EditGolonganObat:
+
+            DataPajak:
+            InsertPajak:
+            EditPajak:
+
+            DataPelanggan:
+            InsertPelanggan:
+            EditPelanggan:
+
+            Kasir:
+            RiwayatTransaksi:
+
+            SettingsDooka:
+
+        MDNavigationDrawer:
+            id: nav_drawer
+            radius: (0, 16, 16, 0)
+
+            MDNavigationDrawerMenu:
+                MDNavigationDrawerHeader:
+                    title: "Menu Utama"
+                    text: "Apotek Medika Usada"
+                    spacing: "4dp"
+                    padding: "12dp", 0, 0, "26dp"
+
+                MDNavigationDrawerItem:
+                    icon: "view-dashboard"
+                    text: "Dashboard"
+                    on_release:
+                        app.open_tab("dashboard", "Dashboard", "dashboard")
+                        nav_drawer.set_state("close")
+
+                MDNavigationDrawerItem:
+                    icon: "pill"
+                    text: "Data Obat"
+                    on_release:
+                        app.open_tab("data_obat", "Data Obat", "data_obat")
+                        nav_drawer.set_state("close")
+
+                MDNavigationDrawerItem:
+                    icon: "tag"
+                    text: "Data Golongan"
+                    on_release:
+                        app.open_tab("data_golongan_obat", "Data Golongan Obat", "data_golongan_obat")
+                        nav_drawer.set_state("close")
+
+                MDNavigationDrawerItem:
+                    icon: "currency-usd"
+                    text: "Data Pajak"
+                    on_release:
+                        app.open_tab("data_pajak", "Data Pajak", "data_pajak")
+                        nav_drawer.set_state("close")
+
+                MDNavigationDrawerItem:
+                    icon: "account-group"
+                    text: "Data Pelanggan"
+                    on_release:
+                        app.open_tab("data_pelanggan", "Data Pelanggan", "data_pelanggan")
+                        nav_drawer.set_state("close")
+
+                MDNavigationDrawerItem:
+                    icon: "cash-register"
+                    text: "Kasir"
+                    on_release:
+                        kasir_item.height = 0 if kasir_item.height > 0 else dp(48)
+                        kasir_item.opacity = 0 if kasir_item.opacity > 0 else 1
+                        kasir_item.disabled = not kasir_item.disabled
+                        riwayat_item.height = 0 if riwayat_item.height > 0 else dp(48)
+                        riwayat_item.opacity = 0 if riwayat_item.opacity > 0 else 1
+                        riwayat_item.disabled = not riwayat_item.disabled
+
+                MDNavigationDrawerItem:
+                    id: kasir_item
+                    icon: "point-of-sale"
+                    text: "Buka Kasir"
+                    height: 0
+                    opacity: 0
+                    disabled: True
+                    padding: [dp(32), 0, 0, 0]
+                    on_release:
+                        app.open_tab("Kasir", "Kasir", "Kasir")
+                        nav_drawer.set_state("close")
+                        kasir_item.height = 0
+                        kasir_item.opacity = 0
+                        kasir_item.disabled = True
+                        riwayat_item.height = 0
+                        riwayat_item.opacity = 0
+                        riwayat_item.disabled = True
+                
+                MDNavigationDrawerItem:
+                    id: riwayat_item
+                    icon: "history"
+                    text: "Riwayat Transaksi"
+                    height: 0
+                    opacity: 0
+                    disabled: True
+                    padding: [dp(32), 0, 0, 0]
+                    on_release:
+                        app.open_tab("riwayat_transaksi", "Riwayat_transaksi", "riwayat_transaksi")
+                        nav_drawer.set_state("close")
+                        kasir_item.height = 0
+                        kasir_item.opacity = 0
+                        kasir_item.disabled = True
+                        riwayat_item.height = 0
+                        riwayat_item.opacity = 0
+                        riwayat_item.disabled = True
+
+                MDNavigationDrawerItem:
+                    icon: "cog"
+                    text: "Settings"
+                    on_release:
+                        app.open_tab("settings_dooka", "Settings_dooka", "settings_dooka")
+                        nav_drawer.set_state("close")
 #-----------------------------------------------------------------------------------------#
 
 <Dashboard>:
     name: "dashboard"
-    MDNavigationLayout:
-        ScreenManager:
-            Screen:
-                name: "dashboard_content"
-
-                MDBoxLayout:
-                    orientation: "vertical"
-
-                    # --- TOP BAR ---
-                    BoxLayout:
-                        size_hint_y: None
-                        height: dp(56)
-                        padding: dp(8)
-                        spacing: dp(8)
-                        canvas.before:
-                            Color:
-                                rgba: 0.980, 0.729, 0.004, 1  # warna top bar
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-
-                        MDIconButton:
-                            icon: "menu"
-                            theme_text_color: "Custom"
-                            text_color: 0.149, 0.333, 0.729, 1
-                            on_release: nav_drawer.set_state("toggle")
-
-                        Label:
-                            text: "DASHBOARD"
-                            color: 0.149, 0.333, 0.729, 1
-                            bold: True
-                            font_size: 24
-                            halign: "center"
-                            valign: "middle"
-                            text_size: self.size
-
-                        Label:
-                            id: time_label
-                            text: '__-__-__ || --:--:--'
-                            font_size: 14
-                            color: 0.149, 0.333, 0.729, 1
-                            bold: True
-                            size_hint_x: None
-                            width: dp(100)
-                            halign: "right"
-                            valign: "middle"
-                            text_size: self.size
-
-                    # --- MAIN CONTENT ---
-                    GridLayout:
-                        cols: 2
-                        rows: 2
-                        spacing: dp(5)
-                        padding: 0
-                        canvas.before:
-                            Color:
-                                rgba: 1, 1, 1, 1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                        canvas.after:
-                            Color:
-                                rgba: 0, 0, 0, 0.5
-                            # Garis vertikal tengah (1dp, full height)
-                            Rectangle:
-                                pos: self.center_x - dp(0.5), self.y
-                                size: dp(1), self.height
-                            # Garis horizontal tengah (1dp, full width)
-                            Rectangle:
-                                pos: self.x, self.center_y - dp(0.5)
-                                size: self.width, dp(1)
-                        AnchorLayout:
-                            anchor_x: 'center'
-                            anchor_y: 'center'
-                            BoxLayout:
-                                orientation: 'vertical'
-                                size_hint: None, None
-                                width: dp(300)
-                                height: self.minimum_height
-                                spacing: dp(5)
-                                Label:
-                                    text: 'Total Obat = '+ str(root.total_obat)
-                                    font_size: 30
-                                    size_hint_y: None
-                                    height: self.texture_size[1]
-                                    halign: 'center'
-                                    valign: 'middle'
-                                    text_size: self.size
-                                    color: 0, 0, 0, 1
-                                Label:
-                                    text: 'Total Golongan = '+ str(root.total_golongan)
-                                    font_size: 30
-                                    size_hint_y: None
-                                    height: self.texture_size[1]
-                                    halign: 'center'
-                                    valign: 'middle'
-                                    text_size: self.size
-                                    color: 0, 0, 0, 1
-                                Label:
-                                    text: 'Total Pajak = '+ str(root.total_pajak)
-                                    font_size: 30
-                                    size_hint_y: None
-                                    height: self.texture_size[1]
-                                    halign: 'center'
-                                    valign: 'middle'
-                                    text_size: self.size
-                                    color: 0, 0, 0, 1
-                                Label:
-                                    text: 'Total Pelanggan = '+ str(root.total_pelanggan)
-                                    font_size: 30
-                                    size_hint_y: None
-                                    height: self.texture_size[1]
-                                    halign: 'center'
-                                    valign: 'middle'
-                                    text_size: self.size
-                                    color: 0, 0, 0, 1
-
-                        AnchorLayout:
-                            anchor_x: 'center'
-                            anchor_y: 'center'
-                            BoxLayout:
-                                orientation: 'vertical'
-                                size_hint: 1, 1
-                                spacing: dp(6)
-                                padding: dp(10)
-                                halign: 'center'
-                                valign: 'middle'
-
-                                # Judul kartu
-                                Label:
-                                    text: 'Stok Minimum'
-                                    font_size: dp(20)
-                                    size_hint_y: None
-                                    height: self.texture_size[1]
-                                    halign: 'center'
-                                    valign: 'middle'
-                                    text_size: self.size
-                                    color: 0.149, 0.333, 0.729, 1
-
-                                # Jumlah item low stock (opsional)
-                                Label:
-                                    id: lbl_lowstock_count
-                                    text: ''   # akan diisi dari Python
-                                    font_size: dp(14)
-                                    size_hint_y: None
-                                    height: self.texture_size[1]
-                                    halign: 'center'
-                                    valign: 'middle'
-                                    text_size: self.size
-                                    color: 0.2, 0.2, 0.2, 1
-                                # List scrollable
-                                BoxLayout:
-                                    padding: dp(4)
-                                    size_hint_y: 1
-                                    canvas.before:
-                                        Color: 
-                                            rgba: 1, 1, 1, 1
-                                        RoundedRectangle:
-                                            pos: self.pos
-                                            size: self.size
-                                        Color: 
-                                            rgba: 0, 0, 0, 1
-                                        Line:
-                                            rounded_rectangle: (self.x + .5, self.y + .5, self.width - 1, self.height - 1, dp(8), dp(8), dp(8), dp(8))
-                                            width: 1
-
-                                    RecycleView:
-                                        id: rv_lowstock
-                                        size_hint_y: 1
-                                        viewclass: "LowStockCard"
-                                        scroll_type: ["bars", "content"]
-                                        bar_width: dp(10)
-                                        canvas.before:
-                                            Color:
-                                                rgba: 1, 1, 1, 1
-                                            Rectangle:
-                                                pos: self.pos
-                                                size: self.size
-
-                                        RecycleBoxLayout:
-                                            default_size: None, dp(50)
-                                            default_size_hint: 1, None
-                                            size_hint_y: None
-                                            height: self.minimum_height
-                                            orientation: "vertical"
-                                            spacing: dp(4)
-
-                        AnchorLayout:
-                            anchor_x: 'center'
-                            anchor_y: 'center'
-                            BoxLayout:
-                                orientation: 'vertical'
-                                size_hint: 1, 1
-                                spacing: dp(6)
-                                padding: dp(10)
-                                halign: 'center'
-                                valign: 'middle'
-
-                                # Judul kartu
-                                Label:
-                                    text: 'Tanggal Obat Kadaluarsa'
-                                    font_size: dp(20)
-                                    size_hint_y: None
-                                    height: self.texture_size[1]
-                                    halign: 'center'
-                                    valign: 'middle'
-                                    text_size: self.size
-                                    color: 0.149, 0.333, 0.729, 1
-
-                                # Jumlah item low stock (opsional)
-                                Label:
-                                    id: lbl_kadaluarsa_count
-                                    text: ''   # akan diisi dari Python
-                                    font_size: dp(14)
-                                    size_hint_y: None
-                                    height: self.texture_size[1]
-                                    halign: 'center'
-                                    valign: 'middle'
-                                    text_size: self.size
-                                    color: 0.2, 0.2, 0.2, 1
-                                # List scrollable
-                                BoxLayout:
-                                    padding: dp(4)
-                                    size_hint_y: 1
-                                    canvas.before:
-                                        Color: 
-                                            rgba: 1, 1, 1, 1
-                                        RoundedRectangle:
-                                            pos: self.pos
-                                            size: self.size
-                                        Color: 
-                                            rgba: 0, 0, 0, 1
-                                        Line:
-                                            rounded_rectangle: (self.x + .5, self.y + .5, self.width - 1, self.height - 1, dp(8), dp(8), dp(8), dp(8))
-                                            width: 1
-
-                                    RecycleView:
-                                        id: rv_kadaluarsa
-                                        size_hint_y: 1
-                                        viewclass: "StokKadaluarsa"
-                                        scroll_type: ["bars", "content"]
-                                        bar_width: dp(10)
-                                        canvas.before:
-                                            Color:
-                                                rgba: 1, 1, 1, 1
-                                            Rectangle:
-                                                pos: self.pos
-                                                size: self.size
-
-                                        RecycleBoxLayout:
-                                            default_size: None, dp(50)
-                                            default_size_hint: 1, None
-                                            size_hint_y: None
-                                            height: self.minimum_height
-                                            orientation: "vertical"
-                                            spacing: dp(4)
-                        AnchorLayout:
-                            anchor_x: 'center'
-                            anchor_y: 'center'
-                            BoxLayout:
-                                orientation: 'vertical'
-                                size_hint: None, None
-                                width: dp(180)
-                                height: self.minimum_height
-                                spacing: dp(2)
-                                Label:
-                                    text: 'COMING SOON'
-                                    font_size: 40
-                                    size_hint_y: None
-                                    height: self.texture_size[1]
-                                    halign: 'center'
-                                    valign: 'middle'
-                                    text_size: self.size
-                                    color: 0, 0, 0, 1
-                                Label:
-                                    text: ""
-                                    font_size: 30
-                                    size_hint_y: None
-                                    height: self.texture_size[1]
-                                    halign: 'center'
-                                    valign: 'middle'
-                                    text_size: self.size
-                                    color: 0, 0, 0, 1
-
-        MDNavigationDrawer:
-            id: nav_drawer
-            radius: (0, dp(5), dp(5), 0)
+    MDBoxLayout:
+        orientation: "vertical"
+        # --- MAIN CONTENT ---
+        GridLayout:
+            cols: 2
+            rows: 2
+            spacing: dp(5)
+            padding: 0
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            canvas.after:
+                Color:
+                    rgba: 0, 0, 0, 0.5
+                # Garis vertikal tengah (1dp, full height)
+                Rectangle:
+                    pos: self.center_x - dp(0.5), self.y
+                    size: dp(1), self.height
+                # Garis horizontal tengah (1dp, full width)
+                Rectangle:
+                    pos: self.x, self.center_y - dp(0.5)
+                    size: self.width, dp(1)
             AnchorLayout:
-                anchor_y: "top"
+                anchor_x: 'center'
+                anchor_y: 'center'
                 BoxLayout:
-                    orientation: "vertical"
-                    size_hint_y: None
+                    orientation: 'vertical'
+                    size_hint: None, None
+                    width: dp(300)
                     height: self.minimum_height
-                    spacing: dp(8)
-                    BoxLayout:
+                    spacing: dp(5)
+                    Label:
+                        text: 'Total Obat = '+ str(root.total_obat)
+                        font_size: 30
                         size_hint_y: None
-                        height: dp(56)
+                        height: self.texture_size[1]
+                        halign: 'center'
+                        valign: 'middle'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
+                    Label:
+                        text: 'Total Golongan = '+ str(root.total_golongan)
+                        font_size: 30
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        halign: 'center'
+                        valign: 'middle'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
+                    Label:
+                        text: 'Total Pajak = '+ str(root.total_pajak)
+                        font_size: 30
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        halign: 'center'
+                        valign: 'middle'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
+                    Label:
+                        text: 'Total Pelanggan = '+ str(root.total_pelanggan)
+                        font_size: 30
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        halign: 'center'
+                        valign: 'middle'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
+
+            AnchorLayout:
+                anchor_x: 'center'
+                anchor_y: 'center'
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint: 1, 1
+                    spacing: dp(6)
+                    padding: dp(10)
+                    halign: 'center'
+                    valign: 'middle'
+
+                    # Judul kartu
+                    Label:
+                        text: 'Stok Minimum'
+                        font_size: dp(20)
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        halign: 'center'
+                        valign: 'middle'
+                        text_size: self.size
+                        color: 0.149, 0.333, 0.729, 1
+
+                    # Jumlah item low stock (opsional)
+                    Label:
+                        id: lbl_lowstock_count
+                        text: ''   # akan diisi dari Python
+                        font_size: dp(14)
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        halign: 'center'
+                        valign: 'middle'
+                        text_size: self.size
+                        color: 0.2, 0.2, 0.2, 1
+                    # List scrollable
+                    BoxLayout:
+                        padding: dp(4)
+                        size_hint_y: 1
                         canvas.before:
-                            Color:
-                                rgba: 0.933, 0.412, 0.259, 1
-                            Rectangle:
+                            Color: 
+                                rgba: 1, 1, 1, 1
+                            RoundedRectangle:
                                 pos: self.pos
                                 size: self.size
-                        canvas.after:
-                            Color:
-                                rgba: 0, 0, 0, 0.5
+                            Color: 
+                                rgba: 0, 0, 0, 1
                             Line:
+                                rounded_rectangle: (self.x + .5, self.y + .5, self.width - 1, self.height - 1, dp(8), dp(8), dp(8), dp(8))
                                 width: 1
-                                rectangle: self.x, self.y, self.width, self.height
-                        MDLabel:
-                            text: "MENU"
-                            bold: True
-                            halign: "center"
-                            valign: "middle"
-                            theme_text_color: "Custom"
-                            text_color: 1, 1, 1, 1
-                            font_style: "H6"
-                    BoxLayout:
-                        orientation: "vertical"
+
+                        RecycleView:
+                            id: rv_lowstock
+                            size_hint_y: 1
+                            viewclass: "LowStockCard"
+                            scroll_type: ["bars", "content"]
+                            bar_width: dp(10)
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                Rectangle:
+                                    pos: self.pos
+                                    size: self.size
+
+                            RecycleBoxLayout:
+                                default_size: None, dp(50)
+                                default_size_hint: 1, None
+                                size_hint_y: None
+                                height: self.minimum_height
+                                orientation: "vertical"
+                                spacing: dp(4)
+
+            AnchorLayout:
+                anchor_x: 'center'
+                anchor_y: 'center'
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint: 1, 1
+                    spacing: dp(6)
+                    padding: dp(10)
+                    halign: 'center'
+                    valign: 'middle'
+
+                    # Judul kartu
+                    Label:
+                        text: 'Tanggal Obat Kadaluarsa'
+                        font_size: dp(20)
                         size_hint_y: None
-                        height: self.minimum_height
-                        MenuItem:
-                            bg_rgba: 0.980, 0.729, 0.004, 0.5
-                            text: "Kasir"
-                            on_release:
-                                app.change_screen('Kasir', 'left')
-                                nav_drawer.set_state("close")
+                        height: self.texture_size[1]
+                        halign: 'center'
+                        valign: 'middle'
+                        text_size: self.size
+                        color: 0.149, 0.333, 0.729, 1
 
-                        MenuItem:
-                            bg_rgba: 0.149, 0.333, 0.729, 0.5
-                            text: "Obat"
-                            on_release:
-                                app.change_screen('data_obat', 'left')
-                                nav_drawer.set_state("close")
+                    # Jumlah item low stock (opsional)
+                    Label:
+                        id: lbl_kadaluarsa_count
+                        text: ''   # akan diisi dari Python
+                        font_size: dp(14)
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        halign: 'center'
+                        valign: 'middle'
+                        text_size: self.size
+                        color: 0.2, 0.2, 0.2, 1
+                    # List scrollable
+                    BoxLayout:
+                        padding: dp(4)
+                        size_hint_y: 1
+                        canvas.before:
+                            Color: 
+                                rgba: 1, 1, 1, 1
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                            Color: 
+                                rgba: 0, 0, 0, 1
+                            Line:
+                                rounded_rectangle: (self.x + .5, self.y + .5, self.width - 1, self.height - 1, dp(8), dp(8), dp(8), dp(8))
+                                width: 1
 
-                        MenuItem:
-                            bg_rgba: 0.980, 0.729, 0.004, 0.5
-                            text: "Golongan"
-                            on_release:
-                                app.change_screen('data_golongan_obat', 'left')
-                                nav_drawer.set_state("close")
+                        RecycleView:
+                            id: rv_kadaluarsa
+                            size_hint_y: 1
+                            viewclass: "StokKadaluarsa"
+                            scroll_type: ["bars", "content"]
+                            bar_width: dp(10)
+                            canvas.before:
+                                Color:
+                                    rgba: 1, 1, 1, 1
+                                Rectangle:
+                                    pos: self.pos
+                                    size: self.size
 
-                        MenuItem:
-                            bg_rgba: 0.149, 0.333, 0.729, 0.5
-                            text: "Pajak"
-                            on_release:
-                                app.change_screen('data_pajak', 'left')
-                                nav_drawer.set_state("close")
-
-                        MenuItem:
-                            bg_rgba: 0.980, 0.729, 0.004, 0.5
-                            text: "Pelanggan"
-                            on_release:
-                                app.change_screen('data_pelanggan', 'left')
-                                nav_drawer.set_state("close")
-
-                        MenuItem:
-                            size_hint_x: 1
-                            bg_rgba: 0.149, 0.333, 0.729, 0.5
-                            text: "Settings"
-                            on_release:
-                                app.change_screen('settings_dooka', 'left')
-                                nav_drawer.set_state("close")
+                            RecycleBoxLayout:
+                                default_size: None, dp(50)
+                                default_size_hint: 1, None
+                                size_hint_y: None
+                                height: self.minimum_height
+                                orientation: "vertical"
+                                spacing: dp(4)
+            AnchorLayout:
+                anchor_x: 'center'
+                anchor_y: 'center'
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint: None, None
+                    width: dp(180)
+                    height: self.minimum_height
+                    spacing: dp(2)
+                    Label:
+                        text: 'COMING SOON'
+                        font_size: 40
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        halign: 'center'
+                        valign: 'middle'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
+                    Label:
+                        text: ""
+                        font_size: 30
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        halign: 'center'
+                        valign: 'middle'
+                        text_size: self.size
+                        color: 0, 0, 0, 1
 
 <LowStockCard@BoxLayout>:
     # data yg di-set dari rv.data
@@ -593,58 +647,22 @@ WindowsManager:
                         pos: self.pos
                         size: self.size
                 NavButton:
-                    text: 'Dashboard'
-                    width: 100
+                    text: 'Tambah'
+                    width: 70
                     bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
+                    on_release: app.open_tab("insert_obat", "Insert Obat", "insert_obat")
 
                 NavButton:
-                    id: tombol_add_obat
-                    text: 'Add'
-                    font_size: 12
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 60
-                    on_release: app.change_screen('insert_obat',"left")
-
-                NavButton:
-                    id: tombol_edit_obat
                     text: 'Edit'
-                    font_size: 12
+                    width: 70
                     bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 60
                     on_release: root.edit_data_obat()
 
                 NavButton:
-                    id: tombol_hapus_obat
-                    text: "Hapus"
-                    font_size: 12
+                    text: 'Hapus'
+                    width: 70
                     bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 60
                     on_release: root.hapus_terpilih()
-                Widget:
-                Label:
-                    id: time_label
-                    text: '__-__-__ || --:--:--'
-                    font_size: 14
-                    halign: 'right'
-                    valign: 'middle'
-                    size_hint_x: 1
-                    color: 0.149, 0.333, 0.729, 1
-                    text_size: self.size
-
-            Label:
-                text: 'DATA OBAT'
-                font_size: 25
-                size_hint_y: None
-                height: 40
-                bold: True
-                halign: 'center'
-                valign: 'middle'
-                color: 0.149, 0.333, 0.729, 1
-                text_size: self.size
 
         BoxLayout:
             id: table_container_obat
@@ -681,54 +699,6 @@ WindowsManager:
             Rectangle: 
                 pos: self.pos
                 size: self.size
-        RelativeLayout:
-            size_hint_y: None
-            height: dp(40)
-            BoxLayout:
-                size_hint: 1, 1
-                padding: dp(8)
-                spacing: dp(10)
-                canvas.before:
-                    Color: 
-                        rgba: 0.980, 0.729, 0.004, 1
-                    Rectangle: 
-                        pos: self.pos
-                        size: self.size
-                NavButton:
-                    text: 'Dashboard'
-                    width: 100
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
-
-                NavButton:
-                    text: 'Data Obat'
-                    font_size: 12
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 100
-                    on_release: app.change_screen('data_obat',"right")
-                Widget:
-                Label:
-                    id: time_label
-                    text: '__-__-__ || --:--:--'
-                    font_size: 14
-                    halign: 'right'
-                    valign: 'middle'
-                    size_hint_x: 1
-                    color: 0.149, 0.333, 0.729, 1
-                    text_size: self.size
-
-            Label:
-                text: 'ISI DATA OBAT'
-                font_size: 25
-                size_hint_y: None
-                height: 40
-                bold: True
-                halign: 'center'
-                valign: 'middle'
-                color: 0.149, 0.333, 0.729, 1
-                text_size: self.size
-                
         ScrollView:
             bar_width: dp(8)
             do_scroll_x: True
@@ -1155,54 +1125,6 @@ WindowsManager:
             Rectangle: 
                 pos: self.pos
                 size: self.size
-        RelativeLayout:
-            size_hint_y: None
-            height: dp(40)
-            BoxLayout:
-                size_hint: 1, 1
-                padding: dp(8)
-                spacing: dp(10)
-                canvas.before:
-                    Color: 
-                        rgba: 0.980, 0.729, 0.004, 1
-                    Rectangle: 
-                        pos: self.pos
-                        size: self.size
-                NavButton:
-                    text: 'Dashboard'
-                    width: 100
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
-
-                NavButton:
-                    text: 'Data Obat'
-                    font_size: 12
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 100
-                    on_release: app.change_screen('data_obat',"right")
-                Widget:
-                Label:
-                    id: time_label
-                    text: '__-__-__ || --:--:--'
-                    font_size: 14
-                    halign: 'right'
-                    valign: 'middle'
-                    size_hint_x: 1
-                    color: 0.149, 0.333, 0.729, 1
-                    text_size: self.size
-
-            Label:
-                text: 'EDIT DATA OBAT'
-                font_size: 25
-                size_hint_y: None
-                height: 40
-                bold: True
-                halign: 'center'
-                valign: 'middle'
-                color: 0.149, 0.333, 0.729, 1
-                text_size: self.size
-
         ScrollView:
             bar_width: dp(8)
             do_scroll_x: True
@@ -1641,58 +1563,22 @@ WindowsManager:
                         pos: self.pos
                         size: self.size
                 NavButton:
-                    text: 'Dashboard'
-                    width: 100
+                    text: 'Tambah'
+                    width: 70
                     bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
+                    on_release: app.open_tab("insert_golongan_obat", "Insert Golongan Obat", "insert_golongan_obat")
 
                 NavButton:
-                    id: tombol_add_golongan
-                    text: 'Insert'
-                    font_size: 12
-                    size_hint_x: None
-                    width: 60
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('insert_golongan_obat',"left")
-
-                NavButton:
-                    id: tombol_edit_golongan
                     text: 'Edit'
-                    font_size: 12
+                    width: 70
                     bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 60
                     on_release: root.edit_data_golongan_obat()
 
                 NavButton:
-                    id: tombol_hapus_golongan
                     text: 'Hapus'
+                    width: 70
                     bg_normal: 0.149, 0.333, 0.729, 1
-                    font_size: 12
-                    size_hint_x: None
-                    width: 60
                     on_release: root.hapus_terpilih()
-                Widget:
-                Label:
-                    id: time_label
-                    text: '__-__-__ || --:--:--'
-                    font_size: 14
-                    halign: 'right'
-                    valign: 'middle'
-                    size_hint_x: 1
-                    color: 0.149, 0.333, 0.729, 1
-                    text_size: self.size
-
-            Label:
-                text: 'DATA GOLONGAN OBAT'
-                font_size: 25
-                size_hint_y: None
-                height: 40
-                bold: True
-                halign: 'center'
-                valign: 'middle'
-                color: 0.149, 0.333, 0.729, 1
-                text_size: self.size
 
         BoxLayout:
             id: table_container_golongan
@@ -1729,54 +1615,6 @@ WindowsManager:
             Rectangle: 
                 pos: self.pos
                 size: self.size
-        RelativeLayout:
-            size_hint_y: None
-            height: dp(40)
-            BoxLayout:
-                size_hint: 1, 1
-                padding: dp(8)
-                spacing: dp(10)
-                canvas.before:
-                    Color: 
-                        rgba: 0.980, 0.729, 0.004, 1
-                    Rectangle: 
-                        pos: self.pos
-                        size: self.size
-                NavButton:
-                    text: 'Dashboard'
-                    width: 100
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
-
-                NavButton:
-                    text: 'Data Golongan'
-                    font_size: 12
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 100
-                    on_release: app.change_screen('data_golongan_obat',"right")
-                Widget:
-                Label:
-                    id: time_label
-                    text: '__-__-__ || --:--:--'
-                    font_size: 14
-                    halign: 'right'
-                    valign: 'middle'
-                    size_hint_x: 1
-                    color: 0.149, 0.333, 0.729, 1
-                    text_size: self.size
-
-            Label:
-                text: 'ISI DATA GOLONGAN'
-                font_size: 25
-                size_hint_y: None
-                height: 40
-                bold: True
-                halign: 'center'
-                valign: 'middle'
-                color: 0.149, 0.333, 0.729, 1
-                text_size: self.size
-
         ScrollView:
             bar_width: dp(8)
             do_scroll_x: True
@@ -2016,7 +1854,7 @@ WindowsManager:
                     text: 'Dashboard'
                     width: 100
                     bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
+                    on_release: app.open_tab("dashboard", "Dashboard", "dashboard")
 
                 NavButton:
                     text: 'Data Obat'
@@ -2024,7 +1862,7 @@ WindowsManager:
                     bg_normal: 0.149, 0.333, 0.729, 1
                     size_hint_x: None
                     width: 100
-                    on_release: app.change_screen('data_golongan_obat',"right")
+                    on_release: app.open_tab("data_golongan", "Data Golongan Obat", "data_golongan_obat")
                 Widget:
                 Label:
                     id: time_label
@@ -2286,58 +2124,22 @@ WindowsManager:
                         pos: self.pos
                         size: self.size
                 NavButton:
-                    text: 'Dashboard'
-                    width: 100
+                    text: 'Tambah'
+                    width: 70
                     bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
+                    on_release: app.open_tab("insert_pajak", "Insert Data Pajak", "insert_pajak")
 
                 NavButton:
-                    id: tombol_add_pajak
-                    text: 'Insert'
-                    font_size: 12
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 60
-                    on_release: app.change_screen('insert_pajak',"left")
-
-                NavButton:
-                    id: tombol_edit_pajak
                     text: 'Edit'
-                    font_size: 12
+                    width: 70
                     bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 60
                     on_release: root.edit_data_pajak()
 
                 NavButton:
-                    id: tombol_hapus_pajak
                     text: 'Hapus'
-                    font_size: 12
+                    width: 70
                     bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 60
                     on_release: root.hapus_terpilih()
-                Widget:
-                Label:
-                    id: time_label
-                    text: '__-__-__ || --:--:--'
-                    font_size: 14
-                    halign: 'right'
-                    valign: 'middle'
-                    size_hint_x: 1
-                    color: 0.149, 0.333, 0.729, 1
-                    text_size: self.size
-
-            Label:
-                text: 'DATA PAJAK'
-                font_size: 25
-                size_hint_y: None
-                height: 40
-                bold: True
-                halign: 'center'
-                valign: 'middle'
-                color: 0.149, 0.333, 0.729, 1
-                text_size: self.size
 
         BoxLayout:
             id: table_container_pajak
@@ -2374,54 +2176,6 @@ WindowsManager:
             Rectangle: 
                 pos: self.pos
                 size: self.size
-        RelativeLayout:
-            size_hint_y: None
-            height: dp(40)
-            BoxLayout:
-                size_hint: 1, 1
-                padding: dp(8)
-                spacing: dp(10)
-                canvas.before:
-                    Color: 
-                        rgba: 0.980, 0.729, 0.004, 1
-                    Rectangle: 
-                        pos: self.pos
-                        size: self.size
-                NavButton:
-                    text: 'Dashboard'
-                    width: 100
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
-
-                NavButton:
-                    text: 'Data Pajak'
-                    font_size: 12
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 100
-                    on_release: app.change_screen('data_pajak',"right")
-                Widget:
-                Label:
-                    id: time_label
-                    text: '__-__-__ || --:--:--'
-                    font_size: 14
-                    halign: 'right'
-                    valign: 'middle'
-                    size_hint_x: 1
-                    color: 0.149, 0.333, 0.729, 1
-                    text_size: self.size
-
-            Label:
-                text: 'ISI DATA PAJAK'
-                font_size: 25
-                size_hint_y: None
-                height: 40
-                bold: True
-                halign: 'center'
-                valign: 'middle'
-                color: 0.149, 0.333, 0.729, 1
-                text_size: self.size
-
         ScrollView:
             bar_width: dp(8)
             do_scroll_x: True
@@ -2519,54 +2273,6 @@ WindowsManager:
             Rectangle: 
                 pos: self.pos
                 size: self.size
-        RelativeLayout:
-            size_hint_y: None
-            height: dp(40)
-            BoxLayout:
-                size_hint: 1, 1
-                padding: dp(8)
-                spacing: dp(10)
-                canvas.before:
-                    Color: 
-                        rgba: 0.980, 0.729, 0.004, 1
-                    Rectangle: 
-                        pos: self.pos
-                        size: self.size
-                NavButton:
-                    text: 'Dashboard'
-                    width: 100
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
-
-                NavButton:
-                    text: 'Data Obat'
-                    font_size: 12
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 100
-                    on_release: app.change_screen('data_golongan_obat',"right")
-                Widget:
-                Label:
-                    id: time_label
-                    text: '__-__-__ || --:--:--'
-                    font_size: 14
-                    halign: 'right'
-                    valign: 'middle'
-                    size_hint_x: 1
-                    color: 0.149, 0.333, 0.729, 1
-                    text_size: self.size
-
-            Label:
-                text: 'EDIT DATA PAJAK'
-                font_size: 25
-                size_hint_y: None
-                height: 40
-                bold: True
-                halign: 'center'
-                valign: 'middle'
-                color: 0.149, 0.333, 0.729, 1
-                text_size: self.size
-
         ScrollView:
             bar_width: dp(8)
             do_scroll_x: True
@@ -2627,6 +2333,7 @@ WindowsManager:
                             FormInput:
                                 id: jenis_pajak
                                 hint_text: "Jenis Pajak"
+                                disabled: True
 
                         GridLayout:
                             cols: 2
@@ -2681,59 +2388,22 @@ WindowsManager:
                         pos: self.pos
                         size: self.size
                 NavButton:
-                    text: 'Dashboard'
-                    width: 100
+                    text: 'Tambah'
+                    width: 70
                     bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
+                    on_release: app.open_tab("insert_pelanggan", "Insert Data Pelanggan", "insert_pelanggan")
 
                 NavButton:
-                    id: tombol_add_pelanggan
-                    text: 'Insert'
-                    font_size: 12
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 60
-                    on_release: app.change_screen('insert_pelanggan',"left")
-
-                NavButton:
-                    id: tombol_edit_pelanggan
                     text: 'Edit'
-                    font_size: 12
+                    width: 70
                     bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 60
                     on_release: root.edit_data_pelanggan()
 
                 NavButton:
-                    id: tombol_hapus_pelanggan
                     text: 'Hapus'
-                    font_size: 12
+                    width: 70
                     bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 60
                     on_release: root.hapus_terpilih()
-                Widget:
-                Label:
-                    id: time_label
-                    text: '__-__-__ || --:--:--'
-                    font_size: 14
-                    halign: 'right'
-                    valign: 'middle'
-                    size_hint_x: 1
-                    color: 0.149, 0.333, 0.729, 1
-                    text_size: self.size
-
-            Label:
-                text: 'DATA PELANGGAN'
-                font_size: 25
-                size_hint_y: None
-                height: 40
-                bold: True
-                halign: 'center'
-                valign: 'middle'
-                color: 0.149, 0.333, 0.729, 1
-                text_size: self.size
-
         BoxLayout:
             id: table_container_pelanggan
             orientation: "vertical"
@@ -2769,54 +2439,6 @@ WindowsManager:
             Rectangle: 
                 pos: self.pos
                 size: self.size
-        RelativeLayout:
-            size_hint_y: None
-            height: dp(40)
-            BoxLayout:
-                size_hint: 1, 1
-                padding: dp(8)
-                spacing: dp(10)
-                canvas.before:
-                    Color: 
-                        rgba: 0.980, 0.729, 0.004, 1
-                    Rectangle: 
-                        pos: self.pos
-                        size: self.size
-                NavButton:
-                    text: 'Dashboard'
-                    width: 100
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
-
-                NavButton:
-                    text: 'Data Pelanggan'
-                    font_size: 12
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 100
-                    on_release: app.change_screen('data_pelanggan',"right")
-                Widget:
-                Label:
-                    id: time_label
-                    text: '__-__-__ || --:--:--'
-                    font_size: 14
-                    halign: 'right'
-                    valign: 'middle'
-                    size_hint_x: 1
-                    color: 0.149, 0.333, 0.729, 1
-                    text_size: self.size
-
-            Label:
-                text: 'ISI DATA PELANGGAN'
-                font_size: 25
-                size_hint_y: None
-                height: 40
-                bold: True
-                halign: 'center'
-                valign: 'middle'
-                color: 0.149, 0.333, 0.729, 1
-                text_size: self.size
-
         ScrollView:
             bar_width: dp(8)
             do_scroll_x: True
@@ -2974,54 +2596,6 @@ WindowsManager:
             Rectangle: 
                 pos: self.pos
                 size: self.size
-        RelativeLayout:
-            size_hint_y: None
-            height: dp(40)
-            BoxLayout:
-                size_hint: 1, 1
-                padding: dp(8)
-                spacing: dp(10)
-                canvas.before:
-                    Color: 
-                        rgba: 0.980, 0.729, 0.004, 1
-                    Rectangle: 
-                        pos: self.pos
-                        size: self.size
-                NavButton:
-                    text: 'Dashboard'
-                    width: 100
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
-
-                NavButton:
-                    text: 'Data Obat'
-                    font_size: 12
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 100
-                    on_release: app.change_screen('data_golongan_obat',"right")
-                Widget:
-                Label:
-                    id: time_label
-                    text: '__-__-__ || --:--:--'
-                    font_size: 14
-                    halign: 'right'
-                    valign: 'middle'
-                    size_hint_x: 1
-                    color: 0.149, 0.333, 0.729, 1
-                    text_size: self.size
-
-            Label:
-                text: 'EDIT DATA PAJAK'
-                font_size: 25
-                size_hint_y: None
-                height: 40
-                bold: True
-                halign: 'center'
-                valign: 'middle'
-                color: 0.149, 0.333, 0.729, 1
-                text_size: self.size
-
         ScrollView:
             bar_width: dp(8)
             do_scroll_x: True
@@ -3249,64 +2823,6 @@ WindowsManager:
             Rectangle:
                 pos: self.pos
                 size: self.size
-        RelativeLayout:
-            size_hint_y: None
-            height: dp(40)
-            BoxLayout:
-                size_hint: 1, 1
-                padding: dp(8)
-                spacing: dp(10)
-                canvas.before:
-                    Color: 
-                        rgba: 0.980, 0.729, 0.004, 1
-                    Rectangle: 
-                        pos: self.pos
-                        size: self.size
-                NavButton:
-                    text: 'Dashboard'
-                    width: 100
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
-
-                NavButton:
-                    text: 'Riwayat Transaksi'
-                    width: 130
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('riwayat_transaksi', "left")
-
-                NavButton:
-                    text: 'Pending'
-                    width: 100
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: root.pending_transaksi()
-
-                NavButton:
-                    text: 'Reload'
-                    width: 100
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: root.reload_pending()
-                Widget:
-                Label:
-                    id: time_label
-                    text: '__-__-__ || --:--:--'
-                    font_size: 14
-                    halign: 'right'
-                    valign: 'middle'
-                    size_hint_x: 1
-                    color: 0.149, 0.333, 0.729, 1
-                    text_size: self.size
-
-            Label:
-                text: 'KASIR'
-                font_size: 25
-                size_hint_y: None
-                height: 40
-                bold: True
-                halign: 'center'
-                valign: 'middle'
-                color: 0.149, 0.333, 0.729, 1
-                text_size: self.size
-
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
@@ -3330,7 +2846,7 @@ WindowsManager:
                     foreground_color: 0, 0, 0, 1
                     hint_text_color: 0.5, 0.5, 0.5, 1
                     on_text_validate:
-                        app.root.get_screen('Kasir').cari_obat(search_input.text)
+                        app.root.ids.screen_manager.get_screen('Kasir').cari_obat(search_input.text)
 
                 IconButton:
                     source: 'assets/image/3.png'
@@ -3338,7 +2854,7 @@ WindowsManager:
                     size: 20, 20
                     pos: (self.parent.width - 25, 5)
                     on_release:
-                        app.root.get_screen('Kasir').cari_obat(search_input.text)
+                        app.root.ids.screen_manager.get_screen('Kasir').cari_obat(search_input.text)
 
             Spinner:
                 id: jenis_pelanggan_spinner
@@ -3348,6 +2864,7 @@ WindowsManager:
                 width: 100
                 height: 30
                 font_size: 12
+                on_text: root.set_jenis_pelanggan(self.text)
 
             BoxLayout:
                 orientation: 'horizontal'
@@ -3400,10 +2917,17 @@ WindowsManager:
                     on_focus: root.periksa_pelanggan_kosong(self)
 
                 Label:
+                    text: "Pasien: "
+                    size_hint_x: None
+                    width: 50
+                    font_size: 12
+                    color: 0.2, 0.2, 0.2, 1
+                            
+                Label:
                     id: label_nama_pelanggan
                     text: "Pelanggan Umum"
                     size_hint_x: None
-                    width: 250
+                    width: 150
                     font_size: 12
                     color: 0.2, 0.2, 0.2, 1
                     canvas.before:
@@ -3439,7 +2963,7 @@ WindowsManager:
 
                 Label:
                     id: label_penjaga_kasir
-                    text: root.penjaga_kasir
+                    text: "Kasir: " + root.penjaga_kasir
                     size_hint_x: None
                     width: 100
                     font_size: 12
@@ -3455,6 +2979,47 @@ WindowsManager:
                         Line:
                             rectangle: (*self.pos, *self.size)
                             width: 1
+            
+                MDRaisedButton:
+                    text: "Pending"
+                    on_release: root.pending_transaksi()
+                    
+                    # Warna
+                    md_bg_color: 0.149, 0.333, 0.729, 1
+                    theme_text_color: "Custom"
+                    text_color: 1, 1, 1, 1
+                    
+                    # 1. Hilangkan Bayangan (Kunci untuk versi lama)
+                    elevation: 0
+                    
+                    # 2. Atur Ukuran Ramping
+                    size_hint: None, None
+                    height: dp(30)  # Paksa tinggi sama dengan input box
+                    width: dp(80)
+                    
+                    # Posisi Tengah
+                    pos_hint: {'center_y': 0.5}
+
+                # --- TOMBOL RELOAD ---
+                MDRaisedButton:
+                    text: "Reload"
+                    on_release: root.reload_pending()
+                    
+                    # Warna
+                    md_bg_color: 0.149, 0.333, 0.729, 1
+                    theme_text_color: "Custom"
+                    text_color: 1, 1, 1, 1
+                    
+                    # 1. Hilangkan Bayangan
+                    elevation: 0
+                    
+                    # 2. Atur Ukuran Ramping
+                    size_hint: None, None
+                    height: dp(30)
+                    width: dp(80)
+                    
+                    # Posisi Tengah
+                    pos_hint: {'center_y': 0.5}
 
         BoxLayout:
             size_hint_y: None
@@ -3776,62 +3341,6 @@ WindowsManager:
             Rectangle: 
                 pos: self.pos
                 size: self.size
-        RelativeLayout:
-            size_hint_y: None
-            height: dp(40)
-            BoxLayout:
-                size_hint: 1, 1
-                padding: dp(8)
-                spacing: dp(10)
-                canvas.before:
-                    Color: 
-                        rgba: 0.980, 0.729, 0.004, 1
-                    Rectangle: 
-                        pos: self.pos
-                        size: self.size
-                NavButton:
-                    text: 'Dashboard'
-                    width: 100
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
-
-                NavButton:
-                    text: 'Kembali ke Kasir'
-                    font_size: 12
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 120
-                    on_release: app.root.current = 'Kasir'
-
-                NavButton:
-                    text: 'Muat Ulang'
-                    font_size: 12
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    size_hint_x: None
-                    width: 90
-                    on_release: root.muat_riwayat_transaksi()
-                Widget:
-                Label:
-                    id: time_label
-                    text: '__-__-__ || --:--:--'
-                    font_size: 14
-                    halign: 'right'
-                    valign: 'middle'
-                    size_hint_x: 1
-                    color: 0.149, 0.333, 0.729, 1
-                    text_size: self.size
-
-            Label:
-                text: 'RIWAYAT TRANSAKSI'
-                font_size: 25
-                size_hint_y: None
-                height: 40
-                bold: True
-                halign: 'center'
-                valign: 'middle'
-                color: 0.149, 0.333, 0.729, 1
-                text_size: self.size
-
         BoxLayout:
             id: table_container_riwayat_transaksi
             orientation: "vertical"
@@ -4057,7 +3566,7 @@ WindowsManager:
             background_color: 0.35, 0.35, 0.35, 1
             border: 0, 0, 0, 0
             padding: 0, 0
-            on_release: app.root.get_screen('Kasir').hapus_item(root.index)
+            on_release: app.root.ids.screen_manager.get_screen('Kasir').hapus_item(root.index)
 
 <IconButton@ButtonBehavior+Image>:
     source: ''
@@ -4127,46 +3636,6 @@ WindowsManager:
     name: 'settings_dooka'
     BoxLayout:
         orientation: 'vertical'
-        RelativeLayout:
-            size_hint_y: None
-            height: dp(40)
-            BoxLayout:
-                size_hint: 1, 1
-                padding: dp(8)
-                spacing: dp(10)
-                canvas.before:
-                    Color: 
-                        rgba: 0.980, 0.729, 0.004, 1
-                    Rectangle: 
-                        pos: self.pos
-                        size: self.size
-                NavButton:
-                    text: 'Dashboard'
-                    width: 100
-                    bg_normal: 0.149, 0.333, 0.729, 1
-                    on_release: app.change_screen('dashboard', "right")
-                Widget:
-                Label:
-                    id: time_label
-                    text: '__-__-__ || --:--:--'
-                    font_size: 14
-                    halign: 'right'
-                    valign: 'middle'
-                    size_hint_x: 1
-                    color: 0.149, 0.333, 0.729, 1
-                    text_size: self.size
-
-            Label:
-                text: 'PENGATURAN DOOKA'
-                font_size: 25
-                size_hint_y: None
-                height: 40
-                bold: True
-                halign: 'center'
-                valign: 'middle'
-                color: 0.149, 0.333, 0.729, 1
-                text_size: self.size
-
         AnchorLayout:
             anchor_y: 'top'
             padding: dp(16)
