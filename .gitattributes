@@ -1,9 +1,9 @@
-# Paksa semua file non-Python menjadi dokumentasi/aset
-*.html linguist-documentation
-*.tex linguist-documentation
-*.css linguist-documentation
-*.js linguist-documentation
-*.kv linguist-documentation
+# Hilangkan TeX dan HTML dari perhitungan statistik
+*.tex linguist-vendored
+*.tex linguist-detectable=false
+*.html linguist-vendored
+*.html linguist-detectable=false
 
-# Pastikan hanya Python yang dihitung dalam statistik kode
+# Definisikan Kivy sebagai bahasa pembantu namun biarkan Python mendominasi
+*.kv linguist-language=Kivy
 *.py linguist-detectable=true
