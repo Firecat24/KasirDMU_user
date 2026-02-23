@@ -1,0 +1,3 @@
+# Mengabaikan HTML dan TeX dari statistik bahasa GitHub
+*.html linguist-vendored
+*.tex linguist-vendored
