@@ -1,3 +1,11 @@
-# Mengabaikan HTML dan TeX dari statistik bahasa GitHub
-*.html linguist-vendored
+# Menganggap file TeX dan HTML sebagai aset pendukung (bukan kode utama)
 *.tex linguist-vendored
+*.html linguist-vendored
+
+# Memastikan file Kivy tetap terdeteksi namun tidak mendominasi Python
+*.kv linguist-language=Kivy
+
+# Jika ada folder assets atau build, abaikan juga dari statistik
+assets/** linguist-vendored
+build/** linguist-vendored
+dist/** linguist-vendored
