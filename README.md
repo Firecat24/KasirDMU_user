@@ -2,7 +2,7 @@
 
 > 🚧 **Status Proyek: Aktif Dikembangkan (On Progress)** 🚧
 
-**DOOKA (User Module)** adalah subsistem aplikasi berbasis *desktop* yang merupakan bagian dari ekosistem **Kasir DMU**. Repositori ini secara spesifik memuat modul klien (kasir/pengguna) yang dirancang untuk mempercepat operasional kasir harian, manajemen basis data lokal, dan pelaporan transaksi.
+**DOOKA (Digital Online-Offile Kasir Apotek)** adalah subsistem aplikasi berbasis *desktop* yang merupakan bagian dari ekosistem **Kasir DMU**. Repositori ini secara spesifik memuat modul klien (kasir/pengguna) yang dirancang untuk mempercepat operasional kasir harian, manajemen basis data lokal, dan pelaporan transaksi.
 
 Sistem ini didesain berdampingan dengan **DOOKA Admin** (sedang dikembangkan) untuk membentuk arsitektur *client-server* yang efisien.
 
