@@ -1,9 +1,9 @@
-# Sembunyikan TeX dan aset tampilan dari bar statistik
-*.tex linguist-documentation
+# Paksa semua file non-Python menjadi dokumentasi/aset
 *.html linguist-documentation
+*.tex linguist-documentation
 *.css linguist-documentation
+*.js linguist-documentation
+*.kv linguist-documentation
 
-# Tampilkan Python dan Kivy secara proporsional
+# Pastikan hanya Python yang dihitung dalam statistik kode
 *.py linguist-detectable=true
-*.kv linguist-language=Kivy
-*.kv linguist-detectable=true
