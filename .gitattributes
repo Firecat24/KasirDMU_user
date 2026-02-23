@@ -1,11 +1,8 @@
-# Menganggap file TeX dan HTML sebagai aset pendukung (bukan kode utama)
+# Mengabaikan aset tampilan agar tidak mendominasi
 *.tex linguist-vendored
 *.html linguist-vendored
+*.css linguist-vendored
 
-# Memastikan file Kivy tetap terdeteksi namun tidak mendominasi Python
+# Memastikan file Kivy tetap dihitung sebagai bahasa pemrograman
 *.kv linguist-language=Kivy
-
-# Jika ada folder assets atau build, abaikan juga dari statistik
-assets/** linguist-vendored
-build/** linguist-vendored
-dist/** linguist-vendored
+*.kv linguist-detectable=true
