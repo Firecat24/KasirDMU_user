@@ -1,8 +1,9 @@
-# Mengabaikan aset tampilan agar tidak mendominasi
-*.tex linguist-vendored
-*.html linguist-vendored
-*.css linguist-vendored
+# Sembunyikan TeX dan aset tampilan dari bar statistik
+*.tex linguist-documentation
+*.html linguist-documentation
+*.css linguist-documentation
 
-# Memastikan file Kivy tetap dihitung sebagai bahasa pemrograman
+# Tampilkan Python dan Kivy secara proporsional
+*.py linguist-detectable=true
 *.kv linguist-language=Kivy
 *.kv linguist-detectable=true
